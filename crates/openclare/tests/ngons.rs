@@ -31,12 +31,13 @@ fn creases(mesh: &PolyMesh, report: &Report) -> BTreeMap<(u32, u32), f64> {
 }
 
 #[test]
-fn a_cube_comes_out_as_its_six_faces() {
+fn a_cube_comes_out_as_its_six_faces_and_eight_corners() {
     let (mesh, report) = remesh(&primitives::cube(8), 300, Faces::Ngons);
-    assert_eq!((mesh.faces.len(), report.merged_faces), (6, 6));
-    // Every edge left is one of the cube, fully creased.
+    assert_eq!((mesh.faces.len(), mesh.positions.len(), mesh.stats().quads), (6, 8, 6));
+    assert_eq!(report.merged_faces, 6);
+    // Every edge is one of the cube, fully creased.
     let creases = creases(&mesh, &report);
-    assert_eq!(creases.len(), mesh.stats().edges);
+    assert_eq!(creases.len(), 12);
     assert!(creases.values().all(|&weight| weight == 1.0));
 }
 

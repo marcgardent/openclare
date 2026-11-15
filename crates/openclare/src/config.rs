@@ -357,7 +357,13 @@ impl RemeshConfig {
                 let groups: Option<Vec<u32>> =
                     guides.groups.map(|groups| opened.triangles.iter().map(|&t| groups[t as usize]).collect());
                 let left = Guides { density: density.as_deref(), groups: groups.as_deref(), ..*guides };
-                if let Ok((mesh, mut report)) = quads.remesh_recorded(&opened.mesh, &left, recorder)
+                // A shape made of such parts only leaves the chain nothing.
+                let made = if opened.mesh.triangles.is_empty() {
+                    Ok(Default::default())
+                } else {
+                    quads.remesh_recorded(&opened.mesh, &left, recorder)
+                };
+                if let Ok((mesh, mut report)) = made
                     && let Some(mesh) = opened.close(mesh, &mut report)
                 {
                     let mesh = crate::ngons::flat_parts(&mesh, &mut report);

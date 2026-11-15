@@ -2086,11 +2086,12 @@ diagonal; no subdivided face is folded in any of the twelve.
 that one face can stand for is taken out of the input before the chain: the field, the map,
 the T-mesh and the quantization never see it, and the chain meshes a surface that is open
 there. The border it leaves is then closed by one face. Such a part lies in one plane, has for
-its outline one convex loop of edges folded by more than the hard-edge angle, triangles of one
-group, and no neighbour that is such a part itself (the edge between two would have no face of
-the chain to give it its vertices: a cube is left whole, and merged as above). It is not done
-with guide curves, poles or a symmetry; and if a border does not come back flat and convex, the
-run is made again with the input whole.
+its outline one convex loop of edges folded by more than the hard-edge angle, and triangles of
+one group. Along what is left of the input, the face takes the vertices of the border the
+chain made there. Between two such parts the edge is straight and has no vertex but its two
+ends: a cube leaves the chain nothing, and comes out as 6 quads on its 8 corners. It is not
+done with guide curves, poles or a symmetry; and if a face cannot be closed flat and convex,
+the run is made again with the input whole.
 
 What it gives, on the cylinder with flat caps:
 
@@ -2102,16 +2103,29 @@ What it gives, on the cylinder with flat caps:
 | sizes, 16 quads a turn | 12 | 16 |
 | sizes, 24 quads a turn | 16 | 23 |
 
-Subdivided twice, the cylinder of 1000 quads is 0.74 per mille of its diagonal from the source
-at most, 1.35 with its caps meshed, and no face is folded. The five other models have no such
-part, and come out as in the table above.
+The quads asked for go to what is left, so the result is closer to the source once subdivided
+twice. Faces of the result, and the greatest distance to the source in per mille of the
+diagonal, quads → n-gons; no subdivided face is folded:
+
+| Model | 1000 quads | 3000 quads |
+|---|---|---|
+| cube | 6 faces, 0.0 → 0.0 | 6 faces, 0.0 → 0.0 |
+| lblock | 10 faces, 0.0 → 0.0 | 10 faces, 0.0 → 0.0 |
+| cylinder | 1010 faces, 1.35 → 0.74 | 2978 faces, 0.73 → 0.55 |
+| cube with a round hole | 663 faces, 12.3 → 1.5 | 1911 faces, 0.90 → 0.51 |
+| part | 750 faces, 11.0 → 6.3 | 1290 faces, 6.7 → 0.92 |
+| cage | as it was | as it was |
+
+A first run of this folded one face of the cube with a hole: a face of 32 sides made by
+merging, bent inwards a little at many corners, whose middle lay almost on one of its edges.
+The corners of a face may now turn inwards by 6 degrees in all, and each edge must be seen
+from the middle under a twentieth of the average angle at least.
 
 **What is not done.** The cage has no flat part cut off by full creases, and stays as it is.
-A cube keeps the vertices of its edges, 52 sides a face at 1000 quads, where 4 would do. The
-plane of a symmetry is a line no face is merged across. Only the parts with a convex outline
-and no flat neighbour leave the chain: the faces of a cube, an L or a face with a hole are
-still meshed, then merged. Not checked: more than two levels of subdivision, how large n-gons
-shade, the add-on.
+A flat part that is not convex, an L or a face with a hole, is still meshed, then merged: round
+a hole that gives strips and scattered quads, valid but not good to look at. The plane of a
+symmetry is a line no face is merged across. Not checked: more than two levels of subdivision,
+how large n-gons shade, organic models, the add-on.
 
 ### Guide curves
 

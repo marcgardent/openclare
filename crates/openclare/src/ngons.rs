@@ -135,24 +135,29 @@ impl Plane {
     }
 
     /// Whether the outline is convex, to within `slack` radians at each
-    /// corner, turns once, and sees all of itself from the mean of its
-    /// vertices, where the subdivision puts the point of the face.
+    /// corner and twice that over all of them, turns once, and sees all of
+    /// itself well from the mean of its vertices, where the subdivision
+    /// puts the point of the face: no edge seen under a twentieth of the
+    /// angle the edges are seen under on average.
     fn convex(&self, positions: &[Vec3], outline: &[u32], slack: f64) -> bool {
         let points: Vec<(f64, f64)> = outline.iter().map(|&v| self.flat(positions[v as usize])).collect();
         let n = points.len();
         let centre = points.iter().fold((0.0, 0.0), |(x, y), p| (x + p.0 / n as f64, y + p.1 / n as f64));
-        let mut turned = 0.0;
+        let (mut turned, mut inwards) = (0.0, 0.0);
+        let mut seen = Vec::with_capacity(n);
         for k in 0..n {
             let (p, q, r) = (points[k], points[(k + 1) % n], points[(k + 2) % n]);
             let (u, v) = ((q.0 - p.0, q.1 - p.1), (r.0 - q.0, r.1 - q.1));
             let turn = (u.0 * v.1 - u.1 * v.0).atan2(u.0 * v.0 + u.1 * v.1);
-            let seen = (p.0 - centre.0) * (q.1 - centre.1) - (p.1 - centre.1) * (q.0 - centre.0);
-            if turn < -slack || seen <= 0.0 {
+            if turn < -slack {
                 return false;
             }
             turned += turn;
+            inwards -= turn.min(0.0);
+            seen.push((p.0 - centre.0) * (q.1 - centre.1) - (p.1 - centre.1) * (q.0 - centre.0));
         }
-        (turned - std::f64::consts::TAU).abs() < 0.5
+        let least = 0.05 * seen.iter().sum::<f64>() / n as f64;
+        inwards <= 2.0 * slack && (turned - std::f64::consts::TAU).abs() < 0.5 && seen.iter().all(|&area| area > least)
     }
 }
 
@@ -376,19 +381,29 @@ impl FlatNgons {
     }
 }
 
+/// What lies across an edge of the outline of a [`Lid`]: what is left of
+/// the input.
+const LEFT: usize = usize::MAX;
+
 /// A flat part of the input taken out of it before the chain: its plane,
-/// its outline as the input has it, and the group of its triangles.
+/// its outline as the input has it (vertices of the input, and where they
+/// are), what lies across each edge of it, from each vertex to the next,
+/// another lid or what is left of the input, and the group of its
+/// triangles.
 #[derive(Clone, Debug)]
 struct Lid {
     plane: Plane,
-    outline: Vec<Vec3>,
+    outline: Vec<u32>,
+    places: Vec<Vec3>,
+    beside: Vec<usize>,
     group: u32,
 }
 
 /// An input with flat parts taken out (see [`FlatNgons::open`]).
 #[derive(Clone, Debug)]
 pub struct Opened {
-    /// What is left of the input, open where the parts were.
+    /// What is left of the input, open where the parts were: nothing at
+    /// all for a shape made of such parts only, a cube.
     pub mesh: TriMesh,
     /// The vertex and the triangle of the input each of those of `mesh`
     /// was.
@@ -403,10 +418,9 @@ impl FlatNgons {
     /// `input` without those of its flat parts that one face can stand
     /// for, so that the chain does not mesh them at all: the quads round a
     /// cylinder are then those its side calls for, not those its caps can
-    /// take. Such a part lies in one plane, has for its outline one convex
-    /// loop of edges folded by more than `angle` degrees, and no neighbour
-    /// that is such a part itself: a cube is left whole. `None` if there
-    /// is none.
+    /// take, and a cube needs no chain. Such a part lies in one plane and
+    /// has for its outline one convex loop of edges folded by more than
+    /// `angle` degrees. `None` if there is none.
     pub fn open(&self, input: &TriMesh, angle: f64, groups: Option<&[u32]>) -> Option<Opened> {
         let positions = &input.positions;
         let (low, high) =
@@ -461,33 +475,50 @@ impl FlatNgons {
                 let group = groups.map_or(0, |groups| groups[members[0]]);
                 let one_group = groups.is_none_or(|groups| members.iter().all(|&t| groups[t] == group));
                 let outline = single_loop(&outline)?;
-                (closed && flat && one_group && plane.convex(positions, &outline, self.bend.to_radians()))
-                    .then(|| Lid { plane, outline: outline.iter().map(|&v| positions[v as usize]).collect(), group })
+                (closed && flat && one_group && plane.convex(positions, &outline, self.bend.to_radians())).then(|| {
+                    let places = outline.iter().map(|&v| positions[v as usize]).collect();
+                    Lid { plane, outline, places, beside: Vec::new(), group }
+                })
             };
             lids.push(lid());
         }
-        // Two such parts side by side are both left in: the edge between
-        // them would have no face of the chain to give it its vertices.
-        let mut alone: Vec<bool> = lids.iter().map(Option::is_some).collect();
-        for (&edge, &t) in &owner {
-            if across(edge).is_some_and(|u| part[u] != part[t] && lids[part[u]].is_some()) {
-                alone[part[t]] = false;
+        // What lies across each edge of each outline. Two parts back to
+        // back, with all of their outline in common, are a sheet with no
+        // inside: left in.
+        for l in 0..lids.len() {
+            let Some(outline) = lids[l].as_ref().map(|lid| lid.outline.clone()) else { continue };
+            let beside: Vec<usize> = steps(&outline).map(|(a, b)| part[owner[&(b, a)]]).collect();
+            if beside.iter().all(|&other| other == beside[0]) && lids[beside[0]].is_some() {
+                lids[l] = None;
+                continue;
             }
+            lids[l].as_mut().unwrap().beside = beside;
         }
-        if !alone.contains(&true) || alone.iter().all(|&out| out) {
+        let mut number = vec![LEFT; lids.len()];
+        let mut kept = 0;
+        for (l, _) in lids.iter().enumerate().filter(|(_, lid)| lid.is_some()) {
+            number[l] = kept;
+            kept += 1;
+        }
+        if kept == 0 {
             return None;
         }
-
+        let out: Vec<bool> = lids.iter().map(Option::is_some).collect();
         let mut opened = Opened {
             mesh: TriMesh::default(),
             vertices: Vec::new(),
             triangles: Vec::new(),
-            lids: lids.into_iter().zip(&alone).filter_map(|(lid, &out)| lid.filter(|_| out)).collect(),
+            lids: lids.into_iter().flatten().collect(),
             tolerance,
             slack: self.slack.to_radians(),
         };
+        for lid in &mut opened.lids {
+            for other in &mut lid.beside {
+                *other = number[*other];
+            }
+        }
         let mut became = vec![u32::MAX; positions.len()];
-        for (t, triangle) in input.triangles.iter().enumerate().filter(|&(t, _)| !alone[part[t]]) {
+        for (t, triangle) in input.triangles.iter().enumerate().filter(|&(t, _)| !out[part[t]]) {
             opened.mesh.triangles.push(triangle.map(|v| {
                 if became[v as usize] == u32::MAX {
                     became[v as usize] = opened.mesh.positions.len() as u32;
@@ -504,72 +535,150 @@ impl FlatNgons {
 
 impl Opened {
     /// `mesh`, made by the chain from what was left of the input, with one
-    /// face on each of the parts taken out: the border the chain left
-    /// there, walked the other way. What `report` says of the mesh is said
-    /// of the result. `None` if a part has no border of its own that is
-    /// flat and convex: the mesh is then not to be used.
+    /// face on each of the parts taken out. Along what was left, a face
+    /// takes the vertices of the border the chain made there. Between two
+    /// parts taken out the edge is straight, and has no vertex but its two
+    /// ends: where the neighbour of a part changes, a vertex of the border
+    /// if the chain made one there, one of the input otherwise. What
+    /// `report` says of the mesh is said of the result. `None` if a face
+    /// cannot be made so, flat and convex: the mesh is then not to be
+    /// used.
     pub(crate) fn close(&self, mut mesh: PolyMesh, report: &mut crate::pipeline::Report) -> Option<PolyMesh> {
+        // The border of the mesh, walked the other way: as the faces that
+        // close it turn.
         let walked: HashSet<Edge> = mesh.faces.iter().flat_map(|face| steps(face)).collect();
-        let mut after: HashMap<u32, u32> = HashMap::new();
+        let mut after: BTreeMap<u32, Vec<u32>> = BTreeMap::new();
         for &(a, b) in walked.iter().filter(|&&(a, b)| !walked.contains(&(b, a))) {
-            // Walked the other way, the border turns as the lid faces.
-            if after.insert(b, a).is_some() {
-                return None;
+            after.entry(b).or_default().push(a);
+        }
+
+        // The ends of the stretches of each outline: where what lies
+        // across changes. One on what is left is a vertex of the border.
+        let mut on_the_border: BTreeMap<u32, (Vec3, bool)> = BTreeMap::new();
+        for lid in &self.lids {
+            let n = lid.outline.len();
+            for k in (0..n).filter(|&k| lid.beside[k] != lid.beside[(k + n - 1) % n]) {
+                let left = lid.beside[k] == LEFT || lid.beside[(k + n - 1) % n] == LEFT;
+                on_the_border.entry(lid.outline[k]).or_insert((lid.places[k], false)).1 |= left;
             }
         }
+        let mut ends: HashMap<u32, u32> = HashMap::new();
+        let mut used: HashSet<u32> = HashSet::new();
+        for (&v, &(place, left)) in &on_the_border {
+            let vertex = if left {
+                let nearest = after.keys().copied().min_by(|&a, &b| {
+                    let far = |v: u32| mesh.positions[v as usize].distance_squared(place);
+                    far(a).total_cmp(&far(b))
+                })?;
+                if mesh.positions[nearest as usize].distance(place) > 10.0 * self.tolerance || !used.insert(nearest) {
+                    return None;
+                }
+                nearest
+            } else {
+                mesh.positions.push(place);
+                (mesh.positions.len() - 1) as u32
+            };
+            ends.insert(v, vertex);
+        }
+        let is_end: HashSet<u32> = ends.values().copied().collect();
+
+        // A whole border, for an outline with what is left all round it.
         let mut borders: Vec<Vec<u32>> = Vec::new();
-        let mut starts: Vec<u32> = after.keys().copied().collect();
-        starts.sort_unstable();
         let mut seen: HashSet<u32> = HashSet::new();
-        for start in starts {
-            if !seen.insert(start) {
+        for (&start, next) in &after {
+            if next.len() != 1 || seen.contains(&start) {
                 continue;
             }
             let mut border = vec![start];
-            let mut at = after[&start];
-            while at != start {
-                if !seen.insert(at) {
+            let mut at = next[0];
+            while at != start && border.len() <= after.len() {
+                border.push(at);
+                at = match after.get(&at).map(Vec::as_slice) {
+                    Some(&[next]) => next,
+                    _ => start,
+                };
+            }
+            if steps(&border).all(|(a, b)| after[&a].contains(&b)) {
+                seen.extend(&border);
+                borders.push(border);
+            }
+        }
+        let mut taken = vec![false; borders.len()];
+
+        let mut creased: HashSet<Edge> = HashSet::new();
+        for lid in &self.lids {
+            let n = lid.outline.len();
+            let flat = |v: &u32| lid.plane.off(mesh.positions[*v as usize]) <= self.tolerance;
+            let stops: Vec<usize> = (0..n).filter(|&k| ends.contains_key(&lid.outline[k])).collect();
+            let face = if stops.is_empty() {
+                // The border in the plane of the lid whose middle is inside
+                // its outline.
+                let inside = |p: Vec3| {
+                    let p = lid.plane.flat(p);
+                    (0..n).all(|k| {
+                        let (a, b) = (lid.plane.flat(lid.places[k]), lid.plane.flat(lid.places[(k + 1) % n]));
+                        (b.0 - a.0) * (p.1 - a.1) - (b.1 - a.1) * (p.0 - a.0) >= 0.0
+                    })
+                };
+                let fits = |border: &Vec<u32>| {
+                    let middle = border.iter().map(|&v| mesh.positions[v as usize]).sum::<Vec3>();
+                    border.iter().all(flat) && inside(middle / border.len() as f64)
+                };
+                let mut fitting = (0..borders.len()).filter(|&b| fits(&borders[b]));
+                let (b, None) = (fitting.next()?, fitting.next()) else { return None };
+                if std::mem::replace(&mut taken[b], true) {
                     return None;
                 }
-                border.push(at);
-                at = *after.get(&at)?;
-            }
-            borders.push(border);
-        }
-
-        let mut taken = vec![false; borders.len()];
-        for lid in &self.lids {
-            // The border in the plane of the lid whose middle is inside
-            // its outline.
-            let n = lid.outline.len();
-            let inside = |p: Vec3| {
-                let p = lid.plane.flat(p);
-                (0..n).all(|k| {
-                    let (a, b) = (lid.plane.flat(lid.outline[k]), lid.plane.flat(lid.outline[(k + 1) % n]));
-                    (b.0 - a.0) * (p.1 - a.1) - (b.1 - a.1) * (p.0 - a.0) >= 0.0
-                })
+                borders[b].clone()
+            } else {
+                let mut face = Vec::new();
+                for (i, &k) in stops.iter().enumerate() {
+                    let (from, to) = (ends[&lid.outline[k]], ends[&lid.outline[stops[(i + 1) % stops.len()]]]);
+                    face.push(from);
+                    if lid.beside[k] != LEFT {
+                        continue;
+                    }
+                    // Along the border of what is left, to the next end.
+                    let run = after.get(&from)?.iter().find_map(|&first| {
+                        let mut run = Vec::new();
+                        let mut at = first;
+                        while at != to {
+                            if is_end.contains(&at) || !flat(&at) || run.len() > after.len() {
+                                return None;
+                            }
+                            run.push(at);
+                            at = match after.get(&at).map(Vec::as_slice) {
+                                Some(&[next]) => next,
+                                _ => return None,
+                            };
+                        }
+                        Some(run)
+                    })?;
+                    face.extend(run);
+                }
+                face
             };
-            let fits = |border: &Vec<u32>| {
-                let at = |&v: &u32| mesh.positions[v as usize];
-                border.iter().all(|v| lid.plane.off(at(v)) <= self.tolerance)
-                    && inside(border.iter().map(at).sum::<Vec3>() / border.len() as f64)
-            };
-            let mut fitting = (0..borders.len()).filter(|&b| fits(&borders[b]));
-            let (b, None) = (fitting.next()?, fitting.next()) else { return None };
-            if std::mem::replace(&mut taken[b], true) || !lid.plane.convex(&mesh.positions, &borders[b], self.slack) {
+            let once: HashSet<u32> = face.iter().copied().collect();
+            if face.len() < 3 || once.len() != face.len() || !lid.plane.convex(&mesh.positions, &face, self.slack) {
                 return None;
             }
-            for (a, b) in steps(&borders[b]) {
-                report.creases.push(([a, b], 1.0));
-                report.hard_edges.push([a, b]);
+            for (a, b) in steps(&face) {
+                if creased.insert(key(a, b)) {
+                    report.creases.push(([a, b], 1.0));
+                    report.hard_edges.push([a, b]);
+                }
             }
             if !report.face_groups.is_empty() {
                 report.face_groups.push(lid.group);
             }
-            mesh.faces.push(borders[b].clone());
+            mesh.faces.push(face);
+        }
+        let stats = mesh.stats();
+        if stats.non_manifold_edges > 0 {
+            return None;
         }
         report.merged_faces += self.lids.len();
-        report.stats = mesh.stats();
+        report.stats = stats;
         Some(mesh)
     }
 }
@@ -705,7 +814,7 @@ mod tests {
     }
 
     #[test]
-    fn the_caps_of_a_cylinder_are_taken_out_and_a_cube_is_left_whole() {
+    fn the_caps_of_a_cylinder_are_taken_out_and_all_of_a_cube() {
         let cylinder = crate::mesh::primitives::cylinder(12);
         let opened = FlatNgons::default().open(&cylinder, 30.0, None).unwrap();
         assert_eq!(opened.lids.len(), 2);
@@ -715,7 +824,15 @@ mod tests {
             opened.triangles.iter().all(|&t| { cylinder.corners(t as usize).iter().any(|p| p.z.abs() < 1.0 - 1e-9) })
         );
         assert_eq!(opened.vertices.len(), opened.mesh.positions.len());
-        assert!(FlatNgons::default().open(&cube_quads(4).triangulated(), 30.0, None).is_none());
+        // A cube is nothing but such parts: nothing is left for the chain,
+        // and its faces are closed from its corners alone.
+        let cube = FlatNgons::default().open(&cube_quads(4).triangulated(), 30.0, None).unwrap();
+        assert_eq!((cube.lids.len(), cube.mesh.triangles.len()), (6, 0));
+        let mut report = crate::pipeline::Report::default();
+        let closed = cube.close(PolyMesh::default(), &mut report).unwrap();
+        assert_eq!((closed.positions.len(), closed.faces.len(), report.creases.len()), (8, 6, 12));
+        assert!(closed.faces.iter().all(|face| face.len() == 4));
+        assert_eq!((closed.stats().euler_characteristic(), closed.stats().boundary_edges), (2, 0));
         // Two groups on a cap: it is left in.
         let groups: Vec<u32> = (0..cylinder.triangles.len() as u32).map(|t| t % 2).collect();
         assert!(FlatNgons::default().open(&cylinder, 30.0, Some(&groups)).is_none());

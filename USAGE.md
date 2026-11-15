@@ -155,8 +155,9 @@ sides: the cap of a cylinder is one face, a cube is six, an L is two rectangles.
 fewer faces and subdivides as the quads do, provided the creases are set on it: `--creases-out
 <file>` writes them, one edge per line as its two vertices, numbered as in the output, and a
 weight from 0 to 1. A flat part is only merged where full creases cut it off from the rest.
-The cap of a cylinder is not meshed at all: the quads asked for all go to the side, and with
-`--quads-a-turn 12` the cylinder has 12 quads round it, where its caps would leave it 8.
+A flat part with a convex outline is not meshed at all: a cube comes out as 6 quads whatever
+is asked for; the quads asked for a cylinder all go to its side, and with `--quads-a-turn 12`
+it has 12 quads round it, where its caps would leave it 8.
 
 ```bash
 ./target/release/openclare remesh part.obj part-ngons.obj --preset hard-surface --quads 3000 --faces ngons --creases-out part-ngons.creases
