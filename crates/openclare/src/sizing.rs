@@ -5,18 +5,19 @@
 //! girth over that number, without which it comes out flat and its volume
 //! is lost. A part much wider than it is thick (a wall, a plate, a shell) is
 //! a sheet and not a finger: its thickness asks for nothing, what it needs
-//! being at its rim, where it bends tightly. Where the surface bends more tightly than the largest quad goes
-//! round in a given number, quads get smaller for the error to the surface
-//! to stay even. What the user painted multiplies it. The size is that, kept
+//! being at its rim, where it bends tightly. Where the surface bends, so
+//! many quads go round the circle it bends along: a cylinder is that many
+//! quads round, be it a pipe or a tower. What the user painted multiplies it. The size is that, kept
 //! between a smallest and a largest quad: the largest wherever the shape
 //! asks for nothing smaller, the smallest where it would ask for less. It is
 //! then smoothed and graded, since the map can only follow a size that
 //! changes gently.
 //!
 //! The number of quads is what that makes, and no setting of its own. Asked
-//! for a number, the sizer measures the bends against the typical one and
-//! looks for the size that goes with it, that gives the number: the same
-//! rule, read the other way.
+//! for a number, the sizer cannot give every bend its quads to a turn, the
+//! number setting the scale: it measures the bends against the typical one,
+//! follows them part of the way (the adaptivity) and looks for the size
+//! that goes with the typical one, that gives the number.
 //!
 //! What a chain is given is one factor per vertex of the work mesh, by which
 //! the edge length of as many quads of one size is multiplied there.
@@ -58,10 +59,16 @@ pub struct Request<'a> {
     /// Without, the sizes are read for the number of quads `edge_length`
     /// stands for (see [`Demand::for_as_many`]).
     pub bounds: Option<(f64, f64)>,
-    /// How much the size follows the way the surface bends: 0 not at all;
-    /// at 1 the error to the surface is evened out, quads being as small
-    /// as the surface bends.
+    /// When a number of quads is asked for (no `bounds`), how much the size
+    /// follows the way the surface bends: 0 not at all; at 1 the error to
+    /// the surface is evened out. With `bounds` it is not read: every bend
+    /// gets its quads to a turn.
     pub adaptivity: f64,
+    /// Quads that go round the circle the surface bends along: with
+    /// `bounds`, a cylinder is that many quads round, as far as the largest
+    /// and the smallest quad allow. 0 not to look at how the surface bends,
+    /// whatever the adaptivity.
+    pub quads_a_turn: f64,
     pub painted: Option<Painted<'a>>,
     /// Fewest quads that should go round a thin part; 0 not to care.
     pub quads_around: f64,
@@ -116,10 +123,6 @@ pub fn create(kind: Kind) -> Box<dyn Sizer> {
 
 #[derive(Clone, Debug)]
 pub struct Curvature {
-    /// Quads to a full turn of the tightest bend that counts as flat: one
-    /// that the largest quad goes round in that many. Tighter, a bend gets
-    /// smaller quads.
-    pub quads_a_turn: f64,
     /// When a number of quads is asked for and not their size: the largest
     /// factor the bends alone may put between the size of a quad and that
     /// of the surface that bends as it typically does, either way; and how
@@ -128,9 +131,10 @@ pub struct Curvature {
     /// beyond what the number can render.
     pub shape_range: f64,
     pub finest: f64,
-    /// Curvature below this over the edge asked for (the largest, when
-    /// sizes are asked for) is not felt at that size: it is added to the
-    /// curvature read everywhere, and the flat is not flatter than that.
+    /// When a number of quads is asked for, curvature below this over the
+    /// edge asked for is not felt at that size: it is added to the curvature
+    /// read everywhere, and the flat is not flatter than that. When sizes
+    /// are asked for the largest quad is what is flat, and nothing is added.
     pub felt: f64,
     /// Length, in edges asked for, over which curvature is read: details
     /// smaller than that do not call for smaller quads.
@@ -156,7 +160,6 @@ pub struct Curvature {
 impl Default for Curvature {
     fn default() -> Self {
         Self {
-            quads_a_turn: 12.0,
             shape_range: 3.0,
             finest: 4.0,
             felt: 0.05,
@@ -173,7 +176,7 @@ impl Default for Curvature {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Reading {
     /// The edge a bend is measured against: one that the quads of that
-    /// edge go round in [`Curvature::quads_a_turn`] is given `level`.
+    /// edge go round in [`Request::quads_a_turn`] is given `level`.
     pub flat: f64,
     /// The edge of the quads where the surface bends as `flat` says.
     pub level: f64,
@@ -211,7 +214,11 @@ pub struct Demand {
     thin: Vec<f64>,
     /// What the paint multiplies the size by, the weight 0 being 1.
     paint: Vec<f64>,
-    adaptivity: f64,
+    /// How far a bend takes the size from that of what is flat towards that
+    /// of so many quads to a turn, as a logarithm: all the way (1) when
+    /// sizes are asked for, half way at most for a number, none (0) when
+    /// the bends are not looked at.
+    follow: f64,
     /// How many times the size is smoothed over the neighbours.
     passes: usize,
     gradation: f64,
@@ -224,6 +231,12 @@ impl Demand {
     pub fn measure(tuning: &Curvature, work: &WorkMesh, request: &Request) -> Result<Self> {
         if !(0.0..=1.0).contains(&request.adaptivity) {
             return Err(Error::InvalidParams(format!("adaptivity {} is not between 0 and 1", request.adaptivity)));
+        }
+        if !(request.quads_a_turn.is_finite() && request.quads_a_turn >= 0.0) {
+            return Err(Error::InvalidParams(format!(
+                "quads to a turn: {} is not a number of quads",
+                request.quads_a_turn
+            )));
         }
         if !(request.quads_around.is_finite() && request.quads_around >= 0.0) {
             return Err(Error::InvalidParams(format!(
@@ -241,8 +254,15 @@ impl Demand {
         // n smoothing passes reach about sqrt(n) edges.
         let passes_over = |length: f64| ((length / work_edge).powi(2).round() as usize).clamp(1, 400);
 
+        let follow = if request.quads_a_turn == 0.0 {
+            0.0
+        } else if request.bounds.is_some() {
+            1.0
+        } else {
+            0.5 * request.adaptivity
+        };
         let mut bend = vec![f64::INFINITY; vertices];
-        if request.adaptivity > 0.0 {
+        if follow > 0.0 {
             let bending = TensorField::on_smooth_patches(
                 mesh,
                 &work.normals,
@@ -252,13 +272,13 @@ impl Demand {
                 passes_over(tuning.reading_scale * request.edge_length),
             )
             .principal(&work.normals);
-            // Curvature below what the quads can feel does not count: the
-            // largest of them, when sizes are asked for.
-            let floor = tuning.felt / request.bounds.map_or(request.edge_length, |(largest, _)| largest);
+            // For a number, curvature below what the quads can feel does
+            // not count. For sizes the largest quad says what is flat.
+            let floor = if request.bounds.is_some() { 0.0 } else { tuning.felt / request.edge_length };
             for v in 0..vertices {
                 let strongest = bending.k1[v].abs().max(bending.k2[v].abs()) + floor;
                 // A circle of radius 1 / k, in so many quads.
-                bend[v] = std::f64::consts::TAU / (strongest * tuning.quads_a_turn);
+                bend[v] = std::f64::consts::TAU / (strongest * request.quads_a_turn);
             }
         }
 
@@ -312,7 +332,7 @@ impl Demand {
             bend,
             thin,
             paint,
-            adaptivity: request.adaptivity,
+            follow,
             passes: passes_over(tuning.smoothing_scale * request.edge_length),
             gradation: tuning.gradation,
         })
@@ -368,16 +388,18 @@ impl Demand {
         sizes
     }
 
-    /// The edge the bend at `v` calls for, as a part of the level. A chord of length l on a circle
-    /// of radius r strays from it by l² / 8r: for the same error everywhere
-    /// l goes as √r, which is half way, as a logarithm, between the edge of
-    /// what is flat and that of so many quads to a turn. That is an
-    /// adaptivity of 1; less is nearer flat.
+    /// The edge the bend at `v` calls for, as a part of the level. When
+    /// sizes are asked for it is the edge of so many quads to a turn. For a
+    /// number it is nearer flat: a chord of length l on a circle of radius r
+    /// strays from it by l² / 8r, so for the same error everywhere l goes
+    /// as √r, which is half way, as a logarithm, between the edge of what is
+    /// flat and that of so many quads to a turn. That is an adaptivity of
+    /// 1; less is nearer flat still.
     fn by_bend(&self, v: usize, reading: &Reading) -> f64 {
-        if self.adaptivity == 0.0 {
+        if self.follow == 0.0 {
             return 1.0;
         }
-        let asked = (self.bend[v] / reading.flat).powf(0.5 * self.adaptivity);
+        let asked = (self.bend[v] / reading.flat).powf(self.follow);
         if reading.range.is_finite() { asked.clamp(1.0 / reading.range, reading.range) } else { asked }
     }
 
@@ -439,7 +461,7 @@ impl Demand {
     /// less than `edge_length`: the others make up for them.
     pub fn for_as_many(&self, tuning: &Curvature, edge_length: f64) -> Reading {
         let logarithms: Vec<f64> = self.bend.iter().map(|bend| bend.ln()).collect();
-        let flat = if self.adaptivity > 0.0 { weighted_mean(&logarithms, &self.areas).exp() } else { edge_length };
+        let flat = if self.follow > 0.0 { weighted_mean(&logarithms, &self.areas).exp() } else { edge_length };
         let mut reading = Reading {
             flat,
             level: edge_length,

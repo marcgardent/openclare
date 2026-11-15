@@ -40,10 +40,20 @@ pub struct RemeshConfig {
     /// they can, without it being imposed as it is for [`Self::crease_angle`]:
     /// one the map cannot keep is let go. `None` for none.
     pub edge_angle: Option<f64>,
-    /// How much the size of the quads follows the shape: 0 keeps them all
-    /// the same size; towards 1 they get smaller where the surface bends
-    /// more, larger where it is flat, for the same number in total.
+    /// When a number of quads is asked for, how much their size follows the
+    /// shape: 0 keeps them all the same size; towards 1 they get smaller
+    /// where the surface bends more, larger where it is flat, for the same
+    /// number in total. Not read when sizes are asked for (see
+    /// [`Self::quads_a_turn`]).
     pub adaptivity: f64,
+    /// Quads that go round a cylinder, whatever its radius: when sizes are
+    /// asked for ([`Target::SizeRange`]), where the surface bends the quads
+    /// are as small as it takes for that many to go round the circle it
+    /// bends along, no larger than the largest and no smaller than the
+    /// smallest. A number of quads asked for sets the scale itself, and
+    /// this one then changes nothing. 0 does not look at how the surface
+    /// bends, in either case.
+    pub quads_a_turn: f64,
     /// Fewest quads that go round a thin part of the shape, a finger or
     /// the tip of an ear: where the quads asked for are too large for that,
     /// they are made smaller there and larger elsewhere, so that the part
@@ -216,6 +226,7 @@ impl RemeshConfig {
             crease_angle: None,
             edge_angle: Some(30.0),
             adaptivity: 0.5,
+            quads_a_turn: 12.0,
             quads_around: 6.0,
             most_quads: 200_000,
             volume_fit: 1.0,
@@ -249,6 +260,7 @@ impl RemeshConfig {
             crease_angle: None,
             edge_angle: Some(30.0),
             adaptivity: 0.0,
+            quads_a_turn: 0.0,
             quads_around: 0.0,
             ..Self::for_organic(target)
         }
@@ -360,6 +372,7 @@ impl RemeshConfig {
             ("skip_pieces_under", self.skip_pieces_under),
             ("slow_work_limit", self.slow_work_limit),
             ("quads_around", self.quads_around),
+            ("quads_a_turn", self.quads_a_turn),
             ("alignment", self.alignment),
             ("singularity_reach", self.singularity_reach),
             ("singularity_tolerance", self.singularity_tolerance),
@@ -421,6 +434,7 @@ impl RemeshConfig {
         }
         .unwrap();
         writeln!(text, "adaptivity = {}", self.adaptivity).unwrap();
+        writeln!(text, "quads_a_turn = {}", self.quads_a_turn).unwrap();
         writeln!(text, "quads_around = {}", self.quads_around).unwrap();
         writeln!(text, "most_quads = {}", self.most_quads).unwrap();
         writeln!(text, "volume_fit = {}", self.volume_fit).unwrap();
@@ -490,6 +504,7 @@ impl RemeshConfig {
                 "crease_angle" if value == "none" => config.crease_angle = None,
                 "crease_angle" => config.crease_angle = Some(number_of("number of degrees, nor 'none'")?),
                 "adaptivity" => config.adaptivity = number_of("number")?,
+                "quads_a_turn" => config.quads_a_turn = number_of("number")?,
                 "quads_around" => config.quads_around = number_of("number")?,
                 // A setting there was until sizes could be asked for: read,
                 // for the files that have it, and no longer used.

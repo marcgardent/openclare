@@ -85,6 +85,7 @@ Les outils de la vue 3D, en Object Mode.
 | `--preset`, `--config`, `--save-config` | stable | |
 | Les préréglages livrés, `organic`, `animation`, `hard-surface` (`presets`) | expérimental | leurs valeurs ne sont pas réglées sur le corpus (#13) |
 | `--adaptivity`, `--crease-angle`, `--density`, `--density-contrast`, `--symmetry` | stable | |
+| `--quads-a-turn` | expérimental | avec `--largest` seulement ; le greffon n'a pas encore de réglage pour lui ; un cylindre à couvercles plats reçoit environ les deux tiers des quads demandés autour |
 | `--alignment` | expérimental | comme *Follow Curvature* (#13, #21, #33) |
 | `--singularity-reach`, `--singularity-tolerance` | expérimental | comme *Fewer Irregular Vertices* (#72) |
 | `--volume-fit` | expérimental | comme *Volume Fit* (#39) |

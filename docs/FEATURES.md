@@ -83,6 +83,7 @@ The tools of the 3D viewport, in Object Mode.
 | `--preset`, `--config`, `--save-config` | stable | |
 | The presets shipped, `organic`, `animation`, `hard-surface` (`presets`) | experimental | their values are not tuned on the corpus (#13) |
 | `--adaptivity`, `--crease-angle`, `--density`, `--density-contrast`, `--symmetry` | stable | |
+| `--quads-a-turn` | experimental | with `--largest` only; the add-on has no setting for it yet; a cylinder with flat caps gets about two thirds of the quads asked round it |
 | `--alignment` | experimental | as *Follow Curvature* (#13, #21, #33) |
 | `--singularity-reach`, `--singularity-tolerance` | experimental | as *Fewer Irregular Vertices* (#72) |
 | `--volume-fit` | experimental | as *Volume Fit* (#39) |

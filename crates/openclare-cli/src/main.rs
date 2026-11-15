@@ -44,7 +44,9 @@ OPTIONS (remesh):
     --singularity-reach <R>      cancel opposite singularities closer than R quad edges
     --singularity-tolerance <T>  what such a cancellation may cost
     --crease-angle <DEG|none>    follow input edges sharper than this dihedral angle
-    --adaptivity <A>             0 for quads of one size, up to 1 for quads as small as the shape bends
+    --adaptivity <A>             with --quads: 0 for quads of one size, up to 1 for quads as small as the shape bends
+    --quads-a-turn <N>           with --largest: quads that go round a cylinder, whatever its radius (0: do not look
+                                 at how the surface bends)
     --quads-around <N>           fewest quads round a thin part, so that it keeps its volume (0: do not look at thickness)
     --volume-fit <F>             0 leaves every vertex on the surface; 1 moves them off it for the mesh to keep the volume
     --fitter <NAME>              what keeps the volume: least-squares, the faces of the mesh (default), or
@@ -412,6 +414,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
                 config.crease_angle = if text == "none" { None } else { Some(parse(arg, text)?) };
             }
             "--adaptivity" => config.adaptivity = parse(arg, value(arg)?)?,
+            "--quads-a-turn" => config.quads_a_turn = parse(arg, value(arg)?)?,
             "--quads-around" => config.quads_around = parse(arg, value(arg)?)?,
             "--volume-fit" => config.volume_fit = parse(arg, value(arg)?)?,
             "--fitter" => config.fitter = value(arg)?.parse().map_err(|e: openclare::Error| e.to_string())?,

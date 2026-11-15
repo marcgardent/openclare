@@ -442,6 +442,7 @@ impl Remesher for Triangles {
                 adaptivity: config.adaptivity,
                 painted,
                 quads_around: config.quads_around,
+                quads_a_turn: config.quads_a_turn,
             };
             let sizer = sizing::create(sizing::Kind::Curvature);
             let factors = sizer.size(&work, &asked)?;
@@ -908,6 +909,7 @@ fn size_key(config: &RemeshConfig, size: &WorkSize, painted: bool) -> Vec<u64> {
     key.extend([
         config.adaptivity.to_bits(),
         config.quads_around.to_bits(),
+        config.quads_a_turn.to_bits(),
         config.most_quads as u64,
         config.density_contrast.to_bits(),
         size.per_quad.to_bits(),
@@ -1732,6 +1734,7 @@ impl Analysis {
                 adaptivity: config.adaptivity,
                 painted,
                 quads_around: config.quads_around,
+                quads_a_turn: config.quads_a_turn,
             };
             let demand = sizing::Demand::measure(&sizing::Curvature::default(), &work, &request)?;
             // Each vertex of the piece reads the work mesh where it is nearest.
@@ -1952,6 +1955,7 @@ fn fields(
             adaptivity: config.adaptivity,
             painted: painted_of(input, guides, config.density_contrast),
             quads_around: config.quads_around,
+            quads_a_turn: config.quads_a_turn,
         };
         let sizer = sizing::create(sizing::Kind::Curvature);
         work.sizing = sizer.size(&work, &request)?;
@@ -2076,6 +2080,7 @@ fn quad_size_with(
                 adaptivity: config.adaptivity,
                 painted: guides.and_then(|guides| painted_of(input, guides, config.density_contrast)),
                 quads_around: config.quads_around,
+                quads_a_turn: config.quads_a_turn,
             };
             let demand = sizing::Demand::measure(&sizing::Curvature::default(), looked_at, &asked)?;
             let reading = sizing::Reading::between(largest, smallest);
