@@ -108,6 +108,7 @@ tool = ["quadriflow", "autoremesher", "instant-meshes-jakob", "quadwild-bimdf", 
 name = "remeasure"
 description = "Measure again the meshes of the results, without remeshing, one job per budget (bench/run.py --remeasure): its results file copied into the job's folder and measured there, to bench/results by PR. It measures the meshes in bench/out of the checkout: run it where the bench ran."
 category = "bench"
+prepare = "cargo build --release"
 command = "cp bench/results/results{suffix}.json {out}/ && python3 bench/run.py --remeasure --target {target} --results {out}"
 parameters = { suffix = "" }
 skip_done = false
