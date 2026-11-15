@@ -96,6 +96,7 @@ The tools of the 3D viewport, in Object Mode.
 | `--groups`: a line of edges between two | experimental | as *Materials* (#47) |
 | `--curves` | experimental | as *Draw Curve* (#195, #196, #44) |
 | `--poles`, `--poles-out` | experimental | as the poles of the add-on (#249) |
+| `--faces ngons`, `--creases-out` | experimental | flat parts as convex n-gons, on the command line only; measured on six mechanical shapes, two levels of subdivision |
 | `--edge-angle` | experimental | sharp edges of the work mesh, off by default, not yet the add-on's |
 | `--method triangles` | experimental | as *Output: Triangles* (#226) |
 | `--method integer-grid`, `--method instant-meshes` | experimental | other chains, kept for comparison (#9) |

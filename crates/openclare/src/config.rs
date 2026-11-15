@@ -92,6 +92,8 @@ pub struct RemeshConfig {
     /// How hard the loops are closed: by the engine alone, or, slowly, by
     /// an exact solver as well (see [`Quality`]).
     pub quality: Quality,
+    /// What the faces of the output are (see [`Faces`]).
+    pub faces: Faces,
     /// In the slow quality mode, the time each solve may take, in seconds:
     /// a bound for safety, which depends on the load of the machine.
     pub slow_time_limit: f64,
@@ -176,6 +178,45 @@ impl std::str::FromStr for Quality {
     }
 }
 
+/// What the faces of the output are.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Faces {
+    /// Quads only.
+    #[default]
+    Quads,
+    /// Quads, and the flat parts cut off by full creases as convex faces
+    /// of many sides, which subdivide as the quads they stand for (see
+    /// [`crate::ngons`]). The creases of the report are then part of the
+    /// result: without them the subdivision rounds those faces off.
+    Ngons,
+}
+
+impl Faces {
+    pub fn name(self) -> &'static str {
+        match self {
+            Faces::Quads => "quads",
+            Faces::Ngons => "ngons",
+        }
+    }
+}
+
+impl std::fmt::Display for Faces {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl std::str::FromStr for Faces {
+    type Err = Error;
+
+    fn from_str(name: &str) -> Result<Self> {
+        [Faces::Quads, Faces::Ngons]
+            .into_iter()
+            .find(|faces| faces.name() == name)
+            .ok_or_else(|| Error::InvalidParams(format!("unknown faces '{name}' (known: quads, ngons)")))
+    }
+}
+
 impl Default for RemeshConfig {
     /// The `organic` preset at 2000 quads.
     fn default() -> Self {
@@ -235,6 +276,7 @@ impl RemeshConfig {
             close_loops: true,
             merge_singularities: false,
             quality: Quality::Standard,
+            faces: Faces::Quads,
             slow_time_limit: SLOW_TIME_LIMIT,
             slow_work_limit: SLOW_WORK_LIMIT,
             ring_selector: Selector::default(),
@@ -296,6 +338,15 @@ impl RemeshConfig {
         recorder: &mut dyn crate::recorder::Recorder,
     ) -> Result<(crate::PolyMesh, crate::pipeline::Report)> {
         use crate::recorder::Shape;
+        if self.faces == Faces::Ngons {
+            // The quads first, mirrored if they are to be, then their flat
+            // parts merged.
+            let quads = Self { faces: Faces::Quads, ..self.clone() };
+            let (mesh, mut report) = quads.remesh_recorded(input, guides, recorder)?;
+            let mesh = crate::ngons::flat_parts(&mesh, &mut report);
+            recorder.record("result/ngons", Shape::Polygons(&mesh));
+            return Ok((mesh, report));
+        }
         if let Some(axis) = self.symmetry {
             return self.remesh_symmetric(input, guides, axis, recorder);
         }
@@ -443,6 +494,7 @@ impl RemeshConfig {
         writeln!(text, "close_loops = {}", self.close_loops).unwrap();
         writeln!(text, "merge_singularities = {}", self.merge_singularities).unwrap();
         writeln!(text, "quality = {}", self.quality).unwrap();
+        writeln!(text, "faces = {}", self.faces).unwrap();
         writeln!(text, "slow_time_limit = {}", self.slow_time_limit).unwrap();
         writeln!(text, "slow_work_limit = {}", self.slow_work_limit).unwrap();
         writeln!(text, "seed = {}", self.seed).unwrap();
@@ -520,6 +572,7 @@ impl RemeshConfig {
                         value.parse().map_err(|_| error(format!("'{value}' is not true or false")))?
                 }
                 "quality" => config.quality = value.parse().map_err(|e: Error| error(e.to_string()))?,
+                "faces" => config.faces = value.parse().map_err(|e: Error| error(e.to_string()))?,
                 "slow_time_limit" => config.slow_time_limit = number_of("number of seconds")?,
                 "slow_work_limit" => config.slow_work_limit = number_of("number")?,
                 "seed" => config.seed = value.parse().map_err(|_| error(format!("'{value}' is not a seed")))?,

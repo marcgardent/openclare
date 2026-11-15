@@ -59,6 +59,11 @@ OPTIONS (remesh):
     --poles <FILE>               poles placed by hand: one per line as x y z valence (3 or 5); the quad mesh has
                                  a vertex of that valence there and places the others it needs freely
     --poles-out <FILE>           writes the poles of the result, in the form --poles reads
+    --faces <quads|ngons>        ngons: the flat parts cut off by full creases come out as convex faces of many
+                                 sides instead of quads, for a mesh with fewer faces that subdivides the same
+                                 once the creases of --creases-out are set on it (default quads; experimental)
+    --creases-out <FILE>         writes the edges to keep sharp when the result is subdivided, one per line as
+                                 two vertices, numbered as in the output, and a weight from 0 to 1
     --groups <FILE>              a group for each input triangle (its material, say), one whole number per line:
                                  the quad mesh has a line of edges where two groups meet, and the group of each
                                  of its faces is written next to it, as <output>.groups
@@ -384,6 +389,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
     let mut groups_path = None::<String>;
     let mut poles_path = None::<String>;
     let mut poles_out = None::<String>;
+    let mut creases_out = None::<String>;
     let mut paths = Vec::new();
     let mut args = args.iter();
     while let Some(arg) = args.next() {
@@ -423,6 +429,8 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--groups" => groups_path = Some(value(arg)?.clone()),
             "--poles" => poles_path = Some(value(arg)?.clone()),
             "--poles-out" => poles_out = Some(value(arg)?.clone()),
+            "--creases-out" => creases_out = Some(value(arg)?.clone()),
+            "--faces" => config.faces = value(arg)?.parse().map_err(|e: openclare::Error| e.to_string())?,
             "--density-contrast" => config.density_contrast = parse(arg, value(arg)?)?,
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
             "--no-close-loops" => config.close_loops = false,
@@ -626,6 +634,15 @@ fn remesh(args: &[String]) -> Result<(), String> {
             .collect();
         std::fs::write(path, lines).map_err(|e| format!("{path}: {e}"))?;
         println!("         written: {path}, {} poles", report.poles.len());
+    }
+    if config.faces == openclare::config::Faces::Ngons {
+        println!("flat     {} faces made of the quads of flat parts", report.merged_faces);
+    }
+    if let Some(path) = &creases_out {
+        let lines: String =
+            report.creases.iter().map(|([a, b], weight)| format!("{} {} {weight}\n", a + 1, b + 1)).collect();
+        std::fs::write(path, lines).map_err(|e| format!("{path}: {e}"))?;
+        println!("         written: {path}, {} creases", report.creases.len());
     }
     if report.quads_wanted > 0.0 {
         println!(

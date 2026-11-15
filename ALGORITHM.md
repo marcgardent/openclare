@@ -2039,6 +2039,55 @@ measured against the source. Hausdorff distance in per mille of the diagonal, wi
 
 What is left open is in DT-043.
 
+### Flat parts as n-gons
+
+Done on 15 November 2026, at the author's request: an output apart from the quads
+(`--faces ngons`, `crates/openclare/src/ngons.rs`), for a mesh with fewer faces that subdivides
+the same. The quads stay the default, and the chain that makes them is not touched: the quads
+of the flat parts are merged at the very end.
+
+**The rule.** A face of many sides subdivides as the quads it stands for when it is flat,
+convex, and has a full crease all round it. A trial on six models (Blender's Limited Dissolve
+and Decimate Planar against these three conditions) found no exception to it, and found that
+a face that is not convex folds every time.
+
+**What is done.**
+
+- A flat part is what a walk across the edges reaches without crossing a full crease (weight
+  1), when all of it lies in one plane, to within 0.1 per mille of the diagonal. A flat that
+  runs into a curve without a fold between them stays quads.
+- A part whose outline is convex becomes one face: the cap of a cylinder, a face of a cube.
+- Another is merged two faces at a time, as long as the two make a convex face (3 degrees of
+  slack at a corner, the lines of a grid not being quite straight): an L gives two rectangles.
+- The edges between two faces made this way get a full crease. In a plane it changes nothing
+  of the shape, and without it the subdivision pulls the line between two large faces
+  sideways, out of the part where the part is not convex.
+- A cut does not end on a crease that bends, the rim of a round hole say: three creases would
+  meet there, and the vertex would stay a corner of the rim. The quads that touch such a rim
+  stay quads.
+- Nothing is merged across an edge along a guide curve or between two groups. The vertices of
+  the outlines are all kept, those on a straight side too.
+
+**Does it subdivide the same?** Measured with Blender's subdivision (`bench/ngons.py`): the
+quads and the n-gons of the same run, each subdivided twice with its creases. Faces, quads →
+n-gons, and the greatest distance between the two subdivided surfaces, in millionths of the
+diagonal; no subdivided face is folded in any of the twelve.
+
+| Model | 1000 quads | 3000 quads |
+|---|---|---|
+| cube (300 and 1000) | 294 → 6, 0.3 | 1014 → 6, 0.9 |
+| lblock | 994 → 10, 0.5 | 3060 → 10, 1.6 |
+| cylinder | 1000 → 602, 0.3 | 2992 → 1822, 0.4 |
+| cube with a round hole (made for the trial, not in the corpus) | 990 → 454, 0.8 | 2984 → 939, 11 |
+| part | 1008 → 628, 1.2 | 2945 → 1321, 36 |
+| cage | 982 → 982 | 2955 → 2955 |
+
+**What is not done.** The cage has no flat part cut off by full creases, and stays as it is.
+A cube keeps the vertices of its edges, 52 sides a face at 1000 quads, where 4 would do. The
+plane of a symmetry is a line no face is merged across. The quads round a flat part are still
+counted as if it were meshed: taking the part out of the quantization is the next step. Not
+checked: more than two levels of subdivision, how large n-gons shade, the add-on.
+
 ### Guide curves
 
 Done on 9 October 2026, at the author's request: curves drawn on the model, held on it by a
