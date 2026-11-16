@@ -376,10 +376,12 @@ pub fn repair(mesh: &PolyMesh, creases: &[Crease], within: Option<&[u32]>, setti
                     kept += 1;
                 }
                 None => {
-                    let reason = if curved_zone {
-                        Reason::ChangeTopology
-                    } else if too_far {
+                    // A move beyond the bound might have mended it: that
+                    // before the curved zone the others found.
+                    let reason = if too_far {
                         Reason::TooFar
+                    } else if curved_zone {
+                        Reason::ChangeTopology
                     } else {
                         Reason::WouldWorsen
                     };
@@ -934,6 +936,18 @@ mod tests {
             out.left.iter().filter(|l| l.fault.kind == Kind::NotFlat).map(|l| l.reason).collect();
         assert_eq!(not_flat, [Reason::TooFar, Reason::TooFar]);
         again(&mesh, &[], &settings, &out);
+
+        // With 0.06, the plane of the pentagon is within the bound, but
+        // tilted by atan(h / 2), more than a degree, against the flat grid:
+        // flat, and pinching. The vertex alone is still too far. Left as too
+        // far, not as wanting a change of topology: a larger bound mends it.
+        assert!((h / 2.0).atan().to_degrees() > 1.0);
+        let settings = RepairSettings { bound: 0.06, ..Default::default() };
+        let out = repair(&mesh, &[], None, &settings);
+        assert_eq!(out.positions, mesh.positions);
+        let not_flat: Vec<Reason> =
+            out.left.iter().filter(|l| l.fault.kind == Kind::NotFlat).map(|l| l.reason).collect();
+        assert_eq!(not_flat, [Reason::TooFar, Reason::TooFar]);
     }
 
     #[test]
