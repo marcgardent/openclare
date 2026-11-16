@@ -290,6 +290,7 @@ addon-test: addon test-trace
 	ulimit -v $(BLENDER_MEMORY_CAP); blender -b --factory-startup --python-exit-code 1 --python blender/test_addon.py
 	ulimit -v $(BLENDER_MEMORY_CAP); blender -b --factory-startup --python-exit-code 1 --python blender/test_reflection.py
 	ulimit -v $(BLENDER_MEMORY_CAP); blender -b --factory-startup --python-exit-code 1 --python blender/test_reflection_repair.py
+	ulimit -v $(BLENDER_MEMORY_CAP); blender -b --factory-startup --python-exit-code 1 --python blender/test_subdivision.py
 
 # The C interface called from C: crates/openclare-capi/tests/c/smoke.c, built
 # with the header crates/openclare-capi/include/openclare.h and linked to the
