@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
     char settings[64];
     snprintf(settings, sizeof settings, "quads = %d\n", QUADS);
     OpenclareResult *result = openclare_remesh(positions, vertex_count, triangles, triangle_count, NULL, 0, NULL,
-                                               NULL, NULL, 0, NULL, NULL, NULL, 0, "organic", settings, on_stage,
+                                               NULL, NULL, 0, NULL, NULL, NULL, 0, NULL, NULL, 0, "organic", settings, on_stage,
                                                &stages_seen);
     check(result != NULL, "a result is never NULL");
     check(openclare_result_ok(result) == 1, openclare_result_error(result));
@@ -171,10 +171,35 @@ int main(int argc, char **argv) {
 
     /* An error comes back as the error of the result, not as a crash. */
     OpenclareResult *refused = openclare_remesh(positions, vertex_count, triangles, triangle_count, NULL, 0, NULL, NULL,
-                                                NULL, 0, NULL, NULL, NULL, 0, "no such preset", NULL, NULL, NULL);
+                                                NULL, 0, NULL, NULL, NULL, 0, NULL, NULL, 0, "no such preset", NULL, NULL, NULL);
     check(openclare_result_ok(refused) == 0, "an unknown preset is refused");
     printf("refused: %s\n", openclare_result_error(refused));
     openclare_result_free(refused);
+
+    /* The reflection check of a cube: each corner is a pole of three faces
+     * at right angles, acos(1 / sqrt 3) from their mean. */
+    {
+        float cube[24];
+        for (int v = 0; v < 8; v++) {
+            cube[3 * v] = (float)(v & 1);
+            cube[3 * v + 1] = (float)((v >> 1) & 1);
+            cube[3 * v + 2] = (float)(v >> 2);
+        }
+        const uint32_t cube_sizes[6] = {4, 4, 4, 4, 4, 4};
+        const uint32_t cube_corners[24] = {0, 2, 3, 1, 4, 5, 7, 6, 0, 1, 5, 4, 2, 6, 7, 3, 0, 4, 6, 2, 1, 3, 7, 5};
+        OpenclareReflection *reflection =
+            openclare_reflection_check(cube, 8, cube_sizes, 6, cube_corners, 24, NULL, NULL, 0, -1.0, -1.0, -1.0);
+        check(openclare_reflection_ok(reflection) == 1, "a cube is checked");
+        check(openclare_reflection_fault_count(reflection) == 8, "eight poles on a curved zone");
+        uint8_t kinds[8];
+        double values[8];
+        openclare_reflection_copy_faults(reflection, kinds, NULL, NULL, NULL, NULL, values);
+        check(kinds[0] == OPENCLARE_FAULT_CURVED_POLE && fabs(values[0] - acos(1.0 / sqrt(3.0)) * 180.0 / acos(-1.0)) < 1e-4,
+              "a corner of a cube is a pole at acos(1 / sqrt 3)");
+        openclare_reflection_free(reflection);
+        check(openclare_reflection_ok(NULL) == 0 && openclare_reflection_fault_count(NULL) == 0, "a NULL check is empty");
+        openclare_reflection_free(NULL);
+    }
 
     /* NULL handles are allowed everywhere. */
     check(openclare_result_ok(NULL) == 0 && openclare_result_vertex_count(NULL) == 0, "a NULL result is empty");
