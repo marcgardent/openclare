@@ -1992,14 +1992,21 @@ fn fields(
     clock.lap(report, "cross field");
     recorder::show_field(recorder, "cross-field", &work, &field);
 
-    if config.singularity_reach > 0.0 {
+    // An experiment for a subdivided result, asked for by OPENCLARE_SLIDE
+    // only (#330).
+    let slide = if config.for_subdivision { singularity::Slide::from_env(edge_length) } else { None };
+    if config.singularity_reach > 0.0 || slide.is_some() {
         recorder.begin("singularities")?;
         let request = singularity::Request {
             alignment: config.alignment,
             tolerance: config.singularity_tolerance,
             reach: Some(config.singularity_reach * edge_length),
+            slide,
         };
-        field = singularity::create(singularity::Kind::PairCancellation).optimize(&work, &field, &request)?.0;
+        let (optimized, done) =
+            singularity::create(singularity::Kind::PairCancellation).optimize(&work, &field, &request)?;
+        field = optimized;
+        report.singularities_slid += done.slid;
     }
     let (positive, negative, _) = field.singularities();
     report.singularities = (positive, negative);

@@ -88,6 +88,9 @@ pub struct Report {
     pub feature_edges: usize,
     /// Orientation-field singularities of index +1/4 and -1/4.
     pub singularities: (usize, usize),
+    /// Singularities slid towards a flatter place: 0 but in the experiment
+    /// of [`crate::singularity::Slide`].
+    pub singularities_slid: usize,
     /// Loops of the extracted graph left without a face (see
     /// [`crate::extract::FaceExtraction::open_loops`]).
     pub open_loops: usize,
@@ -162,6 +165,10 @@ pub struct Report {
     /// Faces made by merging the quads of a flat part, when n-gons were
     /// asked for (see [`crate::ngons`]); 0 otherwise.
     pub merged_faces: usize,
+    /// What the reflection repair did to the mesh at the end of the chain,
+    /// when it is to be subdivided ([`crate::RemeshConfig::for_subdivision`]);
+    /// `None` otherwise.
+    pub subdivision_repair: Option<SubdivisionRepair>,
     /// For each face of the output, the group of the input it lies in, when
     /// the input came with groups (see [`crate::Guides::groups`]); empty
     /// otherwise.
@@ -184,6 +191,20 @@ pub struct Report {
     pub timings: Vec<(&'static str, Duration)>,
 }
 
+/// What the reflection repair in place did to the mesh a chain made (see
+/// [`crate::reflection::repair`]), with the creases of the report.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct SubdivisionRepair {
+    /// Vertices moved, and the farthest move as a share of the shortest
+    /// edge of its vertex.
+    pub moved: usize,
+    pub largest_share: f64,
+    /// Faces whose corner quads fold, and those whose corner quads are thin,
+    /// before the repair and after.
+    pub folded: (usize, usize),
+    pub thin: (usize, usize),
+}
+
 impl Report {
     /// Adds what was done on one piece to what was done on the others.
     pub(crate) fn absorb(&mut self, piece: Report) {
@@ -192,6 +213,7 @@ impl Report {
         self.feature_edges += piece.feature_edges;
         self.singularities.0 += piece.singularities.0;
         self.singularities.1 += piece.singularities.1;
+        self.singularities_slid += piece.singularities_slid;
         self.open_loops += piece.open_loops;
         self.map_inversions += piece.map_inversions;
         self.pieces_fell_back += piece.fell_back as usize;

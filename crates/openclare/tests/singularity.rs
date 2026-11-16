@@ -1,8 +1,10 @@
-use openclare::TriMesh;
 use openclare::crossfield::{self, CrossField, FaceFrames, alignment_error};
+use openclare::math::Vec3;
 use openclare::mesh::{Topology, primitives};
 use openclare::preprocess::{self, WorkMesh};
-use openclare::singularity::{Kind, Report, Request, create};
+use openclare::reflection::{Element, Kind as Fault, Settings, check};
+use openclare::singularity::{Bend, Kind, Report, Request, Slide, create};
+use openclare::{PolyMesh, TriMesh};
 
 fn as_is(source: &TriMesh) -> WorkMesh {
     preprocess::create(preprocess::Kind::Passthrough).preprocess(source, &Default::default()).unwrap()
@@ -24,7 +26,7 @@ fn cancel_within(
     tolerance: f64,
     reach: Option<f64>,
 ) -> (CrossField, Report) {
-    let request = Request { alignment, tolerance, reach };
+    let request = Request { alignment, tolerance, reach, slide: None };
     create(Kind::PairCancellation).optimize(work, field, &request).unwrap()
 }
 
@@ -150,4 +152,124 @@ fn optimizers_are_reachable_by_name_and_keep_changes_nothing() {
     let (second, _) = cancel(&work, &before, 0.0, 1.0);
     assert_eq!(first.angles, second.angles);
     assert_eq!(first.indices, second.indices);
+}
+
+/// The vertex of `positions` nearest to `point`.
+fn nearest(positions: &[Vec3], point: Vec3) -> usize {
+    (0..positions.len()).min_by(|&a, &b| positions[a].distance(point).total_cmp(&positions[b].distance(point))).unwrap()
+}
+
+/// The angle the reflection check gives the pole at `vertex` of `mesh`,
+/// when it finds it on a curved zone.
+fn pole_angle(mesh: &PolyMesh, vertex: usize) -> Option<f64> {
+    check(mesh, &[], &Settings::default())
+        .faults
+        .iter()
+        .find(|fault| fault.kind == Fault::CurvedPole && fault.at == Element::Vertex(vertex as u32))
+        .map(|fault| fault.value)
+}
+
+#[test]
+fn a_pole_costs_what_the_reflection_check_gives_it_on_an_ellipsoid() {
+    // The spheroid x² + y² + (z / 2)² = 1. Its principal curvatures at a
+    // point of polar angle t (x = sin t, z = 2 cos t) are 2 / D^(3/2) along
+    // the meridian and 2 / D^(1/2) along the parallel, D = cos² t + 4 sin² t:
+    // 2 and 2 at the tip (t = 0); at cos t = 1/3, where D = 33 / 9, 0.285
+    // and 1.044. A pole is charged the largest curvature within one quad
+    // edge of it: 2 at the tip; at cos t = 1/3, with quads of edge 0.1, the
+    // largest is 0.1 / √D = 0.052 radians of t towards the tip, where
+    // D = 3.561 and the curvature along the parallel 2 / √D = 1.060. A pole
+    // at the tip costs 2 / 1.060 = 1.89 times as much.
+    let spheroid = |p: Vec3| Vec3::new(p.x, p.y, 2.0 * p.z);
+    let tip = Vec3::new(0.0, 0.0, 2.0);
+    let side = Vec3::new(8f64.sqrt() / 3.0, 0.0, 2.0 / 3.0);
+
+    // The cost, read on a fine triangulation, for quads of edge 0.1.
+    let mut sphere = primitives::icosphere(5);
+    for p in &mut sphere.positions {
+        *p = spheroid(*p);
+    }
+    let work = as_is(&sphere);
+    let edge = 0.1;
+    let bend = Bend::new(&work, edge);
+    let at_tip = bend.at(nearest(&work.mesh.positions, tip));
+    let at_side = bend.at(nearest(&work.mesh.positions, side));
+    assert!((at_tip / edge - 2.0).abs() < 0.2, "{}", at_tip / edge);
+    assert!((at_side / edge - 1.060).abs() < 0.1, "{}", at_side / edge);
+
+    // The check, on a quad sphere on the spheroid, turned so that a corner
+    // of its cube, (1, 1, 1), is the tip, and another, (1, 1, -1), at
+    // cos t = 1/3: two poles of valence 3.
+    let mut cage = primitives::cube_quads(12);
+    let ez = Vec3::new(1.0, 1.0, 1.0).normalize();
+    let other = Vec3::new(1.0, 1.0, -1.0).normalize();
+    let ex = (other - ez * other.dot(ez)).normalize();
+    let ey = ez.cross(ex);
+    for p in &mut cage.positions {
+        let q = p.normalize();
+        *p = spheroid(Vec3::new(q.dot(ex), q.dot(ey), q.dot(ez)));
+    }
+    let (tip_pole, side_pole) = (nearest(&cage.positions, tip), nearest(&cage.positions, side));
+    assert!(cage.positions[tip_pole].distance(tip) < 1e-9 && cage.positions[side_pole].distance(side) < 1e-9);
+    let (check_tip, check_side) = (pole_angle(&cage, tip_pole).unwrap(), pole_angle(&cage, side_pole).unwrap());
+    // Both rank the tip first, by a like margin.
+    assert!(check_tip > 1.5 * check_side, "{check_tip} {check_side}");
+    assert!(at_tip > 1.5 * at_side);
+}
+
+#[test]
+fn a_pole_on_the_flat_of_a_cube_costs_nothing_and_on_its_corner_much() {
+    // On the flat of a face the surface does not bend, and the check finds
+    // no pole on a curved zone there (see the reflection tests: a valence 5
+    // on a plane is no fault). At a corner the check gives a pole of
+    // valence 3 acos(1 / √3) = 54.7 degrees, and the surface bends most.
+    let work = as_is(&primitives::cube(8));
+    let positions = &work.mesh.positions;
+    let bend = Bend::new(&work, 0.25);
+    let flat = bend.at(nearest(positions, Vec3::new(0.0, 0.0, 1.0)));
+    let corner = bend.at(nearest(positions, Vec3::new(1.0, 1.0, 1.0)));
+    assert!(flat < 1e-9, "{flat}");
+    assert!(corner > 0.1, "{corner}");
+    let cage = primitives::cube_quads(4);
+    let at_corner = pole_angle(&cage, nearest(&cage.positions, Vec3::new(1.0, 1.0, 1.0))).unwrap();
+    assert!((at_corner - (1.0 / 3f64.sqrt()).acos().to_degrees()).abs() < 1e-9, "{at_corner}");
+}
+
+#[test]
+fn on_an_ellipsoid_the_poles_slide_from_its_tips_towards_its_waist() {
+    // The field puts its eight poles where the curvature of the spheroid
+    // x² + y² + (z / 2)² = 1 gathers, round its two tips; the surface bends
+    // there by 2, at the waist by 1 (see above). Slid, they go down
+    // towards the waist, each by at most a few quads, and stay eight.
+    let mut sphere = primitives::icosphere(5);
+    for p in &mut sphere.positions {
+        p.z *= 2.0;
+    }
+    let work = as_is(&sphere);
+    let before = field(&work, 0.05);
+    let edge = 0.12;
+    // The tuning the bench was measured with, the alignment not held apart.
+    let tuning = Slide {
+        edge_length: edge,
+        reach: 3.0,
+        gain: 0.95,
+        tolerance: 0.25,
+        alignment_tolerance: f64::INFINITY,
+        tries: 3,
+    };
+    let slide = |slide| {
+        let request = Request { alignment: 0.05, tolerance: 1.0, reach: Some(0.0), slide };
+        create(Kind::PairCancellation).optimize(&work, &before, &request).unwrap()
+    };
+    let height = |field: &CrossField| -> f64 {
+        let singular: Vec<usize> = (0..field.indices.len()).filter(|&v| field.indices[v] != 0).collect();
+        singular.iter().map(|&v| work.mesh.positions[v].z.abs()).sum::<f64>() / singular.len() as f64
+    };
+    let (kept, report) = slide(None);
+    assert_eq!((report.slid, kept.angles == before.angles), (0, true));
+    let (slid, report) = slide(Some(tuning));
+    assert_eq!(slid.singularities(), (8, 0, 0));
+    assert!(report.slid >= 4, "{report:?}");
+    assert!(height(&before) > 1.85, "the poles are not round the tips: {}", height(&before));
+    assert!(height(&slid) < height(&before) - 0.05, "{} -> {}", height(&before), height(&slid));
 }

@@ -401,7 +401,7 @@ mod tests {
             assert_eq!(optimizer.index(v, &outgoing[v]), field.indices[v] as i32, "vertex {v}");
         }
 
-        let request = crate::singularity::Request { alignment: 0.05, tolerance: 1.0, reach: None };
+        let request = crate::singularity::Request { alignment: 0.05, tolerance: 1.0, reach: None, slide: None };
         let (optimized, report) = crate::singularity::create(crate::singularity::Kind::PairCancellation)
             .optimize(&work, &field, &request)
             .unwrap();

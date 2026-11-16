@@ -31,11 +31,123 @@ pub struct Request {
     /// the field is several times smoother without it, a twist and not a
     /// feature. `None` puts no limit.
     pub reach: Option<f64>,
+    /// The singularities left after the cancellations slide towards
+    /// flatter places, where the field affords it (see [`Slide`]). `None`
+    /// leaves them where they are.
+    pub slide: Option<Slide>,
 }
 
 impl Default for Request {
     fn default() -> Self {
-        Self { alignment: 0.05, tolerance: 1.0, reach: None }
+        Self { alignment: 0.05, tolerance: 1.0, reach: None, slide: None }
+    }
+}
+
+/// An experiment for a mesh to be subdivided (#330): each simple
+/// singularity slides to a place within reach where a pole costs less
+/// ([`Bend`]), if the field round the way affords it. Measured on the
+/// bench, it lowers the angle the reflection check gives the poles, and
+/// pays for it in alignment, spirals and thin faces (ALGORITHM.md, "A
+/// result to be subdivided"): it is no part of any setting, and only runs
+/// when `OPENCLARE_SLIDE` asks for it ([`Slide::from_env`]).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Slide {
+    /// The edge of the quads to come.
+    pub edge_length: f64,
+    /// How far a singularity may go, in quad edges.
+    pub reach: f64,
+    /// The most a pole may cost where it goes, as a share of where it is.
+    pub gain: f64,
+    /// How much the energy of the field round the way may rise, as a share
+    /// of what it was; and its part that pulls towards the curvature
+    /// directions (infinite: not looked at apart).
+    pub tolerance: f64,
+    pub alignment_tolerance: f64,
+    /// Places tried, the cheapest first.
+    pub tries: usize,
+}
+
+impl Slide {
+    /// The slide `OPENCLARE_SLIDE` asks for, for quads of `edge_length`:
+    /// `reach,gain,tolerance,alignment_tolerance,tries` (`inf` for no
+    /// bound), or `on` for `3,0.95,0.25,inf,3`, the tuning of the
+    /// measures. `None` when it is not set or cannot be read.
+    pub fn from_env(edge_length: f64) -> Option<Self> {
+        let text = std::env::var("OPENCLARE_SLIDE").ok()?;
+        let text = if text.trim() == "on" { "3,0.95,0.25,inf,3".to_string() } else { text };
+        let values: Vec<f64> = text.split(',').map(|value| value.trim().parse().ok()).collect::<Option<_>>()?;
+        let [reach, gain, tolerance, alignment_tolerance, tries] = values[..] else { return None };
+        Some(Self { edge_length, reach, gain, tolerance, alignment_tolerance, tries: tries as usize })
+    }
+}
+
+/// What a pole is charged when the mesh is to be subdivided: how far the
+/// surface turns over one quad round it, in radians.
+///
+/// The reflection check gives a pole the largest angle between the normals
+/// of the faces round it and their mean; on a smooth surface that angle
+/// grows as the curvature across those faces, in the direction the surface
+/// bends most, times their size. So a pole at vertex `v` of the work mesh
+/// is charged the largest principal curvature (read at the scale of the
+/// quads) met within one quad edge of it, times that edge (`edge_length`
+/// times the sizing at `v`). The largest within reach and not the value at
+/// `v`: the faces round a pole reach one edge out, and a pole on the rim of
+/// a curved zone, its curvature averaged with the flat beside it, has faces
+/// on the curve all the same.
+pub struct Bend<'a> {
+    work: &'a WorkMesh,
+    edge_length: f64,
+    neighbours: Vec<Vec<u32>>,
+    most: Vec<f64>,
+}
+
+impl<'a> Bend<'a> {
+    pub fn new(work: &'a WorkMesh, edge_length: f64) -> Self {
+        let mesh = &work.mesh;
+        let mut neighbours = vec![Vec::new(); mesh.positions.len()];
+        for tri in &mesh.triangles {
+            for k in 0..3 {
+                let (a, b) = (tri[k], tri[(k + 1) % 3]);
+                if !neighbours[a as usize].contains(&b) {
+                    neighbours[a as usize].push(b);
+                }
+                if !neighbours[b as usize].contains(&a) {
+                    neighbours[b as usize].push(a);
+                }
+            }
+        }
+        let curvature = &work.curvature;
+        let most = (0..mesh.positions.len())
+            .map(|v| {
+                let k1 = curvature.k1.get(v).map_or(0.0, |k| k.abs());
+                k1.max(curvature.k2.get(v).map_or(0.0, |k| k.abs()))
+            })
+            .collect();
+        Self { work, edge_length, neighbours, most }
+    }
+
+    /// The edge of the quads at `v`.
+    pub fn edge(&self, v: usize) -> f64 {
+        self.work.sizing.get(v).copied().unwrap_or(1.0) * self.edge_length
+    }
+
+    /// The charge of a pole at `v`, in radians.
+    pub fn at(&self, v: usize) -> f64 {
+        let positions = &self.work.mesh.positions;
+        let (centre, reach) = (positions[v], self.edge(v));
+        // Every vertex joined to `v` through vertices within reach.
+        let mut seen = std::collections::HashSet::from([v as u32]);
+        let mut queue = vec![v as u32];
+        let mut most = self.most[v];
+        while let Some(u) = queue.pop() {
+            for &w in &self.neighbours[u as usize] {
+                if positions[w as usize].distance(centre) <= reach && seen.insert(w) {
+                    queue.push(w);
+                    most = most.max(self.most[w as usize]);
+                }
+            }
+        }
+        most * reach
     }
 }
 
@@ -50,6 +162,10 @@ pub struct Report {
     pub split: usize,
     /// Cancellations tried, accepted or not.
     pub tried: usize,
+    /// Singularities slid towards a flatter place ([`Request::slide`]), and
+    /// the slides tried.
+    pub slid: usize,
+    pub slides_tried: usize,
     pub energy_before: f64,
     pub energy_after: f64,
 }

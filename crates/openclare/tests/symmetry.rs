@@ -190,6 +190,40 @@ fn sizes_asked_for_come_out_symmetric_too() {
 }
 
 #[test]
+fn a_change_to_the_half_kept_is_made_to_its_image() {
+    // A grid of 4 by 4 quads on [-1, 1]², cut across x: the half kept has
+    // 8 quads, 4 of them along the plane x = 0.
+    let grid = primitives::plane_quads(4);
+    let (mut mesh, carried) = symmetry::symmetric(&grid, Axis::X, 1e-9);
+    let halves = carried.halves(Axis::X);
+    let free = halves.free_faces(&mesh);
+    assert_eq!(free.len(), 4);
+    let on_plane = |v: u32| mesh.positions[v as usize].x.abs() < 1e-12;
+    assert!(free.iter().all(|&f| !mesh.faces[f as usize].iter().any(|&v| on_plane(v))));
+    // A vertex of a free face moved; its image follows, and nothing else.
+    let moved = *mesh.faces[free[0] as usize].iter().find(|&&v| !on_plane(v)).unwrap();
+    let before = mesh.positions.clone();
+    mesh.positions[moved as usize] += Vec3::new(0.01, 0.02, 0.03);
+    halves.mirror(&mut mesh.positions);
+    let image = Axis::X.mirror(mesh.positions[moved as usize]);
+    let changed: Vec<usize> = (0..before.len()).filter(|&v| mesh.positions[v] != before[v]).collect();
+    assert_eq!(changed.len(), 2, "{changed:?}");
+    assert!(changed.iter().any(|&v| mesh.positions[v].distance(image) < 1e-12));
+    assert!(symmetry::asymmetry(&mesh, Axis::X) < 1e-12);
+}
+
+#[test]
+fn a_mesh_made_for_subdivision_stays_its_own_mirror_image() {
+    // The repair moves vertices of the half kept alone, those off the
+    // plane, and the other half follows as their image.
+    let torus = primitives::torus(1.0, 0.35, 64, 24);
+    let config = RemeshConfig { for_subdivision: true, ..RemeshConfig::for_organic(Target::QuadCount(800)) };
+    let (mesh, report) = symmetric_with(&torus, Axis::X, config, &openclare::Guides::default());
+    assert!(report.subdivision_repair.is_some());
+    assert!(measure(&torus, &mesh, Some(800)).is_valid());
+}
+
+#[test]
 fn symmetry_is_written_and_read_back() {
     let config = RemeshConfig { symmetry: Some(Axis::Z), ..RemeshConfig::default() };
     let text = config.to_text();

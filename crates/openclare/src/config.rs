@@ -94,6 +94,15 @@ pub struct RemeshConfig {
     pub quality: Quality,
     /// What the faces of the output are (see [`Faces`]).
     pub faces: Faces,
+    /// The result is to be subdivided (a Catmull-Clark Subdivision
+    /// Surface): the mesh the chain is about to give back is repaired in
+    /// place for the reflection check with its creases (see
+    /// [`crate::reflection::repair`]), and the creases are part of the
+    /// result. Off by default: a mesh that is never subdivided has no use
+    /// for it. Experimental. The slide of the singularities towards flatter
+    /// places that was tried with it is not part of it (see
+    /// [`crate::singularity::Slide`]).
+    pub for_subdivision: bool,
     /// In the slow quality mode, the time each solve may take, in seconds:
     /// a bound for safety, which depends on the load of the machine.
     pub slow_time_limit: f64,
@@ -277,6 +286,7 @@ impl RemeshConfig {
             merge_singularities: false,
             quality: Quality::Standard,
             faces: Faces::Quads,
+            for_subdivision: false,
             slow_time_limit: SLOW_TIME_LIMIT,
             slow_work_limit: SLOW_WORK_LIMIT,
             ring_selector: Selector::default(),
@@ -337,6 +347,23 @@ impl RemeshConfig {
         guides: &Guides,
         recorder: &mut dyn crate::recorder::Recorder,
     ) -> Result<(crate::PolyMesh, crate::pipeline::Report)> {
+        let (mut mesh, mut report, halves) = self.remesh_unfinished(input, guides, recorder)?;
+        if self.for_subdivision {
+            report.subdivision_repair = Some(repair_for_subdivision(&mut mesh, &report.creases, halves.as_ref()));
+            recorder.record("result/repaired", crate::recorder::Shape::Polygons(&mesh));
+        }
+        Ok((mesh, report))
+    }
+
+    /// [`Self::remesh_recorded`] up to the mesh the chain makes, before
+    /// anything done for a subdivision ([`Self::for_subdivision`]), and the
+    /// two halves of it when it was made symmetric.
+    fn remesh_unfinished(
+        &self,
+        input: &crate::TriMesh,
+        guides: &Guides,
+        recorder: &mut dyn crate::recorder::Recorder,
+    ) -> Result<(crate::PolyMesh, crate::pipeline::Report, Option<symmetry::Halves>)> {
         use crate::recorder::Shape;
         if self.faces == Faces::Ngons {
             // The quads first, mirrored if they are to be, then their flat
@@ -361,28 +388,31 @@ impl RemeshConfig {
                 let made = if opened.mesh.triangles.is_empty() {
                     Ok(Default::default())
                 } else {
-                    quads.remesh_recorded(&opened.mesh, &left, recorder)
+                    quads.remesh_unfinished(&opened.mesh, &left, recorder)
                 };
-                if let Ok((mesh, mut report)) = made
+                if let Ok((mesh, mut report, _)) = made
                     && let Some(mesh) = opened.close(mesh, &mut report)
                 {
                     let mesh = crate::ngons::flat_parts(&mesh, &mut report);
                     recorder.record("result/ngons", Shape::Polygons(&mesh));
-                    return Ok((mesh, report));
+                    return Ok((mesh, report, None));
                 }
             }
-            let (mesh, mut report) = quads.remesh_recorded(input, guides, recorder)?;
+            // Merging faces renumbers the vertices: the halves of a
+            // symmetric mesh are no longer known.
+            let (mesh, mut report, _) = quads.remesh_unfinished(input, guides, recorder)?;
             let mesh = crate::ngons::flat_parts(&mesh, &mut report);
             recorder.record("result/ngons", Shape::Polygons(&mesh));
-            return Ok((mesh, report));
+            return Ok((mesh, report, None));
         }
         if let Some(axis) = self.symmetry {
-            return self.remesh_symmetric(input, guides, axis, recorder);
+            let (mesh, report, halves) = self.remesh_symmetric(input, guides, axis, recorder)?;
+            return Ok((mesh, report, Some(halves)));
         }
         recorder.record("input/surface", Shape::Surface { mesh: input, values: guides.density });
         let (mesh, report) = crate::remesher::create(self.method).remesh_recorded(input, guides, self, recorder)?;
         recorder.record("result/quads", Shape::Polygons(&mesh));
-        Ok((mesh, report))
+        Ok((mesh, report, None))
     }
 
     /// `input` remeshed with the plane across `axis` drawn into it as a line
@@ -397,7 +427,7 @@ impl RemeshConfig {
         guides: &Guides,
         axis: Axis,
         recorder: &mut dyn crate::recorder::Recorder,
-    ) -> Result<(crate::PolyMesh, crate::pipeline::Report)> {
+    ) -> Result<(crate::PolyMesh, crate::pipeline::Report, symmetry::Halves)> {
         symmetry::check(input, axis, SYMMETRY_TOLERANCE)?;
         let (low, high) = input
             .positions
@@ -419,7 +449,7 @@ impl RemeshConfig {
             ..*guides
         };
         let config = Self { symmetry: None, ..self.clone() };
-        let (mesh, mut report) = config.remesh_recorded(&split.mesh, &drawn, recorder)?;
+        let (mesh, mut report, _) = config.remesh_unfinished(&split.mesh, &drawn, recorder)?;
         let (mesh, carried) = symmetry::symmetric(&mesh, axis, snap);
         // What the report says of edges, by their vertices, said of the
         // result: those of the half kept, and their images.
@@ -434,7 +464,8 @@ impl RemeshConfig {
         let edge = (high - low).length() / (mesh.faces.len().max(1) as f64).sqrt();
         report.off_the_plane = carried.moved.iter().filter(|&&d| d > OFF_THE_PLANE * edge).count();
         report.stats = mesh.stats();
-        Ok((mesh, report))
+        let halves = carried.halves(axis);
+        Ok((mesh, report, halves))
     }
 
     /// The hard edges of `input` the configured chain would follow, and
@@ -524,6 +555,7 @@ impl RemeshConfig {
         writeln!(text, "merge_singularities = {}", self.merge_singularities).unwrap();
         writeln!(text, "quality = {}", self.quality).unwrap();
         writeln!(text, "faces = {}", self.faces).unwrap();
+        writeln!(text, "for_subdivision = {}", self.for_subdivision).unwrap();
         writeln!(text, "slow_time_limit = {}", self.slow_time_limit).unwrap();
         writeln!(text, "slow_work_limit = {}", self.slow_work_limit).unwrap();
         writeln!(text, "seed = {}", self.seed).unwrap();
@@ -602,6 +634,10 @@ impl RemeshConfig {
                 }
                 "quality" => config.quality = value.parse().map_err(|e: Error| error(e.to_string()))?,
                 "faces" => config.faces = value.parse().map_err(|e: Error| error(e.to_string()))?,
+                "for_subdivision" => {
+                    config.for_subdivision =
+                        value.parse().map_err(|_| error(format!("'{value}' is not true or false")))?
+                }
                 "slow_time_limit" => config.slow_time_limit = number_of("number of seconds")?,
                 "slow_work_limit" => config.slow_work_limit = number_of("number")?,
                 "seed" => config.seed = value.parse().map_err(|_| error(format!("'{value}' is not a seed")))?,
@@ -613,6 +649,34 @@ impl RemeshConfig {
         config.validate()?;
         *self = config;
         Ok(())
+    }
+}
+
+/// The reflection repair in place (see [`crate::reflection::repair`]) of
+/// the mesh a chain is about to give back, to be subdivided with `creases`:
+/// its vertices moved, every face kept, and what it did. Of a symmetric
+/// mesh, only the faces of the half kept that touch no vertex of the plane
+/// are repaired, and the other half is made their mirror image again. The
+/// creases the repair proposes are not set: those of the chain read the
+/// source, the repair only the cage.
+fn repair_for_subdivision(
+    mesh: &mut crate::PolyMesh,
+    creases: &[crate::creases::Crease],
+    halves: Option<&symmetry::Halves>,
+) -> crate::pipeline::SubdivisionRepair {
+    use crate::reflection::{Kind, repair};
+    let within = halves.map(|halves| halves.free_faces(mesh));
+    let repaired = repair::repair(mesh, creases, within.as_deref(), &repair::RepairSettings::default());
+    mesh.positions = repaired.positions;
+    if let Some(halves) = halves {
+        halves.mirror(&mut mesh.positions);
+    }
+    let count = |score: &crate::reflection::Score, kind| score.of(kind).count;
+    crate::pipeline::SubdivisionRepair {
+        moved: repaired.moved,
+        largest_share: repaired.largest_share,
+        folded: (count(&repaired.before, Kind::Folded), count(&repaired.after, Kind::Folded)),
+        thin: (count(&repaired.before, Kind::Thin), count(&repaired.after, Kind::Thin)),
     }
 }
 
@@ -644,6 +708,10 @@ mod tests {
         assert_eq!(config.alignment, RemeshConfig::default().alignment);
         let slow = RemeshConfig::from_text("quality = slow\nslow_time_limit = 20\nslow_work_limit = 10\n").unwrap();
         assert_eq!((slow.quality, slow.slow_time_limit, slow.slow_work_limit), (Quality::Slow, 20.0, 10.0));
+        // Off unless asked for.
+        assert!(!config.for_subdivision);
+        assert!(RemeshConfig::from_text("for_subdivision = true\n").unwrap().for_subdivision);
+        assert!(RemeshConfig::from_text("for_subdivision = yes\n").is_err());
     }
 
     #[test]
