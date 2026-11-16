@@ -67,6 +67,15 @@ The tools of the 3D viewport, in Object Mode.
 | The poles of the last result, kept on the object and shown; those touched imposed on the next remesh | experimental | new on 31 October 2026, not yet measured on the bench nor tried by artists (#249) |
 | The *Poles* tool: drag, add (3, 5), pin (P), remove (X), *Free All*, *Clear* | experimental | the same (#249) |
 
+## The add-on: reflection check
+
+The panel *Reflection Check* of the Properties editor, on the tab of the mesh, for an object under a Catmull-Clark *Subdivision Surface*, in Edit Mode.
+
+| Feature | State | What it lacks |
+|---|---|---|
+| The faults of the cage, worst first, one angle each: n-gons off their plane, triangles and n-gons that pinch, poles on a curved zone, corner quads that fold or are thin; *Show the N Worst*, the tolerances, a row selects its face or vertex | experimental | new on 16 November 2026, not yet tried on a hand-made car body; the angles are measured on the cage, not on the subdivided surface (#328) |
+| The overlay of the N worst in the 3D viewport, one colour per kind | experimental | the same; not drawn while a change is being checked (#328) |
+
 ## Platforms
 
 | Feature | State | What it lacks |
@@ -105,6 +114,7 @@ The tools of the 3D viewport, in Object Mode.
 | `--skip-pieces-under`, `--no-close-loops` | experimental | tools to look into a run |
 | `--merge-singularities` | experimental | a 3 and a 5 merged across a strip of no width, off by default (#171) |
 | `measure`, `layout`, `primitive` | stable | |
+| `measure`: the reflection check, `--creases` | experimental | as *Reflection Check*; an OBJ carries no crease: without `--creases`, only borders are sharp (#328) |
 | `field`, `parametrize`, `tmesh`, `quantize`, `preprocess` | experimental | stages of the chain one at a time: their options follow the chain |
 | `--record`, `--record-still`, `openclare-view` (Rerun) | experimental | a version of Rerun behind, stages not shown (#35) |
 

@@ -159,6 +159,25 @@ def library():
     lib.openclare_hard_edge_finder_find.argtypes = [pointer, pointer, text, text]
     lib.openclare_hard_edge_finder_free.restype = None
     lib.openclare_hard_edge_finder_free.argtypes = [pointer]
+    double = ctypes.c_double
+    lib.openclare_reflection_check.restype = pointer
+    lib.openclare_reflection_check.argtypes = [
+        pointer, size, pointer, size, pointer, size, pointer, pointer, size, double, double, double,
+    ]
+    lib.openclare_reflection_ok.restype = ctypes.c_int32
+    lib.openclare_reflection_error.restype = text
+    for count in ("fault", "pole", "part"):
+        function = getattr(lib, f"openclare_reflection_{count}_count")
+        function.restype, function.argtypes = size, [pointer]
+    lib.openclare_reflection_ok.argtypes = lib.openclare_reflection_error.argtypes = [pointer]
+    lib.openclare_reflection_copy_faults.restype = None
+    lib.openclare_reflection_copy_faults.argtypes = [pointer] * 7
+    lib.openclare_reflection_copy_frames.restype = None
+    lib.openclare_reflection_copy_frames.argtypes = [pointer] * 5
+    lib.openclare_reflection_copy_parts.restype = None
+    lib.openclare_reflection_copy_parts.argtypes = [pointer] * 4
+    lib.openclare_reflection_free.restype = None
+    lib.openclare_reflection_free.argtypes = [pointer]
     _library = lib
     return lib
 
@@ -542,3 +561,89 @@ class Analysis:
         if not self._lib.openclare_analysis_vertices_for(self._handle, float(quads), sizes.ctypes.data):
             raise EngineError(f"{quads} quads cannot be sized")
         return sizes
+
+
+# The kinds of fault of the reflection check, in the engine's order
+# (OPENCLARE_FAULT_* in openclare.h).
+FAULT_KINDS = ("degenerate", "folded", "not_flat", "pinch", "curved_pole", "thin")
+
+
+class Faults:
+    """What the reflection check finds, worst first, as numpy arrays of one
+    entry per fault: `kinds` (indices into `FAULT_KINDS`), `on_vertex`
+    (true for a pole, false for a face), `indices` (of the face or the
+    vertex), `sides` (of the face, or valence of the vertex), `counts` (how
+    many of its parts the fault concerns), `values` (an angle in degrees for
+    not_flat, pinch and curved_pole; the smallest triangle (centre, edge)
+    over the mean one for folded and thin; 0 for degenerate); where to draw
+    each: `centres` and `normals` (three floats each), `inner` and `radius`
+    (for a face, the distance from its centre to its nearest edge and to its
+    furthest vertex; for a vertex, the mean length of its edges); the parts
+    of each, those of fault i from `offsets[i]` to `offsets[i + 1]` in
+    `part_edges` (true for an edge, false for a corner) and `part_places`
+    (the place of the corner, or of the edge from that corner, in its face);
+    and `poles`, how many poles were looked at."""
+
+    def parts(self, i):
+        """The corners and the edges of fault `i`: two lists of places in its
+        face."""
+        span = slice(int(self.offsets[i]), int(self.offsets[i + 1]))
+        places, edges = self.part_places[span], self.part_edges[span]
+        return [int(p) for p in places[~edges]], [int(p) for p in places[edges]]
+
+
+def reflection_check(positions, sizes, corners, crease_edges=None, crease_weights=None,
+                     flat_tolerance=-1.0, angle_tolerance=-1.0, thin_ratio=-1.0):
+    """The reflection check of a cage (see openclare.reflection in the
+    engine): `positions`, three floats per vertex; `sizes`, the number of
+    corners of each face; `corners`, the vertex of each corner, face after
+    face; `crease_edges` and `crease_weights`, two vertices and one weight
+    per creased edge, or None. A tolerance below zero takes the engine's
+    default (0.2 % of the radius off the plane, 1 degree, 0.15 of the mean
+    triangle). Returns `Faults`."""
+    import numpy
+
+    lib = library()
+    positions = numpy.ascontiguousarray(positions, numpy.float32).reshape(-1)
+    sizes = numpy.ascontiguousarray(sizes, numpy.uint32).reshape(-1)
+    corners = numpy.ascontiguousarray(corners, numpy.uint32).reshape(-1)
+    if crease_edges is not None and len(crease_edges):
+        crease_edges = numpy.ascontiguousarray(crease_edges, numpy.uint32).reshape(-1)
+        crease_weights = numpy.ascontiguousarray(crease_weights, numpy.float32).reshape(-1)
+        if len(crease_edges) != 2 * len(crease_weights):
+            raise EngineError(f"{len(crease_edges)} vertices for {len(crease_weights)} creased edges, two each")
+        creases = (crease_edges.ctypes.data, crease_weights.ctypes.data, len(crease_weights))
+    else:
+        creases = (None, None, 0)
+    found = lib.openclare_reflection_check(
+        positions.ctypes.data, len(positions) // 3, sizes.ctypes.data, len(sizes), corners.ctypes.data, len(corners),
+        *creases, float(flat_tolerance), float(angle_tolerance), float(thin_ratio),
+    )
+    try:
+        if not lib.openclare_reflection_ok(found):
+            raise EngineError(lib.openclare_reflection_error(found).decode())
+        n, parts = lib.openclare_reflection_fault_count(found), lib.openclare_reflection_part_count(found)
+        out = Faults()
+        out.poles = lib.openclare_reflection_pole_count(found)
+        out.kinds, elements = numpy.empty(n, numpy.uint8), numpy.empty(n, numpy.uint8)
+        out.indices, out.sides, out.counts = (numpy.empty(n, numpy.uint32) for _ in range(3))
+        out.values = numpy.empty(n, numpy.float64)
+        lib.openclare_reflection_copy_faults(
+            found, out.kinds.ctypes.data, elements.ctypes.data, out.indices.ctypes.data, out.sides.ctypes.data,
+            out.counts.ctypes.data, out.values.ctypes.data,
+        )
+        out.on_vertex = elements == 1
+        out.centres, out.normals = numpy.empty((n, 3), numpy.float32), numpy.empty((n, 3), numpy.float32)
+        out.inner, out.radius = numpy.empty(n, numpy.float32), numpy.empty(n, numpy.float32)
+        lib.openclare_reflection_copy_frames(
+            found, out.centres.ctypes.data, out.normals.ctypes.data, out.inner.ctypes.data, out.radius.ctypes.data
+        )
+        out.offsets = numpy.empty(n + 1, numpy.uint32)
+        part_kinds, out.part_places = numpy.empty(parts, numpy.uint8), numpy.empty(parts, numpy.uint32)
+        lib.openclare_reflection_copy_parts(
+            found, out.offsets.ctypes.data, part_kinds.ctypes.data, out.part_places.ctypes.data
+        )
+        out.part_edges = part_kinds == 1
+        return out
+    finally:
+        lib.openclare_reflection_free(found)

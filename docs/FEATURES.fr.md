@@ -69,6 +69,15 @@ Les outils de la vue 3D, en Object Mode.
 | Les pôles du dernier résultat, gardés sur l'objet et affichés ; ceux qu'on touche imposés au remaillage suivant | expérimental | nouveaux au 31 octobre 2026, ni mesurés sur le banc ni essayés par des artistes (#249) |
 | L'outil *Poles* : glisser, ajouter (3, 5), épingler (P), retirer (X), *Free All*, *Clear* | expérimental | la même chose (#249) |
 
+## Le greffon : le contrôle des reflets
+
+Le panneau *Reflection Check* de l'éditeur de propriétés, sur l'onglet du maillage, pour un objet sous un *Subdivision Surface* Catmull-Clark, en Edit Mode.
+
+| Fonction | État | Ce qui lui manque |
+|---|---|---|
+| Les fautes de la cage, la pire d'abord, un angle chacune : n-gones hors de leur plan, triangles et n-gones qui pincent, pôles sur une zone courbe, quads de coin qui se replient ou s'étirent ; *Show the N Worst*, les tolérances, une ligne sélectionne sa face ou son sommet | expérimental | nouveau au 16 novembre 2026, pas encore essayé sur une carrosserie modelée à la main ; les angles sont mesurés sur la cage, pas sur la surface subdivisée (#328) |
+| La surimpression des N pires dans la vue 3D, une couleur par sorte | expérimental | la même chose ; rien de dessiné le temps qu'un changement soit contrôlé (#328) |
+
 ## Plateformes
 
 | Fonction | État | Ce qui lui manque |
@@ -107,6 +116,7 @@ Les outils de la vue 3D, en Object Mode.
 | `--skip-pieces-under`, `--no-close-loops` | expérimental | des outils pour regarder dans un calcul |
 | `--merge-singularities` | expérimental | un 3 et un 5 fusionnés à travers une bande sans largeur, désactivé par défaut (#171) |
 | `measure`, `layout`, `primitive` | stable | |
+| `measure` : le contrôle des reflets, `--creases` | expérimental | comme *Reflection Check* ; un OBJ ne porte aucun crease : sans `--creases`, seuls les bords sont vifs (#328) |
 | `field`, `parametrize`, `tmesh`, `quantize`, `preprocess` | expérimental | les étapes de la chaîne une à une : leurs options suivent la chaîne |
 | `--record`, `--record-still`, `openclare-view` (Rerun) | expérimental | une version de Rerun en retard, des étapes non montrées (#35) |
 

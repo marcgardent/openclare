@@ -8,7 +8,10 @@ shown, the same panel says what it was made from and how, and remeshes it
 again. A toggle beside the angle of the hard edges shows in the 3D viewport
 the edges the quads will follow, and those left out (see `preview`). Curves
 drawn on the model, with the tools of the toolbar (see `draw`) or by hand,
-give the result lines of edges, or of hard edges, along them.
+give the result lines of edges, or of hard edges, along them. On a cage in
+Edit Mode under a Catmull-Clark Subdivision Surface, the reflection check
+lists and draws what will make a reflection pinch or wobble once it is
+subdivided (see `reflection`).
 """
 
 import math
@@ -20,7 +23,7 @@ import mathutils
 from bl_operators.presets import AddPresetBase
 from bl_ui.utils import PresetPanel
 
-from . import draw, engine, experimental, extend, poles, preview
+from . import draw, engine, experimental, extend, poles, preview, reflection
 
 PRESETS = [
     ("organic", "Organic", "Sculpts and characters: edges follow the shape closely, quads are smaller where it bends"),
@@ -2536,6 +2539,7 @@ def register():
     preview.register()
     draw.register()
     poles.register()
+    reflection.register()
     experimental.register(draw.tools, poles.tools)
     bpy.types.Object.openclare = bpy.props.PointerProperty(type=OpenclareSettings)
     bpy.types.Object.openclare_curve = bpy.props.PointerProperty(type=OpenclareCurveSettings)
@@ -2568,6 +2572,7 @@ def unregister():
     preview.unregister()
     draw.unregister()
     poles.unregister()
+    reflection.unregister()
     bpy.utils.unregister_preset_path(ADDON_FOLDER)
     for handlers, handler in HANDLERS:
         if handler in handlers:
