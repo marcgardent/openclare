@@ -77,6 +77,7 @@ Le panneau *Reflection Check* de l'éditeur de propriétés, sur l'onglet du mai
 |---|---|---|
 | Les fautes de la cage, la pire d'abord, un angle chacune : n-gones hors de leur plan, triangles et n-gones qui pincent, pôles sur une zone courbe, quads de coin qui se replient ou s'étirent ; *Show the N Worst*, les tolérances, une ligne sélectionne sa face ou son sommet | expérimental | nouveau au 16 novembre 2026, pas encore essayé sur une carrosserie modelée à la main ; les angles sont mesurés sur la cage, pas sur la surface subdivisée (#328) |
 | La surimpression des N pires dans la vue 3D, une couleur par sorte | expérimental | la même chose ; rien de dessiné pendant qu'on édite la cage, jusqu'à ce qu'elle soit immobile depuis 0,2 s ; une cage de plus de 25 000 faces environ se contrôle à la demande, avec *Check* (#328) |
+| *Repair in Place* : des sommets déplacés pour aplanir les n-gones et redresser les quads de coin repliés ou étirés, chaque sommet, arête et face gardés ; des creases proposés sur les arêtes pliées de *Sharp From* (30°) ou plus, posés seulement avec *Apply the Proposed Creases* ; aucun sommet déplacé de plus de *Bound* (10 % de sa plus courte arête) ; chaque réparation gardée seulement si le score s'améliore ; les faces sélectionnées, ou toute la cage ; une seule étape d'annulation ; le score avant et après par sorte, et ce qui reste avec sa raison | expérimental | nouveau au 16 novembre 2026, pas encore essayé sur une carrosserie modelée à la main ; « réparé » l'est au sens du contrôle, dont les angles sont mesurés sur la cage, pas sur la surface subdivisée ; un n-gone ou un pôle sur une zone courbe est listé, pas réparé (#329) |
 
 ## Plateformes
 
@@ -116,6 +117,7 @@ Le panneau *Reflection Check* de l'éditeur de propriétés, sur l'onglet du mai
 | `--skip-pieces-under`, `--no-close-loops` | expérimental | des outils pour regarder dans un calcul |
 | `--merge-singularities` | expérimental | un 3 et un 5 fusionnés à travers une bande sans largeur, désactivé par défaut (#171) |
 | `measure`, `layout`, `primitive` | stable | |
+| `repair` : la réparation des reflets d'une cage sur place, `--bound`, `--crease-fold`, `--apply-creases`, `--creases`, `--creases-out` | expérimental | comme *Repair in Place* (#329) |
 | `measure` : le contrôle des reflets, `--creases` | expérimental | comme *Reflection Check* ; un OBJ ne porte aucun crease : sans `--creases`, seuls les bords sont vifs (#328) |
 | `field`, `parametrize`, `tmesh`, `quantize`, `preprocess` | expérimental | les étapes de la chaîne une à une : leurs options suivent la chaîne |
 | `--record`, `--record-still`, `openclare-view` (Rerun) | expérimental | une version de Rerun en retard, des étapes non montrées (#35) |

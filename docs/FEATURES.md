@@ -75,6 +75,7 @@ The panel *Reflection Check* of the Properties editor, on the tab of the mesh, f
 |---|---|---|
 | The faults of the cage, worst first, one angle each: n-gons off their plane, triangles and n-gons that pinch, poles on a curved zone, corner quads that fold or are thin; *Show the N Worst*, the tolerances, a row selects its face or vertex | experimental | new on 16 November 2026, not yet tried on a hand-made car body; the angles are measured on the cage, not on the subdivided surface (#328) |
 | The overlay of the N worst in the 3D viewport, one colour per kind | experimental | the same; not drawn while the cage is being edited, until it has been still for 0.2 s; a cage of more than about 25 000 faces is checked on demand, with *Check* (#328) |
+| *Repair in Place*: vertices moved to flatten the n-gons and straighten the folded and thin corner quads, every vertex, edge and face kept; creases proposed on edges folding by *Sharp From* (30°) or more, set only with *Apply the Proposed Creases*; no vertex moved beyond *Bound* (10 % of its shortest edge); each repair kept only if the score gets better; the selected faces, or the whole cage; one undo step; the score before and after per kind, and what is left with its reason | experimental | new on 16 November 2026, not yet tried on a hand-made car body; "repaired" means by the check, whose angles are measured on the cage, not on the subdivided surface; an n-gon or a pole on a curved zone is listed, not repaired (#329) |
 
 ## Platforms
 
@@ -114,6 +115,7 @@ The panel *Reflection Check* of the Properties editor, on the tab of the mesh, f
 | `--skip-pieces-under`, `--no-close-loops` | experimental | tools to look into a run |
 | `--merge-singularities` | experimental | a 3 and a 5 merged across a strip of no width, off by default (#171) |
 | `measure`, `layout`, `primitive` | stable | |
+| `repair`: the reflection repair of a cage in place, `--bound`, `--crease-fold`, `--apply-creases`, `--creases`, `--creases-out` | experimental | as *Repair in Place* (#329) |
 | `measure`: the reflection check, `--creases` | experimental | as *Reflection Check*; an OBJ carries no crease: without `--creases`, only borders are sharp (#328) |
 | `field`, `parametrize`, `tmesh`, `quantize`, `preprocess` | experimental | stages of the chain one at a time: their options follow the chain |
 | `--record`, `--record-still`, `openclare-view` (Rerun) | experimental | a version of Rerun behind, stages not shown (#35) |

@@ -20,6 +20,7 @@ USAGE:
     openclare remesh <input.obj> <output.obj> [options]
     openclare presets
     openclare measure <source.obj> <quads.obj> [--target <N>] [--creases <FILE>] [--json]
+    openclare repair <cage.obj> <output.obj> [options]
     openclare layout <quads.obj>
     openclare analyse <input.obj> [--preset <NAME>] [--largest <L>]
     openclare preprocess <input.obj> <output.obj> [options]
@@ -139,6 +140,16 @@ OPTIONS (measure):
                            reflection check
     --json                 print the metrics as one JSON object
 
+OPTIONS (repair): the reflection repair of a cage, in place: vertices moved, creases proposed,
+every vertex, edge and face kept; each repair kept only if the reflection check scores better
+    --creases <FILE>       the creases the cage is subdivided with, as remesh --creases-out writes them
+    --bound <F>            how far a vertex may move, as a share of the shortest of its edges (default 0.1)
+    --crease-fold <DEG>    fold between two faces from which an edge is a sharp edge of the shape, where
+                           a crease may be proposed (default 30)
+    --apply-creases        set the proposed creases: written with the others by --creases-out
+    --creases-out <FILE>   writes the creases of the result, in the same form
+    --json                 print the report as one JSON object
+
 layout prints, as one JSON object, what measure counts of the poles and edge
 loops, for a viewer to draw them: \"poles\", [vertex, valence] for each
 irregular vertex off the borders, and \"closed\", \"spiral\", \"open\" (stops
@@ -170,6 +181,7 @@ fn run(args: &[String]) -> Result<(), String> {
         }
         Some("measure") => measure_command(&args[1..]),
         Some("layout") => layout_command(&args[1..]),
+        Some("repair") => repair_command(&args[1..]),
         Some("analyse") => analyse_command(&args[1..]),
         Some("preprocess") => preprocess_command(&args[1..]),
         Some("field") => field_command(&args[1..]),
@@ -826,6 +838,133 @@ fn print_reflection(score: &openclare::reflection::Score) {
         shares(Fault::Thin, "thin faces"),
         of(Fault::Degenerate).count,
     );
+}
+
+/// The reflection repair of a cage (`openclare::reflection::repair`): the
+/// cage moved in place, the scores before and after, kind by kind.
+fn repair_command(args: &[String]) -> Result<(), String> {
+    use openclare::reflection::repair::{Reason, RepairSettings, repair};
+
+    let mut settings = RepairSettings::default();
+    let (mut creases, mut creases_out, mut apply, mut json, mut paths) = (None, None, false, false, Vec::new());
+    let mut args = args.iter();
+    while let Some(arg) = args.next() {
+        let mut value = || args.next().ok_or(format!("{arg} expects a value"));
+        match arg.as_str() {
+            "--creases" => creases = Some(value()?.clone()),
+            "--creases-out" => creases_out = Some(value()?.clone()),
+            "--bound" => settings.bound = parse(arg, value()?)?,
+            "--crease-fold" => settings.crease_fold = parse(arg, value()?)?,
+            "--apply-creases" => apply = true,
+            "--json" => json = true,
+            flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
+            path => paths.push(path),
+        }
+    }
+    let [input, output] = paths[..] else {
+        return Err("repair takes a cage and the file to write".into());
+    };
+    let mut mesh = obj::read_obj_poly(input).map_err(|e| format!("{input}: {e}"))?;
+    let given = match &creases {
+        Some(path) => read_creases(path, mesh.positions.len()).map_err(|e| format!("{path}: {e}"))?,
+        None => Vec::new(),
+    };
+    let repaired = repair(&mesh, &given, None, &settings);
+    mesh.positions = repaired.positions.clone();
+    obj::write_obj_poly(output, &mesh).map_err(|e| format!("{output}: {e}"))?;
+    let mut written = given.clone();
+    if apply {
+        written.extend(repaired.creases.iter().map(|c| (c.edge, 1.0)));
+    }
+    if let Some(path) = &creases_out {
+        let lines: String = written.iter().map(|([a, b], weight)| format!("{} {} {weight}\n", a + 1, b + 1)).collect();
+        std::fs::write(path, lines).map_err(|e| format!("{path}: {e}"))?;
+    }
+    let reasons: Vec<(Reason, usize)> = Reason::ALL
+        .iter()
+        .map(|&reason| (reason, repaired.left.iter().filter(|l| l.reason == reason).count()))
+        .collect();
+    if json {
+        let optional = |value: Option<f64>| value.map_or("null".to_string(), |v| v.to_string());
+        let score = |score: &openclare::reflection::Score| {
+            let kinds: Vec<String> = Fault::ALL
+                .iter()
+                .map(|&kind| {
+                    let s = score.of(kind);
+                    format!(
+                        "\"{}\": {{\"count\": {}, \"worst\": {}, \"median\": {}}}",
+                        kind.name(),
+                        s.count,
+                        optional(s.worst),
+                        optional(s.median)
+                    )
+                })
+                .collect();
+            format!("{{\"poles\": {}, {}}}", score.poles, kinds.join(", "))
+        };
+        let left: Vec<String> = reasons.iter().map(|(reason, n)| format!("\"{}\": {n}", reason.name())).collect();
+        println!(
+            "{{\"before\": {}, \"after\": {}, \"with_creases\": {}, \"moved\": {}, \"largest_displacement\": {}, \
+             \"largest_share\": {}, \"repairs\": {}, \"passes\": {}, \"creases_proposed\": {}, \"left\": {{{}}}}}",
+            score(&repaired.before),
+            score(&repaired.after),
+            score(&repaired.with_creases),
+            repaired.moved,
+            repaired.largest_displacement,
+            repaired.largest_share,
+            repaired.repairs,
+            repaired.passes,
+            repaired.creases.len(),
+            left.join(", ")
+        );
+        return Ok(());
+    }
+    println!("repair   on the cage, under Catmull-Clark: angles measured on the cage, not on its subdivision");
+    println!("         {:12} {:>14} {:>14} {:>14}", "", "before", "after", "with creases");
+    for kind in Fault::ALL {
+        let cell = |score: &openclare::reflection::Score| {
+            let s = score.of(kind);
+            match s.worst {
+                Some(worst) if kind.is_angle() => format!("{} (worst {worst:.1})", s.count),
+                Some(worst) => format!("{} (worst {worst:.3})", s.count),
+                None => "0".to_string(),
+            }
+        };
+        println!(
+            "         {:12} {:>14} {:>14} {:>14}",
+            kind.name(),
+            cell(&repaired.before),
+            cell(&repaired.after),
+            cell(&repaired.with_creases)
+        );
+    }
+    println!(
+        "moved    {} vertices by {} repairs in {} passes; the furthest by {:.6} ({:.3} of its shortest edge; bound {})",
+        repaired.moved,
+        repaired.repairs,
+        repaired.passes,
+        repaired.largest_displacement,
+        repaired.largest_share,
+        settings.bound
+    );
+    println!(
+        "creases  {} proposed on edges folding by {} degrees or more{}",
+        repaired.creases.len(),
+        settings.crease_fold,
+        if apply { ", set" } else { ", not set (--apply-creases sets them)" }
+    );
+    let left: Vec<String> =
+        reasons.iter().filter(|(_, n)| *n > 0).map(|(reason, n)| format!("{n} {}", reason.name())).collect();
+    println!(
+        "left     {} faults: {}",
+        repaired.left.len(),
+        if left.is_empty() { "none".into() } else { left.join(", ") }
+    );
+    println!("         written: {output}");
+    if let Some(path) = &creases_out {
+        println!("         written: {path}, {} creases", written.len());
+    }
+    Ok(())
 }
 
 /// The creases in the form remesh --creases-out writes them: one edge per

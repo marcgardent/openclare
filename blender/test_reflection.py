@@ -189,7 +189,8 @@ reflection.draw_panel(Drawn(log), bpy.context)
 said = [text for kind, text, _ in log if kind == "label"]
 assert f"3 shown out of {len(report)}; 10 poles looked at" in said, said
 listed = [(text, icon) for kind, text, icon in log if kind == "operator"]
-assert listed == [("N-gon, 5 sides · pinch 90°", "MESH_GRID")] * 3, listed
+# The rows, then the button of Repair in Place.
+assert listed == [("N-gon, 5 sides · pinch 90°", "MESH_GRID")] * 3 + [("", "MODIFIER")], listed
 settings.worst = 20
 
 # A click on a row selects the face, or the vertex, and makes it active.

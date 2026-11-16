@@ -296,6 +296,24 @@ sharp, and the creases `remesh --creases-out` wrote are given back with `--creas
 ./target/release/openclare measure source.obj quads.obj --creases quads.creases
 ```
 
+`repair` cleans a cage up for its reflections in place, every vertex, edge and face kept: it
+flattens the n-gons off their plane, makes the faces whose corner quads fold or are thin
+star-shaped again, and proposes creases on edges already folding by `--crease-fold` degrees or more
+(30), where they cure a pinch or a pole on a curved zone. Each repair is kept only if the score of
+the check gets better, by an order that puts folded faces before any angle, and the angles of
+pinches and poles before those of n-gons off their plane; no vertex moves further than `--bound`
+times its shortest edge (0.1). It prints the score before, after, and with the proposed creases,
+kind by kind, and why each fault is left. The creases are read and written as `--creases-out`
+writes them; the proposed ones are written with the others only with `--apply-creases`:
+
+```bash
+./target/release/openclare repair quads.obj repaired.obj --creases quads.creases \
+    --apply-creases --creases-out repaired.creases
+```
+
+The angles are those of the check, measured on the cage: "repaired" means by that measure, not on
+the subdivided surface.
+
 The marks from 0 to 100 the bench gives, for any mesh against its source:
 
 ```bash

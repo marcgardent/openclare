@@ -15,12 +15,13 @@
  *   read during the call only, never kept.
  * - The calls that do work (openclare_remesh, openclare_bake_height,
  *   openclare_analyse, openclare_hard_edges, openclare_hard_edge_finder,
- *   openclare_hard_edge_finder_find, openclare_reflection_check) never
- *   return NULL: they return a handle, which holds either what was made or
- *   the reason it was not. Each handle is freed by its own function, once:
- *   openclare_result_free, openclare_baked_free, openclare_analysis_free,
+ *   openclare_hard_edge_finder_find, openclare_reflection_check,
+ *   openclare_reflection_repair) never return NULL: they return a handle,
+ *   which holds either what was made or the reason it was not. Each handle
+ *   is freed by its own function, once: openclare_result_free,
+ *   openclare_baked_free, openclare_analysis_free,
  *   openclare_hard_edges_free, openclare_hard_edge_finder_free,
- *   openclare_reflection_free.
+ *   openclare_reflection_free, openclare_repair_free.
  *   Freeing NULL is allowed.
  * - The copy functions write into arrays the caller allocates, of the size
  *   the matching count function gives.
@@ -597,6 +598,141 @@ void openclare_reflection_copy_parts(const OpenclareReflection *reflection,
 
 /* Frees a handle of a reflection check. NULL is fine; twice is not. */
 void openclare_reflection_free(OpenclareReflection *reflection);
+
+/* ------------------------------------------------------------------------ */
+/* Reflection repair                                                        */
+/* ------------------------------------------------------------------------ */
+
+/* What openclare_reflection_repair gives back: the cage repaired in place,
+ * the creases proposed, the scores before and after, the faults left and
+ * why. Opaque; free with openclare_repair_free. */
+typedef struct OpenclareRepair OpenclareRepair;
+
+/* The scores openclare_repair_copy_score writes. */
+#define OPENCLARE_REPAIR_BEFORE 0       /* of the cage given */
+#define OPENCLARE_REPAIR_AFTER 1        /* after the moves, with the creases given */
+#define OPENCLARE_REPAIR_WITH_CREASES 2 /* after the moves, with the proposed creases set too */
+
+/* Why a fault is left, as openclare_repair_copy_left writes it. */
+#define OPENCLARE_REASON_CHANGE_TOPOLOGY 0   /* moving vertices does not mend it */
+#define OPENCLARE_REASON_TOO_FAR 1           /* mending it would move a vertex beyond the bound */
+#define OPENCLARE_REASON_WOULD_WORSEN 2      /* every move tried makes the score worse */
+#define OPENCLARE_REASON_PROPOSED_CREASE 3   /* gone once the proposed creases are set */
+#define OPENCLARE_REASON_OUTSIDE_SELECTION 4 /* not on the faces asked for */
+#define OPENCLARE_REASON_OUT_OF_PASSES 5     /* appeared in the last pass */
+
+/*
+ * The reflection repair of a cage, in place: every vertex, edge and face
+ * kept. Vertices are moved to flatten the n-gons off their plane and to make
+ * the faces whose corner quads fold or are thin star-shaped again; creases
+ * are proposed on edges already sharp where they cure a pinch or a pole on a
+ * curved zone, never set. Each repair is kept only if the score of the
+ * reflection check gets better. Angles are measured on the cage, not on the
+ * subdivided surface.
+ *
+ * - The cage and its creases as for openclare_reflection_check.
+ * - within: within_count faces, the only ones repaired (only their vertices
+ *   move, only their edges get a crease); NULL and 0 for the whole cage.
+ * - flat_tolerance, angle_tolerance, thin_ratio as for the check; bound, the
+ *   largest displacement of a vertex as a share of the shortest of its edges
+ *   (default 0.1); crease_fold, the fold in degrees between two faces from
+ *   which an edge may get a crease (default 30). A negative one takes its
+ *   default.
+ *
+ * The arrays are read during the call only. Never returns NULL; free the
+ * handle with openclare_repair_free.
+ */
+OpenclareRepair *openclare_reflection_repair(const float *positions,
+                                             size_t vertex_count,
+                                             const uint32_t *face_sizes,
+                                             size_t face_count,
+                                             const uint32_t *corner_vertices,
+                                             size_t corner_count,
+                                             const uint32_t *crease_edges,
+                                             const float *crease_weights,
+                                             size_t crease_count,
+                                             const uint32_t *within,
+                                             size_t within_count,
+                                             double flat_tolerance,
+                                             double angle_tolerance,
+                                             double thin_ratio,
+                                             double bound,
+                                             double crease_fold);
+
+/* The functions below take a handle from openclare_reflection_repair not
+ * yet freed, or NULL. */
+
+/* 1 if the cage was repaired (even with nothing to change), 0 if not or if
+ * repair is NULL. */
+int32_t openclare_repair_ok(const OpenclareRepair *repair);
+
+/* Why the cage could not be repaired; "" if it was. Owned by the handle. */
+const char *openclare_repair_error(const OpenclareRepair *repair);
+
+/* How many vertices the cage has, and how many of them moved. */
+size_t openclare_repair_vertex_count(const OpenclareRepair *repair);
+size_t openclare_repair_moved_count(const OpenclareRepair *repair);
+
+/* How far the furthest vertex moved; with share not NULL, the largest
+ * displacement over the shortest edge of its vertex is written there. */
+double openclare_repair_largest_displacement(const OpenclareRepair *repair, double *share);
+
+/* How many repairs were kept; with passes not NULL, how many passes ran. */
+size_t openclare_repair_repair_count(const OpenclareRepair *repair, size_t *passes);
+
+/* Writes the positions of the repaired cage, 3 floats per vertex, numbered
+ * as given; a vertex not moved is written as it was given. */
+void openclare_repair_copy_positions(const OpenclareRepair *repair, float *positions);
+
+/*
+ * Writes one score, stage OPENCLARE_REPAIR_*: for each of the six kinds of
+ * fault, in the order of OPENCLARE_FAULT_*, how many, the worst value and
+ * the median one (NaN where there is none), into each array not NULL, of 6
+ * numbers. Returns how many poles were looked at; 0 for a stage unknown.
+ */
+size_t openclare_repair_copy_score(const OpenclareRepair *repair,
+                                   uint32_t stage,
+                                   uint32_t *counts,
+                                   double *worst,
+                                   double *median);
+
+/* How many creases are proposed. */
+size_t openclare_repair_crease_count(const OpenclareRepair *repair);
+
+/*
+ * Writes the creases proposed, into each array not NULL: edges, 2 vertices
+ * per crease; folds, the fold between its two faces in degrees; and the
+ * fault each is proposed for: kind (OPENCLARE_FAULT_*), element (0 a face,
+ * 1 a vertex), index, angle in degrees, and cured, 1 if that fault is gone
+ * once every proposed crease is set.
+ */
+void openclare_repair_copy_creases(const OpenclareRepair *repair,
+                                   uint32_t *edges,
+                                   double *folds,
+                                   uint8_t *kinds,
+                                   uint8_t *elements,
+                                   uint32_t *indices,
+                                   double *values,
+                                   uint8_t *cured);
+
+/* How many faults are left after the moves, with the creases given. */
+size_t openclare_repair_left_count(const OpenclareRepair *repair);
+
+/*
+ * Writes the faults left, worst first, as openclare_reflection_copy_faults
+ * does, and in reasons why each is left (OPENCLARE_REASON_*); any array may
+ * be NULL.
+ */
+void openclare_repair_copy_left(const OpenclareRepair *repair,
+                                uint8_t *kinds,
+                                uint8_t *elements,
+                                uint32_t *indices,
+                                uint32_t *sides,
+                                double *values,
+                                uint8_t *reasons);
+
+/* Frees a handle of a reflection repair. NULL is fine; twice is not. */
+void openclare_repair_free(OpenclareRepair *repair);
 
 #ifdef __cplusplus
 } /* extern "C" */

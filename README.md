@@ -141,6 +141,15 @@ change; a click on a row selects the face or the vertex and frames the view on i
 on the cage, not on the subdivided surface: they rank the faults, they are not the wobble itself. The
 creases count unless the modifier's *Use Creases* is off. `openclare measure` gives the same score.
 
+*Repair in Place*, in the same panel, cleans a hand-made cage up without changing its topology: it
+flattens the n-gons off their plane, straightens the corner quads that fold or are thin, and proposes
+creases on edges that are already sharp edges of the shape (set only with *Apply the Proposed Creases*).
+Each repair is kept only if the score of the check gets better, and no vertex moves further than *Bound*,
+a share of its shortest edge. It works on the selected faces, or on the whole cage when none is selected,
+in one undo step, and the panel then shows the score before and after per kind, and what is left and why:
+an n-gon or a pole on a curved zone needs a change of topology, and is listed, not flattened. "Repaired"
+means by the check, whose angles are measured on the cage. `openclare repair` does the same on a file.
+
 ## Further
 
 - [USAGE.md](USAGE.md): the command line, sizes and their analysis, the library, the C interface

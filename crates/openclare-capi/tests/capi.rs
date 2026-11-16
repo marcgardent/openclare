@@ -1025,3 +1025,190 @@ fn a_triangle_on_a_cube_corner_pinches_and_says_which_edges() {
         openclare_reflection_free(null_mut());
     }
 }
+
+/// A flat grid of 4 by 4 quads, vertex (i, j) at index 5 j + i, with one
+/// more vertex on the edge from (1, 0) to (1, 1), raised by `h`: the two
+/// quads either side are pentagons, flat but for it. As Blender keeps it.
+fn raised_grid(h: f32) -> (Vec<f32>, Vec<u32>, Vec<u32>) {
+    let mut positions: Vec<f32> = (0..25).flat_map(|v| [(v % 5) as f32, (v / 5) as f32, 0.0]).collect();
+    positions.extend([1.0, 0.5, h]);
+    let (mut sizes, mut corners) = (Vec::new(), Vec::new());
+    for j in 0..4 {
+        for i in 0..4 {
+            let v = 5 * j + i;
+            let mut face = vec![v, v + 1, v + 6, v + 5];
+            // The edge from (1, 0) to (1, 1) is walked by the first two
+            // quads, from 1 to 6 and from 6 to 1.
+            if (i, j) == (0, 0) {
+                face.insert(2, 25);
+            }
+            if (i, j) == (1, 0) {
+                face.insert(4, 25);
+            }
+            sizes.push(face.len() as u32);
+            corners.extend(face);
+        }
+    }
+    (positions, sizes, corners)
+}
+
+/// The repair of a cage given as flat arrays, with `within` faces only if
+/// not empty, a bound and default settings otherwise.
+fn repair_of(positions: &[f32], sizes: &[u32], corners: &[u32], within: &[u32], bound: f64) -> *mut OpenclareRepair {
+    unsafe {
+        openclare_reflection_repair(
+            positions.as_ptr(),
+            positions.len() / 3,
+            sizes.as_ptr(),
+            sizes.len(),
+            corners.as_ptr(),
+            corners.len(),
+            null(),
+            null(),
+            0,
+            if within.is_empty() { null() } else { within.as_ptr() },
+            within.len(),
+            -1.0,
+            -1.0,
+            -1.0,
+            bound,
+            -1.0,
+        )
+    }
+}
+
+/// The reasons of the faults left, with their kinds.
+fn left_of(repair: *const OpenclareRepair) -> Vec<(u8, u8)> {
+    unsafe {
+        let n = openclare_repair_left_count(repair);
+        let (mut kinds, mut reasons) = (vec![0u8; n], vec![0u8; n]);
+        openclare_repair_copy_left(
+            repair,
+            kinds.as_mut_ptr(),
+            null_mut(),
+            null_mut(),
+            null_mut(),
+            null_mut(),
+            reasons.as_mut_ptr(),
+        );
+        kinds.into_iter().zip(reasons).collect()
+    }
+}
+
+#[test]
+fn a_cage_is_repaired_in_place_through_flat_arrays() {
+    let h = 0.04f32;
+    let (positions, sizes, corners) = raised_grid(h);
+    unsafe {
+        let repair = repair_of(&positions, &sizes, &corners, &[], -1.0);
+        assert_eq!(openclare_repair_ok(repair), 1, "{}", text(openclare_repair_error(repair)));
+        // The raised vertex alone is brought back into the plane of the
+        // others, straight down by h; every other vertex is as given.
+        assert_eq!((openclare_repair_vertex_count(repair), openclare_repair_moved_count(repair)), (26, 1));
+        let mut share = 0.0;
+        assert_eq!(openclare_repair_largest_displacement(repair, &mut share), h as f64);
+        let edge = (0.25 + (h as f64).powi(2)).sqrt();
+        assert!((share - h as f64 / edge).abs() < 1e-9, "{share}");
+        let mut out = vec![0f32; 3 * 26];
+        openclare_repair_copy_positions(repair, out.as_mut_ptr());
+        assert_eq!(&out[..75], &positions[..75]);
+        assert_eq!(&out[75..], &[1.0, 0.5, 0.0]);
+        // Before, the two pentagons off their plane; after, nothing.
+        let (mut counts, mut worst) = ([0u32; 6], [0f64; 6]);
+        openclare_repair_copy_score(
+            repair,
+            OPENCLARE_REPAIR_BEFORE,
+            counts.as_mut_ptr(),
+            worst.as_mut_ptr(),
+            null_mut(),
+        );
+        assert_eq!(counts[OPENCLARE_FAULT_NOT_FLAT as usize], 2);
+        assert!(worst[OPENCLARE_FAULT_NOT_FLAT as usize] > 0.0);
+        openclare_repair_copy_score(
+            repair,
+            OPENCLARE_REPAIR_AFTER,
+            counts.as_mut_ptr(),
+            worst.as_mut_ptr(),
+            null_mut(),
+        );
+        assert_eq!(counts, [0; 6]);
+        assert!(worst.iter().all(|w| w.is_nan()));
+        assert_eq!((openclare_repair_left_count(repair), openclare_repair_crease_count(repair)), (0, 0));
+        let mut passes = 0;
+        assert_eq!(openclare_repair_repair_count(repair, &mut passes), 1);
+        assert_eq!(passes, 2);
+        openclare_repair_free(repair);
+
+        // A bound of 0.04 of the shortest edge refuses it: the vertex needs
+        // h / √(1/4 + h²) = 0.080 alone, and the plane of each pentagon
+        // 0.048 (see the core's tests).
+        let refused = repair_of(&positions, &sizes, &corners, &[], 0.04);
+        assert_eq!(openclare_repair_moved_count(refused), 0);
+        let not_flat: Vec<u8> =
+            left_of(refused).into_iter().filter(|&(k, _)| k == OPENCLARE_FAULT_NOT_FLAT).map(|(_, r)| r).collect();
+        assert_eq!(not_flat, [OPENCLARE_REASON_TOO_FAR; 2]);
+        openclare_repair_free(refused);
+
+        // Only the quads asked for: the pentagons are left, outside.
+        let quads: Vec<u32> = (2..16).collect();
+        let outside = repair_of(&positions, &sizes, &corners, &quads, -1.0);
+        assert_eq!(openclare_repair_moved_count(outside), 0);
+        let left = left_of(outside);
+        assert!(!left.is_empty() && left.iter().all(|&(_, r)| r == OPENCLARE_REASON_OUTSIDE_SELECTION), "{left:?}");
+        openclare_repair_free(outside);
+
+        // What is wrong is said, not thrown.
+        let wrong = repair_of(&positions, &sizes, &corners, &[16], -1.0);
+        assert_eq!(openclare_repair_ok(wrong), 0);
+        assert!(text(openclare_repair_error(wrong)).contains("face 16"), "{}", text(openclare_repair_error(wrong)));
+        assert_eq!(openclare_repair_vertex_count(wrong), 0);
+        openclare_repair_free(wrong);
+        assert_eq!(openclare_repair_ok(null()), 0);
+        openclare_repair_free(null_mut());
+    }
+}
+
+#[test]
+fn the_edges_of_a_cube_are_proposed_as_creases() {
+    // Each corner of a cube is a pole of three faces at right angles; each
+    // of its twelve edges a fold of 90 degrees, beyond 30: all proposed, and
+    // with them no corner is looked at and nothing is left.
+    let (positions, sizes, corners) = cube();
+    unsafe {
+        let repair = repair_of(&positions, &sizes, &corners, &[], -1.0);
+        assert_eq!(openclare_repair_ok(repair), 1);
+        assert_eq!(openclare_repair_moved_count(repair), 0);
+        let n = openclare_repair_crease_count(repair);
+        assert_eq!(n, 12);
+        let (mut edges, mut folds) = (vec![0u32; 2 * n], vec![0f64; n]);
+        let (mut kinds, mut cured) = (vec![0u8; n], vec![0u8; n]);
+        openclare_repair_copy_creases(
+            repair,
+            edges.as_mut_ptr(),
+            folds.as_mut_ptr(),
+            kinds.as_mut_ptr(),
+            null_mut(),
+            null_mut(),
+            null_mut(),
+            cured.as_mut_ptr(),
+        );
+        assert!(folds.iter().all(|f| (f - 90.0).abs() < 1e-9), "{folds:?}");
+        assert!(kinds.iter().all(|&k| k == OPENCLARE_FAULT_CURVED_POLE) && cured.iter().all(|&c| c == 1));
+        // Two corners whose numbers differ by one bit make an edge.
+        assert!(edges.chunks(2).all(|e| (e[0] ^ e[1]).count_ones() == 1), "{edges:?}");
+        let mut counts = [0u32; 6];
+        let poles =
+            openclare_repair_copy_score(repair, OPENCLARE_REPAIR_BEFORE, counts.as_mut_ptr(), null_mut(), null_mut());
+        assert_eq!((poles, counts[OPENCLARE_FAULT_CURVED_POLE as usize]), (8, 8));
+        let poles = openclare_repair_copy_score(
+            repair,
+            OPENCLARE_REPAIR_WITH_CREASES,
+            counts.as_mut_ptr(),
+            null_mut(),
+            null_mut(),
+        );
+        assert_eq!((poles, counts), (0, [0; 6]));
+        assert_eq!(left_of(repair), [(OPENCLARE_FAULT_CURVED_POLE, OPENCLARE_REASON_PROPOSED_CREASE); 8]);
+        openclare_repair_free(repair);
+    }
+}

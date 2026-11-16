@@ -178,6 +178,31 @@ def library():
     lib.openclare_reflection_copy_parts.argtypes = [pointer] * 4
     lib.openclare_reflection_free.restype = None
     lib.openclare_reflection_free.argtypes = [pointer]
+    lib.openclare_reflection_repair.restype = pointer
+    lib.openclare_reflection_repair.argtypes = [
+        pointer, size, pointer, size, pointer, size, pointer, pointer, size, pointer, size,
+        double, double, double, double, double,
+    ]
+    lib.openclare_repair_ok.restype = ctypes.c_int32
+    lib.openclare_repair_error.restype = text
+    lib.openclare_repair_ok.argtypes = lib.openclare_repair_error.argtypes = [pointer]
+    for count in ("vertex", "moved", "crease", "left"):
+        function = getattr(lib, f"openclare_repair_{count}_count")
+        function.restype, function.argtypes = size, [pointer]
+    lib.openclare_repair_largest_displacement.restype = double
+    lib.openclare_repair_largest_displacement.argtypes = [pointer, pointer]
+    lib.openclare_repair_repair_count.restype = size
+    lib.openclare_repair_repair_count.argtypes = [pointer, pointer]
+    lib.openclare_repair_copy_positions.restype = None
+    lib.openclare_repair_copy_positions.argtypes = [pointer, pointer]
+    lib.openclare_repair_copy_score.restype = size
+    lib.openclare_repair_copy_score.argtypes = [pointer, ctypes.c_uint32, pointer, pointer, pointer]
+    lib.openclare_repair_copy_creases.restype = None
+    lib.openclare_repair_copy_creases.argtypes = [pointer] * 8
+    lib.openclare_repair_copy_left.restype = None
+    lib.openclare_repair_copy_left.argtypes = [pointer] * 7
+    lib.openclare_repair_free.restype = None
+    lib.openclare_repair_free.argtypes = [pointer]
     _library = lib
     return lib
 
@@ -647,3 +672,105 @@ def reflection_check(positions, sizes, corners, crease_edges=None, crease_weight
         return out
     finally:
         lib.openclare_reflection_free(found)
+
+
+# Why a fault is left after a reflection repair, in the engine's order
+# (OPENCLARE_REASON_* in openclare.h); and its three scores
+# (OPENCLARE_REPAIR_*).
+REPAIR_REASONS = ("change_topology", "too_far", "would_worsen", "proposed_crease", "outside_selection",
+                  "out_of_passes")
+REPAIR_STAGES = ("before", "after", "with_creases")
+
+
+class Repair:
+    """What the reflection repair gives back, as numpy arrays: `positions`
+    (one row of three floats per vertex, numbered as given; a vertex not
+    moved is as given); `moved`, `largest` (the furthest displacement),
+    `share` (the largest displacement over the shortest edge of its vertex),
+    `repairs` and `passes`; `scores`, for each of `REPAIR_STAGES`, a tuple
+    (counts, worst, median, poles), the first three of one entry per kind of
+    `FAULT_KINDS` (NaN where there is none); the creases proposed:
+    `crease_edges` (two vertices each), `crease_folds` (degrees), and the
+    fault each is for, `crease_kinds`, `crease_on_vertex`, `crease_indices`,
+    `crease_values`, `crease_cured`; the faults left after the moves:
+    `left_kinds`, `left_on_vertex`, `left_indices`, `left_sides`,
+    `left_values` and `left_reasons` (indices into `REPAIR_REASONS`)."""
+
+
+def reflection_repair(positions, sizes, corners, crease_edges=None, crease_weights=None, within=None,
+                      flat_tolerance=-1.0, angle_tolerance=-1.0, thin_ratio=-1.0, bound=-1.0, crease_fold=-1.0):
+    """The reflection repair of a cage in place (see openclare.reflection.repair
+    in the engine), given as to `reflection_check`, with `within` the faces
+    to repair, or None for all of them; `bound` is the largest displacement
+    of a vertex as a share of its shortest edge, `crease_fold` the fold in
+    degrees from which an edge may get a crease. A setting below zero takes
+    the engine's default (0.1, 30 degrees). Returns `Repair`."""
+    import numpy
+
+    lib = library()
+    positions = numpy.ascontiguousarray(positions, numpy.float32).reshape(-1)
+    sizes = numpy.ascontiguousarray(sizes, numpy.uint32).reshape(-1)
+    corners = numpy.ascontiguousarray(corners, numpy.uint32).reshape(-1)
+    if crease_edges is not None and len(crease_edges):
+        crease_edges = numpy.ascontiguousarray(crease_edges, numpy.uint32).reshape(-1)
+        crease_weights = numpy.ascontiguousarray(crease_weights, numpy.float32).reshape(-1)
+        if len(crease_edges) != 2 * len(crease_weights):
+            raise EngineError(f"{len(crease_edges)} vertices for {len(crease_weights)} creased edges, two each")
+        creases = (crease_edges.ctypes.data, crease_weights.ctypes.data, len(crease_weights))
+    else:
+        creases = (None, None, 0)
+    if within is not None:
+        within = numpy.ascontiguousarray(within, numpy.uint32).reshape(-1)
+        chosen = (within.ctypes.data if len(within) else None, len(within))
+        if not len(within):
+            raise EngineError("no face to repair")
+    else:
+        chosen = (None, 0)
+    found = lib.openclare_reflection_repair(
+        positions.ctypes.data, len(positions) // 3, sizes.ctypes.data, len(sizes), corners.ctypes.data, len(corners),
+        *creases, *chosen, float(flat_tolerance), float(angle_tolerance), float(thin_ratio), float(bound),
+        float(crease_fold),
+    )
+    try:
+        if not lib.openclare_repair_ok(found):
+            raise EngineError(lib.openclare_repair_error(found).decode())
+        out = Repair()
+        n = lib.openclare_repair_vertex_count(found)
+        out.positions = numpy.empty((n, 3), numpy.float32)
+        lib.openclare_repair_copy_positions(found, out.positions.ctypes.data)
+        out.moved = lib.openclare_repair_moved_count(found)
+        share, passes = ctypes.c_double(), ctypes.c_size_t()
+        out.largest = lib.openclare_repair_largest_displacement(found, ctypes.byref(share))
+        out.share = share.value
+        out.repairs = lib.openclare_repair_repair_count(found, ctypes.byref(passes))
+        out.passes = passes.value
+        out.scores = {}
+        for stage, name in enumerate(REPAIR_STAGES):
+            counts = numpy.empty(len(FAULT_KINDS), numpy.uint32)
+            worst, median = numpy.empty(len(FAULT_KINDS)), numpy.empty(len(FAULT_KINDS))
+            poles = lib.openclare_repair_copy_score(
+                found, stage, counts.ctypes.data, worst.ctypes.data, median.ctypes.data
+            )
+            out.scores[name] = (counts, worst, median, poles)
+        c = lib.openclare_repair_crease_count(found)
+        out.crease_edges = numpy.empty((c, 2), numpy.uint32)
+        out.crease_folds, out.crease_values = numpy.empty(c), numpy.empty(c)
+        out.crease_kinds, elements, cured = (numpy.empty(c, numpy.uint8) for _ in range(3))
+        out.crease_indices = numpy.empty(c, numpy.uint32)
+        lib.openclare_repair_copy_creases(
+            found, out.crease_edges.ctypes.data, out.crease_folds.ctypes.data, out.crease_kinds.ctypes.data,
+            elements.ctypes.data, out.crease_indices.ctypes.data, out.crease_values.ctypes.data, cured.ctypes.data,
+        )
+        out.crease_on_vertex, out.crease_cured = elements == 1, cured == 1
+        n = lib.openclare_repair_left_count(found)
+        out.left_kinds, elements, out.left_reasons = (numpy.empty(n, numpy.uint8) for _ in range(3))
+        out.left_indices, out.left_sides = numpy.empty(n, numpy.uint32), numpy.empty(n, numpy.uint32)
+        out.left_values = numpy.empty(n)
+        lib.openclare_repair_copy_left(
+            found, out.left_kinds.ctypes.data, elements.ctypes.data, out.left_indices.ctypes.data,
+            out.left_sides.ctypes.data, out.left_values.ctypes.data, out.left_reasons.ctypes.data,
+        )
+        out.left_on_vertex = elements == 1
+        return out
+    finally:
+        lib.openclare_repair_free(found)
