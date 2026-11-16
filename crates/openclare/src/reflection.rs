@@ -24,7 +24,9 @@
 //! closed mesh cannot do without poles.
 //!
 //! The criteria, their thresholds and their crease rules are those of the
-//! ngon_check add-on, ported as they are. What this module adds is the
+//! ngon_check add-on, but for two things: a fold is read up to 180 degrees
+//! where the mesh is consistently oriented (see [`check`]), and a vertex of
+//! valence 2, a point on an edge, is no pole. What this module adds is the
 //! measure each fault is ranked by: an error of normal shows in a
 //! reflection, so every criterion that can be is brought back to an angle,
 //! in degrees, comparable across criteria and free of scale. The size of a
@@ -35,7 +37,7 @@
 //! ranks faults against one another, it is not the actual wobble of the
 //! reflection.
 
-use std::collections::HashMap;
+use rayon::prelude::*;
 
 use crate::creases::Crease;
 use crate::math::Vec3;
@@ -170,6 +172,37 @@ pub struct Fault {
     pub count: usize,
     /// The number that ranks it, as [`Kind`] says.
     pub value: f64,
+    /// Which corners and edges of the face are at fault, for a viewer to
+    /// show them: the vertices off the plane, the corners whose quad folds
+    /// or is thin, the edges and corners that pinch (all of those that do,
+    /// even the corners [`Fault::count`] leaves out). None for a pole or a
+    /// degenerate face.
+    pub parts: Vec<Part>,
+    /// Where to draw it.
+    pub frame: Frame,
+}
+
+/// A corner or an edge of a face, by its place in the face: corner `i` is
+/// its vertex `i`, edge `i` runs from its vertex `i` to its vertex `i + 1`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Part {
+    Corner(u32),
+    Edge(u32),
+}
+
+/// The place of a fault, for a viewer.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Frame {
+    /// The centre of the face (the mean of its vertices), or the vertex.
+    pub centre: Vec3,
+    /// The unit normal of the face, or the mean normal round the vertex;
+    /// zero for a degenerate face.
+    pub normal: Vec3,
+    /// For a face, the distance from its centre to its nearest edge, and to
+    /// its furthest vertex. For a vertex, the mean length of its edges,
+    /// twice.
+    pub inner: f64,
+    pub radius: f64,
 }
 
 impl Fault {
@@ -264,23 +297,39 @@ pub fn rank(faults: &mut [Fault]) {
 /// looks at it), where the vertex is on fewer than two sharp edges, the
 /// fold between the face and a face round the vertex, and where it is on
 /// two, the tilt off the plane of the face of a sharp edge leaving the
-/// face. A fold is the angle between the two normals, regardless of their
-/// sense: it is at most 90 degrees.
+/// face.
+///
+/// A fold is the angle between the two normals, up to 180 degrees, where
+/// the mesh is a consistently oriented manifold: every edge on two faces
+/// at most, walked one way by each. Otherwise (a face wound against its
+/// neighbours, as a cage with flipped normals has, or an edge on three
+/// faces) the sense of a normal tells nothing, and a fold is the angle
+/// between the two lines, at most 90 degrees: one beyond 90 then reads as
+/// its supplement. The tilt of a sharp edge is that of a line, either way.
 pub fn check(mesh: &PolyMesh, creases: &[Crease], settings: &Settings) -> Check {
     let cage = Cage::build(mesh, creases, settings.crease_sharp);
     let tolerance = settings.angle_tolerance.to_radians();
-    let mut faults = Vec::new();
-    for f in 0..mesh.faces.len() {
-        cage.check_face(f, settings, tolerance, &mut faults);
-    }
-    let mut poles = 0;
-    for v in 0..mesh.positions.len() {
-        if let Some(fault) = cage.check_vertex(v, tolerance, &mut poles) {
-            faults.push(fault);
-        }
-    }
+    let mut faults: Vec<Fault> = (0..mesh.faces.len())
+        .into_par_iter()
+        .flat_map_iter(|f| {
+            let mut found = Vec::new();
+            cage.check_face(f, settings, tolerance, &mut found);
+            found
+        })
+        .collect();
+    // One entry per pole looked at, with its fault if it has one.
+    let poles: Vec<Option<Fault>> = (0..mesh.positions.len())
+        .into_par_iter()
+        .filter_map(|v| {
+            let mut looked = 0;
+            let fault = cage.check_vertex(v, tolerance, &mut looked);
+            (looked > 0).then_some(fault)
+        })
+        .collect();
+    let looked = poles.len();
+    faults.extend(poles.into_iter().flatten());
     rank(&mut faults);
-    Check { faults, poles }
+    Check { faults, poles: looked }
 }
 
 /// Twice the area vector of a polygon (Newell's normal): its length is
@@ -297,87 +346,188 @@ fn newell(corners: &[Vec3]) -> Vec3 {
     n
 }
 
-/// The angle, in radians, between two lines of unit directions `a` and
-/// `b`: the sense of either does not count.
-fn fold(a: Vec3, b: Vec3) -> f64 {
-    a.dot(b).abs().min(1.0).acos()
+/// The distance from `p` to the segment from `a` to `b`.
+fn distance_to_segment(p: Vec3, a: Vec3, b: Vec3) -> f64 {
+    let ab = b - a;
+    let t = if ab.length_squared() <= 1e-24 { 0.0 } else { ((p - a).dot(ab) / ab.length_squared()).clamp(0.0, 1.0) };
+    (p - (a + t * ab)).length()
 }
 
 fn key(a: u32, b: u32) -> (u32, u32) {
     (a.min(b), a.max(b))
 }
 
-/// The mesh with what the criteria ask of its connectivity.
+/// The mesh with what the criteria ask of its connectivity, in flat arrays:
+/// a check runs on every change of a cage being edited.
 struct Cage<'a> {
     mesh: &'a PolyMesh,
-    /// The faces on each edge.
-    edge_faces: HashMap<(u32, u32), Vec<u32>>,
+    /// The edges, by their two vertices, the smaller first, in order; the
+    /// faces on edge `e` are `edge_faces[edge_offsets[e]..edge_offsets[e + 1]]`.
+    edges: Vec<(u32, u32)>,
+    edge_offsets: Vec<u32>,
+    edge_faces: Vec<u32>,
     /// The sharp edges: borders, and creases from the sharp weight.
-    sharp: HashMap<(u32, u32), bool>,
-    /// The faces round each vertex, and the other end of each of its edges.
-    vertex_faces: Vec<Vec<u32>>,
-    vertex_edges: Vec<Vec<u32>>,
-    /// The vertices on two creases or more, off the borders.
-    creased: Vec<usize>,
+    sharp: Vec<bool>,
+    /// The other end of each edge of each vertex, and the faces round it,
+    /// likewise.
+    neighbour_offsets: Vec<u32>,
+    neighbours: Vec<u32>,
+    round_offsets: Vec<u32>,
+    round: Vec<u32>,
+    /// The vertices on a border, and how many creases each is on.
+    boundary: Vec<bool>,
+    creased: Vec<u32>,
     /// The unit normal of each face, where it has one.
     normals: Vec<Option<Vec3>>,
+    /// Whether the mesh is a consistently oriented manifold, so that the
+    /// sense of its normals can be trusted.
+    oriented: bool,
+}
+
+/// Offsets from counts: `counts[i]` entries for `i`, one after the other.
+fn offsets(counts: impl Iterator<Item = u32>) -> Vec<u32> {
+    let mut offsets = vec![0];
+    for count in counts {
+        offsets.push(offsets.last().unwrap() + count);
+    }
+    offsets
 }
 
 impl<'a> Cage<'a> {
     fn build(mesh: &'a PolyMesh, creases: &[Crease], crease_sharp: f64) -> Self {
         let vertices = mesh.positions.len();
-        let mut edge_faces: HashMap<(u32, u32), Vec<u32>> = HashMap::new();
-        let mut vertex_faces = vec![Vec::new(); vertices];
-        let mut vertex_edges = vec![Vec::new(); vertices];
+        // Every side of every face: its edge, its face, and whether the
+        // face walks it from the smaller vertex.
+        let mut sides: Vec<((u32, u32), u32, bool)> = Vec::new();
+        let mut round_counts = vec![0u32; vertices];
         for (f, face) in mesh.faces.iter().enumerate() {
             for k in 0..face.len() {
                 let (a, b) = (face[k], face[(k + 1) % face.len()]);
-                if !vertex_faces[a as usize].contains(&(f as u32)) {
-                    vertex_faces[a as usize].push(f as u32);
+                // A face that names a vertex twice is round it once.
+                if !face[..k].contains(&a) {
+                    round_counts[a as usize] += 1;
                 }
-                if a == b {
-                    continue;
+                if a != b {
+                    sides.push((key(a, b), f as u32, a < b));
                 }
-                let faces = edge_faces.entry(key(a, b)).or_default();
-                if faces.is_empty() {
-                    vertex_edges[a as usize].push(b);
-                    vertex_edges[b as usize].push(a);
-                }
-                faces.push(f as u32);
             }
         }
-        let mut weights: HashMap<(u32, u32), f64> = HashMap::new();
-        for &([a, b], weight) in creases {
-            let w = weights.entry(key(a, b)).or_insert(weight);
-            *w = w.max(weight);
-        }
-        let mut creased = vec![0; vertices];
-        let mut sharp = HashMap::new();
-        for (&(a, b), faces) in &edge_faces {
-            let creased_edge = weights.get(&(a, b)).is_some_and(|&w| w >= crease_sharp);
-            if creased_edge {
-                creased[a as usize] += 1;
-                creased[b as usize] += 1;
+        let round_offsets = offsets(round_counts.iter().copied());
+        let mut round = vec![0; *round_offsets.last().unwrap() as usize];
+        let mut filled = round_offsets.clone();
+        for (f, face) in mesh.faces.iter().enumerate() {
+            for k in 0..face.len() {
+                if !face[..k].contains(&face[k]) {
+                    let at = &mut filled[face[k] as usize];
+                    round[*at as usize] = f as u32;
+                    *at += 1;
+                }
             }
-            sharp.insert((a, b), faces.len() == 1 || creased_edge);
         }
+
+        sides.sort_unstable();
+        let mut edges: Vec<(u32, u32)> = Vec::new();
+        let mut edge_counts = Vec::new();
+        let mut oriented = true;
+        for (i, &(edge, _, forward)) in sides.iter().enumerate() {
+            if edges.last() == Some(&edge) {
+                *edge_counts.last_mut().unwrap() += 1;
+                // Two faces on an edge walk it both ways, once each.
+                let (_, _, before) = sides[i - 1];
+                oriented &= before != forward && *edge_counts.last().unwrap() <= 2;
+            } else {
+                edges.push(edge);
+                edge_counts.push(1u32);
+            }
+        }
+        let edge_offsets = offsets(edge_counts.iter().copied());
+        let edge_faces: Vec<u32> = sides.iter().map(|&(_, f, _)| f).collect();
+
+        let mut weights: Vec<((u32, u32), f64)> = creases.iter().map(|&([a, b], w)| (key(a, b), w)).collect();
+        weights.sort_unstable_by(|x, y| x.0.cmp(&y.0).then(y.1.total_cmp(&x.1)));
+        weights.dedup_by_key(|x| x.0);
+        let mut neighbour_counts = vec![0u32; vertices];
+        let (mut boundary, mut creased) = (vec![false; vertices], vec![0u32; vertices]);
+        let mut sharp = Vec::with_capacity(edges.len());
+        for (e, &(a, b)) in edges.iter().enumerate() {
+            neighbour_counts[a as usize] += 1;
+            neighbour_counts[b as usize] += 1;
+            let border = edge_counts[e] == 1;
+            let creased_edge =
+                weights.binary_search_by(|x| x.0.cmp(&(a, b))).is_ok_and(|i| weights[i].1 >= crease_sharp);
+            for v in [a, b] {
+                boundary[v as usize] |= border;
+                creased[v as usize] += creased_edge as u32;
+            }
+            sharp.push(border || creased_edge);
+        }
+        let neighbour_offsets = offsets(neighbour_counts.iter().copied());
+        let mut neighbours = vec![0; *neighbour_offsets.last().unwrap() as usize];
+        let mut filled = neighbour_offsets.clone();
+        for &(a, b) in &edges {
+            for (v, u) in [(a, b), (b, a)] {
+                let at = &mut filled[v as usize];
+                neighbours[*at as usize] = u;
+                *at += 1;
+            }
+        }
+
         let normals = mesh
             .faces
-            .iter()
+            .par_iter()
             .map(|face| {
                 let raw = newell(&face.iter().map(|&v| mesh.positions[v as usize]).collect::<Vec<_>>());
                 (raw.length() > 1e-12).then(|| raw.normalize())
             })
             .collect();
-        Self { mesh, edge_faces, sharp, vertex_faces, vertex_edges, creased, normals }
+        Self {
+            mesh,
+            edges,
+            edge_offsets,
+            edge_faces,
+            sharp,
+            neighbour_offsets,
+            neighbours,
+            round_offsets,
+            round,
+            boundary,
+            creased,
+            normals,
+            oriented,
+        }
+    }
+
+    /// The angle, in radians, between two unit normals `a` and `b`; where
+    /// their sense cannot be trusted, between the two lines.
+    fn fold(&self, a: Vec3, b: Vec3) -> f64 {
+        let cosine = if self.oriented { a.dot(b) } else { a.dot(b).abs() };
+        cosine.clamp(-1.0, 1.0).acos()
+    }
+
+    fn edge(&self, a: u32, b: u32) -> Option<usize> {
+        self.edges.binary_search(&key(a, b)).ok()
     }
 
     fn is_sharp(&self, a: u32, b: u32) -> bool {
-        self.sharp.get(&key(a, b)).copied().unwrap_or(false)
+        self.edge(a, b).is_some_and(|e| self.sharp[e])
     }
 
-    fn is_boundary(&self, v: usize) -> bool {
-        self.vertex_edges[v].iter().any(|&u| self.edge_faces.get(&key(v as u32, u)).is_some_and(|f| f.len() == 1))
+    /// The faces on the edge from `a` to `b`.
+    fn faces_on(&self, a: u32, b: u32) -> &[u32] {
+        match self.edge(a, b) {
+            Some(e) => &self.edge_faces[self.edge_offsets[e] as usize..self.edge_offsets[e + 1] as usize],
+            None => &[],
+        }
+    }
+
+    /// The other ends of the edges of vertex `v`.
+    fn neighbours(&self, v: u32) -> &[u32] {
+        &self.neighbours[self.neighbour_offsets[v as usize] as usize..self.neighbour_offsets[v as usize + 1] as usize]
+    }
+
+    /// The faces round vertex `v`.
+    fn faces_round(&self, v: u32) -> &[u32] {
+        &self.round[self.round_offsets[v as usize] as usize..self.round_offsets[v as usize + 1] as usize]
     }
 
     /// The largest fold, in radians, between `normal` and the faces other
@@ -386,7 +536,7 @@ impl<'a> Cage<'a> {
         faces
             .iter()
             .filter(|&&g| g as usize != face)
-            .filter_map(|&g| self.normals[g as usize].map(|n| fold(n, normal)))
+            .filter_map(|&g| self.normals[g as usize].map(|n| self.fold(n, normal)))
             .filter(|&angle| angle > tolerance)
             .reduce(f64::max)
     }
@@ -402,20 +552,35 @@ impl<'a> Cage<'a> {
         let raw = newell(&corners);
         let area = raw.length() / 2.0;
         let radius = corners.iter().map(|&c| (c - center).length()).fold(0.0, f64::max);
+        let inner =
+            (0..k).map(|i| distance_to_segment(center, corners[i], corners[(i + 1) % k])).fold(f64::INFINITY, f64::min);
         let at = Element::Face(f as u32);
+        let mut frame = Frame { centre: center, normal: Vec3::ZERO, inner, radius };
         if area <= 1e-12 || radius <= 1e-9 {
-            faults.push(Fault { kind: Kind::Degenerate, at, sides: k, count: k, value: 0.0 });
+            faults.push(Fault { kind: Kind::Degenerate, at, sides: k, count: k, value: 0.0, parts: Vec::new(), frame });
             return;
         }
         let n = raw / raw.length();
+        frame.normal = n;
+        let corners_where = |wanted: &dyn Fn(usize) -> bool| -> Vec<Part> {
+            (0..k).filter(|&i| wanted(i)).map(|i| Part::Corner(i as u32)).collect()
+        };
 
         // 1. Flat.
         if k > 4 {
             let deviations: Vec<f64> = corners.iter().map(|&c| (c - center).dot(n).abs() / radius).collect();
             let deviation = deviations.iter().copied().fold(0.0, f64::max);
             if deviation > settings.flat_tolerance {
-                let count = deviations.iter().filter(|&&d| d > settings.flat_tolerance).count();
-                faults.push(Fault { kind: Kind::NotFlat, at, sides: k, count, value: deviation.atan().to_degrees() });
+                let parts = corners_where(&|i| deviations[i] > settings.flat_tolerance);
+                faults.push(Fault {
+                    kind: Kind::NotFlat,
+                    at,
+                    sides: k,
+                    count: parts.len(),
+                    value: deviation.atan().to_degrees(),
+                    parts,
+                    frame,
+                });
             }
         }
 
@@ -437,26 +602,26 @@ impl<'a> Cage<'a> {
                 }
             };
             let quads: Vec<u8> = (0..k).map(|i| state(wedges[(i + k - 1) % k]).max(state(wedges[i]))).collect();
-            let folded = quads.iter().filter(|&&s| s == 2).count();
-            let thin = quads.iter().filter(|&&s| s == 1).count();
             let smallest = |wanted: u8| {
                 wedges.iter().filter(|&&w| state(w) == wanted).map(|&w| w / mean).fold(f64::INFINITY, f64::min)
             };
-            if folded > 0 {
-                faults.push(Fault { kind: Kind::Folded, at, sides: k, count: folded, value: smallest(2) });
-            }
-            if thin > 0 {
-                faults.push(Fault { kind: Kind::Thin, at, sides: k, count: thin, value: smallest(1) });
+            for (kind, wanted) in [(Kind::Folded, 2), (Kind::Thin, 1)] {
+                let parts = corners_where(&|i| quads[i] == wanted);
+                if !parts.is_empty() {
+                    let (count, value) = (parts.len(), smallest(wanted));
+                    faults.push(Fault { kind, at, sides: k, count, value, parts, frame });
+                }
             }
         }
 
         // 3. Kept apart from curvature.
         if k != 4 {
-            self.check_curve(f, n, tolerance, faults);
+            self.check_curve(f, frame, tolerance, faults);
         }
     }
 
-    fn check_curve(&self, f: usize, n: Vec3, tolerance: f64, faults: &mut Vec<Fault>) {
+    fn check_curve(&self, f: usize, frame: Frame, tolerance: f64, faults: &mut Vec<Fault>) {
+        let n = frame.normal;
         let face = &self.mesh.faces[f];
         let k = face.len();
         let position = |v: u32| self.mesh.positions[v as usize];
@@ -468,15 +633,14 @@ impl<'a> Cage<'a> {
                 if a == b || self.is_sharp(a, b) {
                     return None;
                 }
-                self.bent(&self.edge_faces[&key(a, b)], f, n, tolerance)
+                self.bent(self.faces_on(a, b), f, n, tolerance)
             })
             .collect();
 
         let corners: Vec<Option<f64>> = face
             .iter()
             .map(|&v| {
-                let sharps: Vec<u32> =
-                    self.vertex_edges[v as usize].iter().copied().filter(|&u| self.is_sharp(v, u)).collect();
+                let sharps: Vec<u32> = self.neighbours(v).iter().copied().filter(|&u| self.is_sharp(v, u)).collect();
                 match sharps.len() {
                     // A corner: the vertex does not move.
                     3.. => None,
@@ -491,7 +655,7 @@ impl<'a> Cage<'a> {
                         })
                         .filter(|&angle| angle > tolerance)
                         .reduce(f64::max),
-                    _ => self.bent(&self.vertex_faces[v as usize], f, n, tolerance),
+                    _ => self.bent(self.faces_round(v), f, n, tolerance),
                 }
             })
             .collect();
@@ -504,12 +668,19 @@ impl<'a> Cage<'a> {
             return;
         }
         let angle = edges.iter().chain(&corners).flatten().copied().fold(0.0, f64::max);
+        let parts = (0..k)
+            .filter(|&i| edges[i].is_some())
+            .map(|i| Part::Edge(i as u32))
+            .chain((0..k).filter(|&i| corners[i].is_some()).map(|i| Part::Corner(i as u32)))
+            .collect();
         faults.push(Fault {
             kind: Kind::Pinch,
             at: Element::Face(f as u32),
             sides: k,
             count: bent_edges + bad_corners,
             value: angle.to_degrees(),
+            parts,
+            frame,
         });
     }
 
@@ -518,11 +689,13 @@ impl<'a> Cage<'a> {
     ///
     /// A vertex on a border of the mesh is not looked at, nor one on two
     /// creases or more: they follow the rules of curves, not those of the
+    /// surface. Nor is a vertex of valence 2 (or 1): a point on an edge,
+    /// which subdivision rounds off like the edge, not a singularity of the
     /// surface.
     fn check_vertex(&self, v: usize, tolerance: f64, poles: &mut usize) -> Option<Fault> {
-        let faces = &self.vertex_faces[v];
-        let valence = self.vertex_edges[v].len();
-        if faces.is_empty() || valence == 4 || self.is_boundary(v) || self.creased[v] >= 2 {
+        let faces = self.faces_round(v as u32);
+        let valence = self.neighbours(v as u32).len();
+        if faces.is_empty() || valence < 3 || valence == 4 || self.boundary[v] || self.creased[v] >= 2 {
             return None;
         }
         let normals: Vec<Vec3> = faces.iter().filter_map(|&f| self.normals[f as usize]).collect();
@@ -532,14 +705,20 @@ impl<'a> Cage<'a> {
         *poles += 1;
         let sum: Vec3 = normals.iter().sum();
         let mean = if sum.length() > 0.0 { sum.normalize() } else { normals[0] };
-        let angles: Vec<f64> = normals.iter().map(|&n| fold(n, mean)).collect();
+        let angles: Vec<f64> = normals.iter().map(|&n| self.fold(n, mean)).collect();
         let count = angles.iter().filter(|&&a| a > tolerance).count();
+        let centre = self.mesh.positions[v];
+        let size =
+            self.neighbours(v as u32).iter().map(|&u| (self.mesh.positions[u as usize] - centre).length()).sum::<f64>()
+                / valence as f64;
         (count > 0).then(|| Fault {
             kind: Kind::CurvedPole,
             at: Element::Vertex(v as u32),
             sides: valence,
             count,
             value: angles.iter().copied().fold(0.0, f64::max).to_degrees(),
+            parts: Vec::new(),
+            frame: Frame { centre, normal: mean, inner: size, radius: size },
         })
     }
 }
@@ -611,8 +790,15 @@ mod tests {
         assert_eq!(pinch.len(), 1);
         assert_eq!(pinch[0].at, Element::Face(octagon as u32));
         assert!(close(pinch[0].value, (1.5 * alpha).to_degrees()), "{}", pinch[0].value);
-        // All eight edges fold, by 15 or 5 degrees, beyond the tolerance.
+        // All eight edges fold, by 15 or 5 degrees, beyond the tolerance,
+        // and every corner touches a quad that does.
         assert_eq!(pinch[0].count, 8);
+        let edges: Vec<Part> = (0..8).map(Part::Edge).collect();
+        let corners: Vec<Part> = (0..8).map(Part::Corner).collect();
+        assert_eq!(pinch[0].parts, [edges, corners].concat());
+        // Drawn round the centre of the octagon, facing the angle 2 α.
+        let facing = Vec3::new((2.0 * alpha).sin(), 0.0, (2.0 * alpha).cos());
+        assert!((pinch[0].frame.normal.dot(facing).abs() - 1.0).abs() < 1e-12);
 
         // Off its plane: towards the axis, the six vertices of columns 1
         // and 3 sit at r cos α, the two of column 2 at r. The centre is at
@@ -669,6 +855,7 @@ mod tests {
         assert_eq!(pinch.len(), 1, "{:?}", check.faults);
         assert_eq!(pinch[0].at, Element::Face(octagon as u32));
         assert_eq!(pinch[0].count, 1);
+        assert_eq!(pinch[0].parts, [Part::Corner(0)]);
         assert!(close(pinch[0].value, 20.0), "{}", pinch[0].value);
         // The rest of the grid is flat but for the two quads under the
         // raised vertex, which no criterion of a quad looks at; the only
@@ -825,6 +1012,63 @@ mod tests {
         let pole = &sphere.faults[0];
         assert_eq!((pole.kind, pole.at, pole.sides, pole.count), (Kind::CurvedPole, Element::Vertex(0), 5, 5));
         assert!(close(pole.value, 15.0), "{}", pole.value);
+        // Drawn at the pole, facing up, as wide as its spokes are long:
+        // the chord 2 ρ sin(β / 2).
+        let spoke = 2.0 * 3.0 * (beta / 2.0).sin();
+        assert!(close(pole.frame.normal.z, 1.0) && close(pole.frame.radius, spoke), "{:?}", pole.frame);
+    }
+
+    #[test]
+    fn a_fold_beyond_a_right_angle_reads_as_itself_where_the_mesh_is_oriented() {
+        // A triangle in the plane z = 0 facing up, and across its edge on
+        // the x axis a triangle whose far vertex is turned by φ about that
+        // axis: its normal is turned by φ from the first.
+        let fold = 120f64.to_radians();
+        let far = Vec3::new(0.5, -fold.cos(), fold.sin());
+        let positions = vec![Vec3::ZERO, Vec3::X, Vec3::new(0.5, 1.0, 0.0), far];
+        let oriented = PolyMesh { positions: positions.clone(), faces: vec![vec![0, 1, 2], vec![1, 0, 3]] };
+        let pinch = |mesh: &PolyMesh| {
+            let check = check(mesh, &[], &Settings::default());
+            check.faults.iter().filter(|f| f.kind == Kind::Pinch).map(|f| f.value).fold(0.0, f64::max)
+        };
+        assert!(close(pinch(&oriented), 120.0), "{}", pinch(&oriented));
+        // The second triangle wound the other way: the senses cannot be
+        // trusted, and the fold reads as its supplement.
+        let flipped = PolyMesh { positions, faces: vec![vec![0, 1, 2], vec![0, 1, 3]] };
+        assert!(close(pinch(&flipped), 60.0), "{}", pinch(&flipped));
+    }
+
+    #[test]
+    fn a_vertex_of_valence_two_is_not_a_pole() {
+        // The flat grid with its octagon, and one more vertex in the middle
+        // of the edge from (1, 0) to (1, 1), between two quads of the bottom
+        // row and used by both: it has two edges, and is a point on that
+        // edge. The two quads become flat pentagons with one vertex on a
+        // straight side.
+        let (mut mesh, _) = grid_with_octagon(|i, j| Vec3::new(i as f64, j as f64, 0.0));
+        let (a, b) = (1u32, 6u32);
+        let middle = mesh.positions.len() as u32;
+        mesh.positions.push(Vec3::new(1.0, 0.5, 0.0));
+        for face in &mut mesh.faces {
+            for k in 0..face.len() {
+                let (u, w) = (face[k], face[(k + 1) % face.len()]);
+                if (u, w) == (a, b) || (u, w) == (b, a) {
+                    face.insert(k + 1, middle);
+                    break;
+                }
+            }
+        }
+        let check = check(&mesh, &[], &Settings::default());
+        // As before: the four middles of the octagon's sides, and no fault.
+        assert_eq!(check.poles, 4);
+        assert!(check.faults.is_empty(), "{:?}", check.faults);
+        // Raised off the plane, the vertex makes its two pentagons pinch
+        // and leave their plane, but it is still no pole.
+        mesh.positions[middle as usize].z = 0.2;
+        let raised = super::check(&mesh, &[], &Settings::default());
+        assert_eq!(raised.poles, 4);
+        assert!(raised.faults.iter().all(|f| f.at != Element::Vertex(middle)), "{:?}", raised.faults);
+        assert!(raised.faults.iter().any(|f| f.kind == Kind::Pinch));
     }
 
     /// A regular pentagon of circumradius `r` in the plane z = 0, its
@@ -855,6 +1099,9 @@ mod tests {
         let fault = &check.faults[0];
         assert_eq!((fault.kind, fault.sides, fault.repair()), (Kind::NotFlat, 5, Repair::MoveVertices));
         assert!(close(fault.value, (deviation / radius).atan().to_degrees()), "{}", fault.value);
+        // Off by more than 0.2 %: the raised vertex (0.0400 of the radius),
+        // the two beside it (0.0323) and the two across (0.0123).
+        assert_eq!(fault.parts, (0..5).map(Part::Corner).collect::<Vec<_>>());
         // Its border is the mesh's: no pinch, alone as it is.
 
         // Raised by 0.004, it is off by 0.0016 of its radius at most, within
@@ -885,6 +1132,12 @@ mod tests {
         let fault = &folded.faults[0];
         assert_eq!((fault.kind, fault.count, fault.repair()), (Kind::Folded, 3, Repair::MoveVertices));
         assert!(close(fault.value, -0.5), "{}", fault.value);
+        assert_eq!(fault.parts, [Part::Corner(1), Part::Corner(2), Part::Corner(3)]);
+        // Centre (0, 1/2). The nearest edges are those from the lower tips to
+        // the notch, along (1, 1), at |(2, 3/2) × (1, 1)| / √2 = 1 / (2 √2);
+        // the furthest vertices the three tips, at 5/2.
+        let inner = 1.0 / (2.0 * 2f64.sqrt());
+        assert!(close(fault.frame.inner, inner) && close(fault.frame.radius, 2.5), "{:?}", fault.frame);
 
         // With a = 0.2: 0.1 against a mean of 5.6 / 4 = 1.4, a share of
         // 1/14, under the 0.15 of a thin quad.
@@ -898,7 +1151,15 @@ mod tests {
 
     #[test]
     fn faults_are_ranked_folded_first_then_by_angle_then_thin() {
-        let fault = |kind, v, value| Fault { kind, at: Element::Vertex(v), sides: 3, count: 1, value };
+        let fault = |kind, v, value| Fault {
+            kind,
+            at: Element::Vertex(v),
+            sides: 3,
+            count: 1,
+            value,
+            parts: Vec::new(),
+            frame: Frame::default(),
+        };
         let mut faults = vec![
             fault(Kind::Thin, 0, 0.1),
             fault(Kind::NotFlat, 1, 2.0),
