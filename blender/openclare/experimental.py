@@ -23,6 +23,7 @@ SETTINGS = {
     "follow_curvature": None,
     "fewer_irregular": None,
     "volume_fit": None,
+    "for_subdivision": None,
 }
 # The values of a setting that are experimental where its others are not,
 # each with the value the engine is given in its place while they are hidden.
@@ -108,9 +109,10 @@ class OpenclarePreferences(bpy.types.AddonPreferences):
         name="Experimental Features",
         description=(
             "Show the features that are not stable yet, marked with this icon: Ask For Sizes and Analyse, "
-            "Quads Around Thin Parts, Follow Curvature, Fewer Irregular Vertices, Volume Fit, triangles for "
-            "simulation, the curves and their tools, the poles and their tool. Hidden, they are left out of "
-            "the panels and the toolbar, and a remesh gives them their default values"
+            "Quads Around Thin Parts, Follow Curvature, Fewer Irregular Vertices, Volume Fit, Optimize for "
+            "Subdivision Surface, triangles for simulation, the curves and their tools, the poles and their "
+            "tool. Hidden, they are left out of the panels and the toolbar, and a remesh gives them their "
+            "default values"
         ),
         default=True,
         update=toggled,

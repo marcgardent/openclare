@@ -33,6 +33,7 @@ The panel *openclare* of the Properties editor, on the tab of the mesh.
 | *Output: Triangles*, for *Simulation* | experimental | a few triangles cut through another one on 3 models of 12 ([TRIANGLES.md](TRIANGLES.md), #226) |
 | *Output: Triangles*, for *Shape* (Blender's *Decimate*) | stable | follows no hard edge, curve or material, as the panel says |
 | *Output: N-gons* | experimental | flat parts as faces of many sides, creased all round; measured on six mechanical shapes and a half cylinder, three levels of subdivision; not with curves, poles or a symmetry for the parts that take no quads |
+| *Optimize for Subdivision Surface* | experimental | new on 16 November 2026: the result repaired in place, its creases always carried; the poles are not moved (a slide towards flatter places was measured and left out); measured by the reflection check on the cage, not on the subdivided surface; not yet tried in a real Blender session nor on a car body (#330) |
 | *Ask For: Number* | stable | |
 | *Ask For: Sizes* (*Largest*, *Smallest*) | experimental | sizes proposed from a hidden constant, fingers dropped on a body (#253) |
 | *Analyse* | experimental | the same (#253) |
@@ -108,6 +109,7 @@ The panel *Reflection Check* of the Properties editor, on the tab of the mesh, f
 | `--curves` | experimental | as *Draw Curve* (#195, #196, #44) |
 | `--poles`, `--poles-out` | experimental | as the poles of the add-on (#249) |
 | `--faces ngons`, `--creases-out` | experimental | as *Output: N-gons* |
+| `--for-subdivision` | experimental | as *Optimize for Subdivision Surface*; the creases written beside the output, as `<output>.creases` (#330) |
 | `--edge-angle` | experimental | sharp edges of the work mesh, off by default, not yet the add-on's |
 | `--method triangles` | experimental | as *Output: Triangles* (#226) |
 | `--method integer-grid`, `--method instant-meshes` | experimental | other chains, kept for comparison (#9) |

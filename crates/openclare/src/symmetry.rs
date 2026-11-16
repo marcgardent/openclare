@@ -325,6 +325,12 @@ pub struct Carried {
 }
 
 impl Carried {
+    /// The two halves of the result, for a change made to the half kept to
+    /// be made to its image.
+    pub fn halves(&self, axis: Axis) -> Halves {
+        Halves { axis, image: self.image.clone(), faces: self.faces.len() / 2 }
+    }
+
     /// The edges of the result that `edges` of the mesh became, with their
     /// mirror images: those left out with the negative side are gone, those
     /// on the plane are their own image, none comes twice.
@@ -348,6 +354,38 @@ impl Carried {
             }
         }
         out
+    }
+}
+
+/// The two halves of a mesh made by [`symmetric`]: the vertices of the half
+/// kept come first, then the images of those off the plane; the faces of
+/// the half first, then their images.
+#[derive(Clone, Debug)]
+pub struct Halves {
+    pub axis: Axis,
+    /// The image of each vertex of the half, itself for those on the plane.
+    image: Vec<u32>,
+    /// How many faces the half has.
+    faces: usize,
+}
+
+impl Halves {
+    /// The faces of the half kept that touch no vertex of the plane: their
+    /// vertices can move without the plane moving.
+    pub fn free_faces(&self, mesh: &PolyMesh) -> Vec<u32> {
+        let on_plane = |v: u32| self.image.get(v as usize) == Some(&v);
+        (0..self.faces.min(mesh.faces.len()) as u32)
+            .filter(|&f| !mesh.faces[f as usize].iter().any(|&v| on_plane(v)))
+            .collect()
+    }
+
+    /// Every vertex of the other half put back at the image of its own.
+    pub fn mirror(&self, positions: &mut [Vec3]) {
+        for (v, &image) in self.image.iter().enumerate() {
+            if image as usize != v && (image as usize) < positions.len() {
+                positions[image as usize] = self.axis.mirror(positions[v]);
+            }
+        }
     }
 }
 

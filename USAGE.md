@@ -163,6 +163,28 @@ it has 12 quads round it, where its caps would leave it 8.
 ./target/release/openclare remesh part.obj part-ngons.obj --preset hard-surface --quads 3000 --faces ngons --creases-out part-ngons.creases
 ```
 
+## A result to be subdivided
+
+`--for-subdivision` (experimental; `for_subdivision = true` in a saved configuration) is for a
+mesh that will go under a Catmull-Clark Subdivision Surface, a car body or a product shot. It does
+two things:
+
+- the mesh the chain is about to write is repaired in place for the reflection check, as
+  `openclare repair` does, with its creases: folded and thin corner quads straightened, n-gons
+  flattened, every vertex, edge and face kept;
+- its creases are written beside it, as `<output>.creases`, unless `--creases-out` says where.
+
+```bash
+./target/release/openclare remesh source.obj body.obj --quads 3000 --for-subdivision
+./target/release/openclare measure source.obj body.obj --creases body.creases
+```
+
+It is off by default: a mesh that is never subdivided has no use for it. What it gains is
+measured by the reflection check, on the cage, not on the subdivided surface. Moving the poles
+towards flatter places was tried with it and left out: it paid for its gain in alignment, spirals
+and thin faces (ALGORITHM.md, "A result to be subdivided"); `OPENCLARE_SLIDE=on` with
+`--for-subdivision` runs that experiment.
+
 ## Symmetry
 
 `--symmetry x` (or `y`, `z`; `symmetry = x` in a saved configuration) says that the plane through

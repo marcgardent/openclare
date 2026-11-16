@@ -330,6 +330,16 @@ unsafe fn remesh(
         openclare::config::Faces::Ngons => format!("{report}merged_faces = {}\n", done.merged_faces),
         openclare::config::Faces::Quads => report,
     };
+    // Said only of a result made to be subdivided.
+    let report = match &done.subdivision_repair {
+        Some(repair) => format!(
+            "{report}subdivision_moved = {}\nsubdivision_largest_share = {}\n\
+             subdivision_folded_before = {}\nsubdivision_folded_after = {}\nsubdivision_thin_before = {}\n\
+             subdivision_thin_after = {}\n",
+            repair.moved, repair.largest_share, repair.folded.0, repair.folded.1, repair.thin.0, repair.thin.1,
+        ),
+        None => report,
+    };
     Ok(OpenclareResult {
         mesh,
         hard_edges: done.hard_edges,

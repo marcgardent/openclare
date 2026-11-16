@@ -731,6 +731,17 @@ class OpenclareSettings(bpy.types.PropertyGroup):
         ),
         default=True,
     )
+    for_subdivision: bpy.props.BoolProperty(
+        options=set(),
+        name="Optimize for Subdivision Surface",
+        description=(
+            "Experimental. For a result to be subdivided (a car body, a product shot): it is repaired in place "
+            "for its reflections, as Repair in Place does, with its creases, which it always carries. Judged "
+            "by the reflection check, on the cage, not on the subdivided surface. Off for a mesh that is never "
+            "subdivided"
+        ),
+        default=False,
+    )
     export_creases: bpy.props.BoolProperty(
         options=set(),
         name="Creases",
@@ -915,6 +926,8 @@ def engine_settings_of(original, evaluated, source, write=True):
         engine_settings["method"] = "triangles"
     if settings.output == "NGONS":
         engine_settings["faces"] = "ngons"
+    if for_subdivision(settings):
+        engine_settings["for_subdivision"] = "true"
     density = None
     if settings.density_group:
         density = weights_of(evaluated, source, settings.density_group)
@@ -1529,8 +1542,10 @@ class Remeshing:
             given = engine_input(
                 source, BASE_PRESET, engine_settings, density, settings.export_materials, copy,
                 sharp=settings.use_marked_sharp, stretch=stretch_of(original), curves=self.curves, curve_marks=marks,
-                # Faces of many sides are rounded off without their creases.
-                sharp_edges=settings.export_sharp_edges, creases=settings.export_creases or of_ngons(settings),
+                # Faces of many sides, and a mesh to be subdivided, are
+                # rounded off without their creases.
+                sharp_edges=settings.export_sharp_edges,
+                creases=settings.export_creases or of_ngons(settings) or for_subdivision(settings),
                 asked=extend.asked(original),
                 poles=poles.placed(original.data, stretch_of(original)) if experimental.shown() else [],
             )
@@ -2115,6 +2130,12 @@ def of_ngons(settings):
     return experimental.value(settings, "output") == "NGONS"
 
 
+def for_subdivision(settings):
+    """Whether these settings ask for a result optimized for a Subdivision
+    Surface: experimental, and not of triangles."""
+    return bool(experimental.value(settings, "for_subdivision")) and settings.output != "TRIANGLES"
+
+
 def of_triangles(told):
     """Whether what the engine said is of a result of triangles."""
     return int(told.get("quads", 0)) == 0 and int(told.get("faces", 0)) > 0 and "merged_faces" not in told
@@ -2176,6 +2197,10 @@ def report_lines(told):
     welded, apart = int(told.get("welded_vertices", 0)), int(told.get("edges_taken_apart", 0))
     if welded or apart:
         lines.append((f"Mended: {welded} vertices welded, {apart} edges taken apart", "ERROR"))
+    if "subdivision_moved" in told:
+        folded = f"{told.get('subdivision_folded_before')} to {told.get('subdivision_folded_after')}"
+        thin = f"{told.get('subdivision_thin_before')} to {told.get('subdivision_thin_after')}"
+        lines.append((f"For subdivision: folded faces {folded}, thin {thin}", "MOD_SUBSURF"))
     return lines
 
 
@@ -2379,6 +2404,8 @@ class OPENCLARE_PT_output(SourcePanel, bpy.types.Panel):
             target = layout.row()
             target.active = not decimate
             target.prop(settings, "target", expand=True)
+        if shown and settings.output != "TRIANGLES":
+            layout.prop(settings, "for_subdivision", icon=experimental.ICON)
         if shown and settings.target == "SIZE" and not decimate:
             draw_sizes(context, layout, owner, settings)
         else:
@@ -2391,6 +2418,8 @@ class OPENCLARE_PT_output(SourcePanel, bpy.types.Panel):
         carried.prop(settings, "export_sharp_edges", text="Sharp")
         if of_ngons(settings):
             carried.label(text="Creases: always, for N-gons", icon="CHECKMARK")
+        elif for_subdivision(settings):
+            carried.label(text="Creases: always, for a subdivision", icon="CHECKMARK")
         else:
             carried.prop(settings, "export_creases", text="Creases")
         followed.prop(settings, "shading", expand=True)

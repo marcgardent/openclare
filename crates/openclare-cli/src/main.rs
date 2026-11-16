@@ -71,6 +71,10 @@ OPTIONS (remesh):
                                  of its faces is written next to it, as <output>.groups
     --skip-pieces-under <Q>      leave out the separate pieces whose share of the quads is below Q (default 0: keep all)
     --no-close-loops             leave the lines of quads round a part as the lengths make them, helices or not
+    --for-subdivision            the result is to be subdivided (a Catmull-Clark Subdivision Surface): the
+                                 mesh is repaired in place for the reflection check (as `openclare repair`),
+                                 with its creases, and they are written beside it, as <output>.creases,
+                                 unless --creases-out says where (experimental)
     --merge-singularities        let a 3 and a 5 (singularities whose valences add up to 3, 4 or 5) merge
                                  across a strip of no width instead of holding it one quad wide (experimental)
     --quality <standard|slow>    slow: after the engine, an exact solver (HiGHS) chooses which loops to close
@@ -451,6 +455,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
             "--no-close-loops" => config.close_loops = false,
             "--merge-singularities" => config.merge_singularities = true,
+            "--for-subdivision" => config.for_subdivision = true,
             "--quality" => config.quality = value(arg)?.parse().map_err(|e: openclare::Error| e.to_string())?,
             "--slow-time-limit" => config.slow_time_limit = parse(arg, value(arg)?)?,
             "--slow-work-limit" => config.slow_work_limit = parse(arg, value(arg)?)?,
@@ -654,6 +659,19 @@ fn remesh(args: &[String]) -> Result<(), String> {
     if config.faces == openclare::config::Faces::Ngons {
         println!("flat     {} faces made of the quads of flat parts", report.merged_faces);
     }
+    if let Some(repair) = &report.subdivision_repair {
+        if report.singularities_slid > 0 {
+            println!("slid     {} singularities towards a flatter place (OPENCLARE_SLIDE)", report.singularities_slid);
+        }
+        println!(
+            "repair   for subdivision: {} vertices moved (the farthest by {:.3} of its shortest edge); folded faces {} -> {}, thin {} -> {}",
+            repair.moved, repair.largest_share, repair.folded.0, repair.folded.1, repair.thin.0, repair.thin.1
+        );
+    }
+    // A mesh to be subdivided is wrong without its creases: they are
+    // written beside it when no other place is said.
+    let beside = output.strip_suffix(".obj").map(|stem| format!("{stem}.creases"));
+    let creases_out = creases_out.or(if config.for_subdivision { beside } else { None });
     if let Some(path) = &creases_out {
         let lines: String =
             report.creases.iter().map(|([a, b], weight)| format!("{} {} {weight}\n", a + 1, b + 1)).collect();
@@ -1082,8 +1100,12 @@ fn field_command(args: &[String]) -> Result<(), String> {
     if let Some(quad_edges) = simplify {
         let quad_edge = work_request.curvature_scale.ok_or("--simplify needs --quads or --scale")?;
         let optimizer = singularity::create(singularity::Kind::PairCancellation);
-        let options =
-            singularity::Request { alignment: request.alignment, tolerance, reach: Some(quad_edges * quad_edge) };
+        let options = singularity::Request {
+            alignment: request.alignment,
+            tolerance,
+            reach: Some(quad_edges * quad_edge),
+            ..Default::default()
+        };
         let start = std::time::Instant::now();
         let (simplified, report) = optimizer.optimize(&work, &field, &options).map_err(|e| e.to_string())?;
         let frames = crossfield::FaceFrames::build(&work.mesh, &Topology::build(&work.mesh));

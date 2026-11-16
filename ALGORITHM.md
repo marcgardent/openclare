@@ -775,7 +775,9 @@ What stays open:
 - **Same reservations as at milestone 2**: these figures describe a field, not a finished mesh.
 - **The reach is a setting**: at 3 quad edges the ogre falls to 58 singularities for 9.7°. The
   right value will be decided on meshes, not on fields.
-- **The order is greedy**, the closest pairs first; no move of a lone singularity is tried.
+- **The order is greedy**, the closest pairs first; no move of a lone singularity is tried
+  (one was tried on 16 November 2026, for a subdivided result, and left as an experiment: see
+  "A result to be subdivided").
 
 ### M4 — Seamless parametrization
 
@@ -2144,6 +2146,115 @@ how large n-gons shade, organic models.
 **In the add-on** (0.21.0): *Output: N-gons*, experimental. The creases are set on the result
 whatever *Carry* says, the result is named `.ngons` and says how many of its faces are on flat
 parts; with the experimental features hidden the same settings give quads.
+
+### A result to be subdivided
+
+Done on 16 November 2026, at the author's request (#330): one option, `--for-subdivision`
+(`for_subdivision` in a configuration, *Optimize for Subdivision Surface* in the add-on), for a
+mesh that will go under a Catmull-Clark subdivision. Off by default. Three things were asked for
+it; two are in it.
+
+- **The repair in place at the end of the chain.** The mesh the chain is about to give back is
+  repaired by `reflection::repair` (#329) with the creases of the report: folded and thin corner
+  quads straightened, n-gons flattened, every vertex, edge and face kept, no vertex moved beyond a
+  tenth of its shortest edge, each repair kept only if the score of the reflection check gets
+  better. The creases the repair proposes are not set: those of the report read the source, the
+  repair only the cage. Of a symmetric mesh only the faces of the half kept that touch no vertex of
+  the plane are repaired, and the other half is made their image again. Under `--faces ngons` the
+  repair comes after the flat parts are merged.
+- **The creases with the output.** They were already made for every output (milestone 12) and
+  given on request (`--creases-out`, *Carry: Creases*); with the option they always are: the
+  command line writes them beside the output, the add-on sets them whatever *Carry* says.
+- **A cost "curvature under the pole"**, to move the poles towards flatter places. Tried, measured,
+  and left out of the option: see below. It stays in the engine as an experiment
+  (`singularity::Slide`), run only when `OPENCLARE_SLIDE` asks for it.
+
+**Measured** on the twelve models of the quick batch at 2970, 3000 and 3030 quads (36 runs a
+side), each measured with the creases it was made with; means over the three budgets. The pole
+angle is the one the check gives (the largest angle between the normal of a face round the pole
+and their mean), over every pole; `--for-subdivision` alone changes no vertex count, no
+singularity and no edge of the mesh, only vertex positions.
+
+| Organic (10 models) | off | the option | option + slide | option + slide, alignment held |
+|---|---|---|---|---|
+| quads | 2993 | 2993 | 2993 | 2996 |
+| irregular vertices | 68.8 | 68.8 | 68.8 | 68.7 |
+| spiral loop edges | 6.17 % | 6.17 % | 11.39 % | 9.40 % |
+| Hausdorff distance × 1000 | 8.12 | 8.12 | 9.05 | 8.61 |
+| angle deviation | 5.68° | 5.68° | 7.01° | 6.55° |
+| base complex patches | 1525 | 1525 | 1786 | 1705 |
+| poles on a curved zone, median angle | 16.0° | 16.0° | 9.4° | 10.8° |
+| the same, worst | 59.0° | 59.0° | 55.1° | 52.9° |
+| pole angle, mean over the poles | 20.0° | 20.0° | 13.8° | 15.2° |
+| folded faces | 0.50 | 0.37 | 0.80 | 0.50 |
+| thin faces | 0.33 | 0.30 | 1.03 | 0.73 |
+
+On the two mechanical models (cage, part) the option alone changes nothing at all: none of their
+faces folds or is thin. The slide lowers their pole angle too (32.1° to 18.9° mean), but at 3.3° of
+angle deviation for 1.9°.
+
+**The repair** mends what it can reach: over the 30 organic runs the folded faces go from 15 to
+11 (jerry 11 to 7, ogre, pig and suzanne unchanged), the thin ones from 10 to 9. Each folded face
+left would need a vertex moved further than the bound (pig, ogre and jerry, looked at by
+`openclare repair`). The creases the repair proposes would cure many poles on a curved zone of
+those models (58 of 92 on pig): the cage folds by 30° or more there; they are not set, since
+the creases of the report, which read the source, found no fold there. It never moved a vertex where
+nothing was wrong: 32 runs of 36 came out byte for byte the same, the 4 others are jerry and ogre.
+On the n-gon output (`--faces ngons`) of `part` at the same three budgets it mends what #331
+found: folded faces 8 to 0, thin 43 to 15, the Hausdorff distance unchanged; on `cage` there is
+nothing to mend. Whether it should run on every n-gon output, option or not, is left to decide.
+
+**What a pole is charged.** The reflection check gives a pole the largest angle between the
+normals of the faces round it and their mean. On a smooth surface that angle grows as the
+curvature across the faces, in the direction the surface bends most, times their size. The cost
+must act before the cage exists, so it reads the source: at a vertex of the work mesh, the largest
+principal curvature (read at the scale of the quads) met within one quad edge of it, times that
+edge (`singularity::Bend`). The largest within reach and not the value at the vertex: on a rounded
+box, the value at the vertex, averaged with the flat beside it, is lower on the rim of a rounded
+corner than at its middle, and poles slid there by that reading scored worse by the check (7.6°
+of mean pole angle went to 9.4°). Checked by hand on known cases (`tests/singularity.rs`): on the
+spheroid x² + y² + (z/2)² = 1 the cost at the tip is 2 per unit of edge and 1.06 at cos t = 1/3,
+and the check of a quad sphere laid on it with a corner of its cube at each of those two places
+ranks the two the same way; on a cube, the cost is 0 on the flat of a face and large at a corner,
+where the check gives 54.7°.
+
+**The slide.** After the cancellations of M3, each simple singularity, the most bent first, looks
+at the places it can reach within three quad edges over interior edges, through no other
+singularity, no border and no line the field is held to. The cheapest of those that cost at most
+95 % of where it is are tried, three at most: the index is moved along the shortest way there by
+the period jumps, as a cancellation moves it, the field solved again round the way, and the move
+undone if the energy there rose by more than a quarter (and, held, its alignment part as well).
+Imposed poles do not move. It is the move of a lone singularity M3 left untried.
+
+**Known answers, derived before looking** (synthetic shapes, 1500 quads, organic preset; the
+mean pole angle):
+
+| Shape | Where the poles should go | off | slide | slide, held |
+|---|---|---|---|---|
+| spheroid (1, 1, 2) | from the tips, where the surface bends by 2, towards the waist, where it bends by 1 | 3.85° (4 poles round each tip) | 2.93°, all 8 slid down | 3.85°, none |
+| capsule (radius 1, cylinder of length 2) | nowhere: the caps and the cylinder bend by the same 1/r across, and the poles belong to the caps, where the curvature of Gauss gathers | 2.81° | 2.81°, none | 2.81°, none |
+| box rounded by 0.3 | nowhere: the flat of a face is four quads away, the rounded corner and edges bend alike | 7.62° | 7.62°, none | 7.62°, none |
+| flat disc with a bump | off the bump onto the flat | 1.56° (4 poles on the bump) | 1.15°, all 4 slid out | 1.56°, none |
+
+The slide moved the poles where the cost said and nowhere else. But every one of those moves
+raised the alignment part of the energy by more than a quarter, even where the whole energy fell
+(on the spheroid, by a quarter): a pole off the place the field put it twists the field away from
+the curvature directions round it.
+
+**Verdict.** The cost does what it says: the angle the check gives the poles falls on every
+model, by about a third in the mean (least on blob, 6.2° to 5.8°). It is paid on
+every model in alignment (+23 % of angle deviation), in spirals (nearly twice as many loop edges,
+though a single model's share is chaotic: bob goes from 0 to 32 %), in base complex patches
+(+17 %), and in thin and folded faces, which the check itself ranks before any angle. Holding the
+alignment to the same tolerance keeps three quarters of the gain for two thirds of the loss, and
+on the known cases moves nothing. So the option ships with the repair and the creases only. What would change it: a
+slide decided with the quantization, which could see the spirals and the thin faces it makes
+(Lyon et al. 2021 move singularities there), or a target on the limit surface, which the cage
+angle only stands for.
+
+**Limits.** Every angle is measured on the cage, not on the subdivided surface: the limit
+surface, its continuity of curvature at a pole, its reflection lines, were not measured. Nothing
+was seen in a real Blender session.
 
 ### Guide curves
 

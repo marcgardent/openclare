@@ -85,6 +85,50 @@ fn a_mesh_goes_in_as_arrays_and_quads_come_out() {
 }
 
 #[test]
+fn a_result_made_to_be_subdivided_says_what_its_repair_did() {
+    let (positions, triangles) = ball();
+    let report_of = |settings: &str| unsafe {
+        let settings = CString::new(settings).unwrap();
+        let result = openclare_remesh(
+            positions.as_ptr(),
+            positions.len() / 3,
+            triangles.as_ptr(),
+            triangles.len() / 3,
+            null(),
+            0,
+            null(),
+            null(),
+            null(),
+            0,
+            null(),
+            null(),
+            null(),
+            0,
+            null(),
+            null(),
+            0,
+            c"organic".as_ptr(),
+            settings.as_ptr(),
+            None,
+            null_mut(),
+        );
+        assert_eq!(openclare_result_ok(result), 1, "{}", text(openclare_result_error(result)));
+        let report = text(openclare_result_report(result));
+        openclare_result_free(result);
+        report
+    };
+    let plain = report_of("quads = 600\n");
+    assert!(!plain.contains("subdivision_"), "{plain}");
+    let made = report_of("quads = 600\nfor_subdivision = true\n");
+    for key in ["subdivision_moved", "subdivision_folded_before", "subdivision_folded_after", "subdivision_thin_after"]
+    {
+        assert!(made.contains(&format!("\n{key} = ")), "{key}: {made}");
+    }
+    // A ball of quads has no folded face, before or after.
+    assert!(made.contains("\nsubdivision_folded_after = 0\n"), "{made}");
+}
+
+#[test]
 fn triangles_may_be_given_by_their_corners_as_blender_keeps_them() {
     let (positions, triangles) = ball();
     // Corners in an order of their own: the triangles then name corners.
