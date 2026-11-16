@@ -63,11 +63,14 @@ Who frees what:
 
 - What you pass in stays yours: the library reads it during the call and keeps nothing.
 - `openclare_remesh`, `openclare_bake_height`, `openclare_analyse`, `openclare_hard_edges`,
-  `openclare_hard_edge_finder`, `openclare_hard_edge_finder_find` and
-  `openclare_reflection_check` never return NULL. Each handle they return is freed once, by
+  `openclare_hard_edge_finder`, `openclare_hard_edge_finder_find`, `openclare_reflection_check`
+  and `openclare_reflection_repair` never return NULL. Each handle they return is freed once, by
   `openclare_result_free`, `openclare_baked_free`, `openclare_analysis_free`,
-  `openclare_hard_edges_free`, `openclare_hard_edge_finder_free` or `openclare_reflection_free`,
-  whether it holds what was asked for or an error.
+  `openclare_hard_edges_free`, `openclare_hard_edge_finder_free`, `openclare_reflection_free` or
+  `openclare_repair_free`, whether it holds what was asked for or an error.
+- `openclare_reflection_repair` gives back new positions and proposed creases; it changes nothing
+  of what it is given, and sets no crease. Its angles, like those of the check, are measured on
+  the cage, not on the subdivided surface: a cage it repairs is repaired by that measure.
 - A hard edge finder copies the mesh it is given, which is the caller's again on return; it is
   used by one thread at a time.
 - The `copy` functions write into arrays you allocate, of the size the `count` functions give.
