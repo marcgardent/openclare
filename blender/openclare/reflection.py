@@ -44,6 +44,14 @@ with each point tested for being seen (see `Visibility`).
 
 With Blender's Developer Extras on, the panel says in one line what the
 check has cost (see `Stats`).
+
+Repair in Place (#329) is the engine's repair (`openclare::reflection::repair`,
+through `engine.reflection_repair`), run by its operator only: it moves
+vertices of the cage and, if asked, sets the creases it proposes, in one
+undo step, on the selected faces if any is selected, else on the whole cage.
+What it did is kept for the panel (see `RepairSummary`) until another
+repair, an undo or a file loaded; no handler, no draw and no check reads or
+runs anything of it.
 """
 
 import time
@@ -278,9 +286,14 @@ def affordable(owner, report):
 def fault_name(report, i):
     """What the panel says of fault `i`: "N-gon, 6 sides · pinch 12°"."""
     faults = report.faults
-    kind = engine.FAULT_KINDS[faults.kinds[i]]
-    sides, value, count = int(faults.sides[i]), float(faults.values[i]), int(faults.counts[i])
-    if faults.on_vertex[i]:
+    return describe(engine.FAULT_KINDS[faults.kinds[i]], bool(faults.on_vertex[i]), int(faults.sides[i]),
+                    float(faults.values[i]), int(faults.counts[i]))
+
+
+def describe(kind, on_vertex, sides, value, count=None):
+    """A fault in words: what it is on, and what is wrong; `count`, the corner
+    quads that fold or are thin, if known."""
+    if on_vertex:
         what = f"Pole, {sides} edges"
     else:
         what = {3: "Triangle", 4: "Quad"}.get(sides, f"N-gon, {sides} sides")
@@ -289,6 +302,8 @@ def fault_name(report, i):
         return f"{angle:.1f}°" if angle < 10.0 else f"{angle:.0f}°"
 
     def quads(n):
+        if n is None:
+            return "corner quads"
         return f"{n} corner quad{'s' if n > 1 else ''}"
 
     detail = {
@@ -304,6 +319,94 @@ def fault_name(report, i):
 
 def rows(report, worst):
     return report.rows(worst)
+
+
+# ---------------------------------------------------------------- repair in place
+
+# Why a fault is left after a repair, in the panel's words.
+REASON_WORDS = {
+    "change_topology": "needs a change of topology",
+    "too_far": "would move a vertex beyond the bound",
+    "would_worsen": "would worsen the score",
+    "proposed_crease": "a proposed crease cures it",
+    "outside_selection": "outside the selection",
+    "out_of_passes": "not tried: out of passes",
+}
+
+
+class RepairSummary:
+    """What the last repair of a cage did, for the panel to show: where
+    (`faces`, how many were asked for, or None for the whole cage), how many
+    vertices moved and how far, the creases proposed and set, the score
+    before and after per kind, and the faults left with their reason. Made
+    once, by the operator; kept until another repair, an undo or a file
+    loaded."""
+
+    def __init__(self, result, faces, set_creases):
+        self.faces, self.set_creases = faces, set_creases
+        self.moved, self.largest, self.share = result.moved, result.largest, result.share
+        self.proposed = len(result.crease_edges)
+        after = "with_creases" if set_creases else "after"
+        self.table = [
+            (kind, int(result.scores["before"][0][k]), int(result.scores[after][0][k]))
+            for k, kind in enumerate(engine.FAULT_KINDS)
+        ]
+        self.left = []
+        for i in range(len(result.left_kinds)):
+            reason = engine.REPAIR_REASONS[result.left_reasons[i]]
+            if set_creases and reason == "proposed_crease":
+                continue
+            kind = engine.FAULT_KINDS[result.left_kinds[i]]
+            words = describe(kind, bool(result.left_on_vertex[i]), int(result.left_sides[i]),
+                             float(result.left_values[i]))
+            self.left.append((words, REASON_WORDS[reason]))
+
+    def headline(self):
+        where = "the whole cage" if self.faces is None else f"{self.faces} selected faces"
+        vertices = "1 vertex" if self.moved == 1 else f"{self.moved} vertices"
+        moved = (f"{vertices} moved, the furthest by {100.0 * self.share:.1f} % of its shortest edge"
+                 if self.moved else "no vertex moved")
+        creases = f"{self.proposed} creases proposed" + (", set" if self.set_creases and self.proposed else "")
+        return f"On {where}: {moved}; {creases}"
+
+
+_repairs = {}        # pointer of the mesh -> RepairSummary
+
+
+def repair(owner, settings, bound, set_creases, crease_fold):
+    """Repairs the cage of `owner` in place, in Edit Mode (see
+    `openclare::reflection::repair` in the engine): the selected faces if
+    any is, else the whole cage. Moves the vertices the engine moved, sets
+    the creases it proposes if `set_creases`, and keeps the summary. `bound`
+    is a share of the shortest edge of a vertex, `crease_fold` an angle in
+    radians. Returns the `RepairSummary`."""
+    import numpy
+
+    arrays = cage_arrays(owner, uses_creases(owner))
+    positions = arrays[0].reshape(-1, 3)
+    bm = bmesh.from_edit_mesh(owner.data)
+    chosen = [i for i, face in enumerate(bm.faces) if face.select]
+    result = engine.reflection_repair(
+        *arrays, within=chosen or None, flat_tolerance=settings.flat_tolerance / 100.0,
+        angle_tolerance=settings.angle_tolerance * 180.0 / pi, bound=bound, crease_fold=crease_fold * 180.0 / pi,
+    )
+    moved = numpy.nonzero((result.positions != positions).any(axis=1))[0]
+    bm.verts.ensure_lookup_table()
+    for v in moved:
+        bm.verts[int(v)].co = result.positions[v].tolist()
+    set_count = 0
+    if set_creases and len(result.crease_edges):
+        layer = bm.edges.layers.float.get("crease_edge") or bm.edges.layers.float.new("crease_edge")
+        for a, b in result.crease_edges:
+            edge = bm.edges.get((bm.verts[int(a)], bm.verts[int(b)]))
+            if edge is not None:
+                edge[layer] = 1.0
+                set_count += 1
+    if len(moved) or set_count:
+        bmesh.update_edit_mesh(owner.data)
+    summary = RepairSummary(result, len(chosen) if chosen else None, set_creases)
+    _repairs[owner.data.as_pointer()] = summary
+    return summary
 
 
 # ---------------------------------------------------------------- looking again
@@ -418,6 +521,8 @@ def _changed(_scene=None, depsgraph=None):
 @persistent
 def _undone(*_args):
     global _missed
+    # What the last repair did no longer describes the cage.
+    _repairs.clear()
     if not active(bpy.context.scene):
         _missed = True
         return
@@ -429,6 +534,7 @@ def _loaded(*_args):
     global _missed
     _reports.clear()
     _drawn.clear()
+    _repairs.clear()
     _missed = True
 
 
@@ -495,6 +601,32 @@ class OpenclareReflectionSettings(bpy.types.PropertyGroup):
         soft_max=radians(20.0),
         subtype="ANGLE",
         update=settings_changed,
+    )
+    # Those of Repair in Place: read when it runs, never by a check.
+    repair_bound: bpy.props.FloatProperty(
+        name="Bound",
+        description="How far Repair in Place may move a vertex, as a share of the shortest of its edges: a repair "
+                    "that needs more is refused and listed",
+        default=10.0,
+        min=0.0,
+        soft_max=50.0,
+        precision=1,
+        subtype="PERCENTAGE",
+    )
+    repair_creases: bpy.props.BoolProperty(
+        name="Apply the Proposed Creases",
+        description="Set a full crease on each edge Repair in Place proposes: edges already folding by Sharp From "
+                    "or more, where a crease cures a pinch or a pole on a curved zone. Off, they are only counted",
+        default=False,
+    )
+    crease_fold: bpy.props.FloatProperty(
+        name="Sharp From",
+        description="Fold between the two faces of an edge from which it is a sharp edge of the shape, where Repair "
+                    "in Place may propose a crease",
+        default=radians(30.0),
+        min=0.0,
+        max=pi,
+        subtype="ANGLE",
     )
 
 
@@ -580,6 +712,50 @@ class OPENCLARE_OT_reflection_select(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class OPENCLARE_OT_reflection_repair(bpy.types.Operator):
+    """Experimental. Move vertices of the cage, every vertex, edge and face kept, to flatten its n-gons and make the faces whose corner quads fold or are thin star-shaped again; propose creases on edges already sharp. Each repair is kept only if the reflection check scores better. The selected faces if any, else the whole cage"""
+
+    bl_idname = "mesh.openclare_reflection_repair"
+    bl_label = "Repair in Place"
+    bl_options = {"REGISTER", "UNDO"}
+
+    bound: bpy.props.FloatProperty(
+        name="Bound",
+        description="How far a vertex may move, as a share of the shortest of its edges",
+        default=10.0,
+        min=0.0,
+        soft_max=50.0,
+        precision=1,
+        subtype="PERCENTAGE",
+    )
+    apply_creases: bpy.props.BoolProperty(
+        name="Apply the Proposed Creases",
+        description="Set a full crease on each edge proposed",
+        default=False,
+    )
+    crease_fold: bpy.props.FloatProperty(
+        name="Sharp From",
+        description="Fold between the two faces of an edge from which a crease may be proposed on it",
+        default=radians(30.0),
+        min=0.0,
+        max=pi,
+        subtype="ANGLE",
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return checked_object(context) is not None
+
+    def execute(self, context):
+        owner = checked_object(context)
+        summary = repair(owner, settings_of(context.scene), self.bound / 100.0, self.apply_creases, self.crease_fold)
+        tag_redraw(context)
+        self.report({"INFO"}, summary.headline())
+        if self.apply_creases and summary.proposed and not uses_creases(owner):
+            self.report({"WARNING"}, "Use Creases is off on the Subdivision Surface: the creases set do not count")
+        return {"FINISHED"}
+
+
 # ---------------------------------------------------------------- panel
 
 
@@ -635,19 +811,51 @@ def draw_panel(layout, context):
         row.operator(OPENCLARE_OT_reflection_check.bl_idname, icon="FILE_REFRESH")
         if report is not None:
             row.label(text=f"Out of date: a check takes {1000.0 * report.seconds:.0f} ms", icon="TIME")
-    if report is None:
+    if report is not None:
+        if not uses_creases(owner):
+            layout.label(text="Use Creases is off: only borders are sharp", icon="INFO")
+        listed = report.rows(settings.worst)
+        layout.label(text=f"{len(listed)} shown out of {len(report)}; {report.faults.poles} poles looked at")
+        box = layout.column(align=True)
+        for index, words, icon in listed:
+            box.operator(OPENCLARE_OT_reflection_select.bl_idname, text=words, icon=icon, emboss=False).index = index
+        if listed:
+            legend = layout.row(align=True)
+            for mends in ("move", "topology"):
+                legend.label(text=REPAIR_WORDS[mends], icon=REPAIR_ICONS[mends])
+    draw_repair(layout, owner, settings)
+
+
+def draw_repair(layout, owner, settings):
+    """The Repair in Place block: its settings, its button, and what the last
+    repair of this cage did. Reads what was kept, runs nothing."""
+    box = layout.box()
+    box.label(text="Repair in Place: the selected faces, or the whole cage", icon=experimental.ICON)
+    column = box.column(align=True)
+    column.prop(settings, "repair_bound")
+    column.prop(settings, "repair_creases")
+    column.prop(settings, "crease_fold")
+    button = box.operator(OPENCLARE_OT_reflection_repair.bl_idname, icon="MODIFIER")
+    button.bound, button.apply_creases = settings.repair_bound, settings.repair_creases
+    button.crease_fold = settings.crease_fold
+    summary = _repairs.get(owner.data.as_pointer())
+    if summary is None:
         return
-    if not uses_creases(owner):
-        layout.label(text="Use Creases is off: only borders are sharp", icon="INFO")
-    listed = report.rows(settings.worst)
-    layout.label(text=f"{len(listed)} shown out of {len(report)}; {report.faults.poles} poles looked at")
-    box = layout.column(align=True)
-    for index, words, icon in listed:
-        box.operator(OPENCLARE_OT_reflection_select.bl_idname, text=words, icon=icon, emboss=False).index = index
-    if listed:
-        legend = layout.row(align=True)
-        for repair in ("move", "topology"):
-            legend.label(text=REPAIR_WORDS[repair], icon=REPAIR_ICONS[repair])
+    box.label(text=summary.headline())
+    after = "after, creases set" if summary.set_creases else "after"
+    header = box.row()
+    for text in ("", "before", after):
+        header.label(text=text)
+    for kind, before, now in summary.table:
+        if before or now:
+            row = box.row()
+            row.label(text=kind.replace("_", " "))
+            row.label(text=str(before))
+            row.label(text=str(now))
+    box.label(text=f"{len(summary.left)} left" + (", the worst first:" if summary.left else ""))
+    rows_left = box.column(align=True)
+    for words, reason in summary.left[:settings.worst]:
+        rows_left.label(text=f"{words}: {reason}")
 
 
 # ---------------------------------------------------------------- overlay
@@ -917,6 +1125,7 @@ CLASSES = (
     OpenclareReflectionSettings,
     OPENCLARE_OT_reflection_check,
     OPENCLARE_OT_reflection_select,
+    OPENCLARE_OT_reflection_repair,
     OPENCLARE_PT_reflection,
 )
 
@@ -951,6 +1160,7 @@ def unregister():
     _timer_set = _view_timer_set = False
     _reports.clear()
     _drawn.clear()
+    _repairs.clear()
     del bpy.types.Scene.openclare_reflection
     for cls in reversed(CLASSES):
         bpy.utils.unregister_class(cls)
