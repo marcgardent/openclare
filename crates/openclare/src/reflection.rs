@@ -37,11 +37,15 @@
 //! ranks faults against one another, it is not the actual wobble of the
 //! reflection.
 
+use std::borrow::Cow;
+
 use rayon::prelude::*;
 
 use crate::creases::Crease;
 use crate::math::Vec3;
 use crate::mesh::PolyMesh;
+
+pub mod repair;
 
 /// The thresholds of what counts as a fault, those of ngon_check.
 #[derive(Clone, Debug, PartialEq)]
@@ -307,29 +311,7 @@ pub fn rank(faults: &mut [Fault]) {
 /// between the two lines, at most 90 degrees: one beyond 90 then reads as
 /// its supplement. The tilt of a sharp edge is that of a line, either way.
 pub fn check(mesh: &PolyMesh, creases: &[Crease], settings: &Settings) -> Check {
-    let cage = Cage::build(mesh, creases, settings.crease_sharp);
-    let tolerance = settings.angle_tolerance.to_radians();
-    let mut faults: Vec<Fault> = (0..mesh.faces.len())
-        .into_par_iter()
-        .flat_map_iter(|f| {
-            let mut found = Vec::new();
-            cage.check_face(f, settings, tolerance, &mut found);
-            found
-        })
-        .collect();
-    // One entry per pole looked at, with its fault if it has one.
-    let poles: Vec<Option<Fault>> = (0..mesh.positions.len())
-        .into_par_iter()
-        .filter_map(|v| {
-            let mut looked = 0;
-            let fault = cage.check_vertex(v, tolerance, &mut looked);
-            (looked > 0).then_some(fault)
-        })
-        .collect();
-    let looked = poles.len();
-    faults.extend(poles.into_iter().flatten());
-    rank(&mut faults);
-    Check { faults, poles: looked }
+    Cage::build(mesh, creases, settings.crease_sharp).check(settings)
 }
 
 /// Twice the area vector of a polygon (Newell's normal): its length is
@@ -360,7 +342,9 @@ fn key(a: u32, b: u32) -> (u32, u32) {
 /// The mesh with what the criteria ask of its connectivity, in flat arrays:
 /// a check runs on every change of a cage being edited.
 struct Cage<'a> {
-    mesh: &'a PolyMesh,
+    faces: &'a [Vec<u32>],
+    /// Borrowed for a check; owned by a repair, which moves them.
+    positions: Cow<'a, [Vec3]>,
     /// The edges, by their two vertices, the smaller first, in order; the
     /// faces on edge `e` are `edge_faces[edge_offsets[e]..edge_offsets[e + 1]]`.
     edges: Vec<(u32, u32)>,
@@ -481,7 +465,8 @@ impl<'a> Cage<'a> {
             })
             .collect();
         Self {
-            mesh,
+            faces: &mesh.faces,
+            positions: Cow::Borrowed(&mesh.positions),
             edges,
             edge_offsets,
             edge_faces,
@@ -495,6 +480,39 @@ impl<'a> Cage<'a> {
             normals,
             oriented,
         }
+    }
+
+    /// Every face and every vertex checked, as [`check`] says.
+    fn check(&self, settings: &Settings) -> Check {
+        let tolerance = settings.angle_tolerance.to_radians();
+        let mut faults: Vec<Fault> = (0..self.faces.len())
+            .into_par_iter()
+            .flat_map_iter(|f| {
+                let mut found = Vec::new();
+                self.check_face(f, settings, tolerance, &mut found);
+                found
+            })
+            .collect();
+        // One entry per pole looked at, with its fault if it has one.
+        let poles: Vec<Option<Fault>> = (0..self.positions.len())
+            .into_par_iter()
+            .filter_map(|v| {
+                let mut looked = 0;
+                let fault = self.check_vertex(v, tolerance, &mut looked);
+                (looked > 0).then_some(fault)
+            })
+            .collect();
+        let looked = poles.len();
+        faults.extend(poles.into_iter().flatten());
+        rank(&mut faults);
+        Check { faults, poles: looked }
+    }
+
+    /// The unit normal of face `f` where it has one, from the positions as
+    /// they are now.
+    fn normal_of(&self, f: usize) -> Option<Vec3> {
+        let raw = newell(&self.faces[f].iter().map(|&v| self.positions[v as usize]).collect::<Vec<_>>());
+        (raw.length() > 1e-12).then(|| raw.normalize())
     }
 
     /// The angle, in radians, between two unit normals `a` and `b`; where
@@ -542,12 +560,12 @@ impl<'a> Cage<'a> {
     }
 
     fn check_face(&self, f: usize, settings: &Settings, tolerance: f64, faults: &mut Vec<Fault>) {
-        let face = &self.mesh.faces[f];
+        let face = &self.faces[f];
         let k = face.len();
         if k < 3 {
             return;
         }
-        let corners: Vec<Vec3> = face.iter().map(|&v| self.mesh.positions[v as usize]).collect();
+        let corners: Vec<Vec3> = face.iter().map(|&v| self.positions[v as usize]).collect();
         let center = corners.iter().sum::<Vec3>() / k as f64;
         let raw = newell(&corners);
         let area = raw.length() / 2.0;
@@ -622,9 +640,9 @@ impl<'a> Cage<'a> {
 
     fn check_curve(&self, f: usize, frame: Frame, tolerance: f64, faults: &mut Vec<Fault>) {
         let n = frame.normal;
-        let face = &self.mesh.faces[f];
+        let face = &self.faces[f];
         let k = face.len();
-        let position = |v: u32| self.mesh.positions[v as usize];
+        let position = |v: u32| self.positions[v as usize];
 
         // Edge i runs from vertex i to vertex i + 1.
         let edges: Vec<Option<f64>> = (0..k)
@@ -707,9 +725,9 @@ impl<'a> Cage<'a> {
         let mean = if sum.length() > 0.0 { sum.normalize() } else { normals[0] };
         let angles: Vec<f64> = normals.iter().map(|&n| self.fold(n, mean)).collect();
         let count = angles.iter().filter(|&&a| a > tolerance).count();
-        let centre = self.mesh.positions[v];
+        let centre = self.positions[v];
         let size =
-            self.neighbours(v as u32).iter().map(|&u| (self.mesh.positions[u as usize] - centre).length()).sum::<f64>()
+            self.neighbours(v as u32).iter().map(|&u| (self.positions[u as usize] - centre).length()).sum::<f64>()
                 / valence as f64;
         (count > 0).then(|| Fault {
             kind: Kind::CurvedPole,
@@ -724,7 +742,7 @@ impl<'a> Cage<'a> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(super) mod tests {
     use super::*;
 
     fn close(a: f64, b: f64) -> bool {
@@ -739,7 +757,7 @@ mod tests {
     /// made of quads but for its 2 by 2 middle, one octagon of the eight
     /// vertices round the middle one (left out of every face). Returns the
     /// mesh and the index of the octagon.
-    fn grid_with_octagon(place: impl Fn(usize, usize) -> Vec3) -> (PolyMesh, usize) {
+    pub(super) fn grid_with_octagon(place: impl Fn(usize, usize) -> Vec3) -> (PolyMesh, usize) {
         let index = |i: usize, j: usize| (j * 5 + i) as u32;
         let mut mesh = PolyMesh::default();
         for j in 0..5 {
@@ -863,13 +881,13 @@ mod tests {
         assert_eq!(check.faults.len(), 1, "{:?}", check.faults);
     }
 
-    fn cube() -> PolyMesh {
+    pub(super) fn cube() -> PolyMesh {
         let positions = (0..8).map(|v| Vec3::new((v & 1) as f64, ((v >> 1) & 1) as f64, (v >> 2) as f64)).collect();
         let faces = [[0, 2, 3, 1], [4, 5, 7, 6], [0, 1, 5, 4], [2, 6, 7, 3], [0, 4, 6, 2], [1, 3, 7, 5]];
         PolyMesh { positions, faces: faces.iter().map(|f| f.to_vec()).collect() }
     }
 
-    fn all_edges(mesh: &PolyMesh, weight: f64) -> Vec<Crease> {
+    pub(super) fn all_edges(mesh: &PolyMesh, weight: f64) -> Vec<Crease> {
         mesh.edge_uses().keys().map(|&(a, b)| ([a, b], weight)).collect()
     }
 
@@ -896,7 +914,7 @@ mod tests {
     /// The unit cube with its corner (1, 1, 1) cut off by a triangle
     /// through the points `t` from it along its three edges; returns the
     /// mesh, the triangle and the three pentagons it cut.
-    fn cut_cube(t: f64) -> (PolyMesh, usize, [usize; 3]) {
+    pub(super) fn cut_cube(t: f64) -> (PolyMesh, usize, [usize; 3]) {
         let mut positions: Vec<Vec3> =
             (0..7).map(|v| Vec3::new((v & 1) as f64, ((v >> 1) & 1) as f64, (v >> 2) as f64)).collect();
         positions.extend([Vec3::new(1.0 - t, 1.0, 1.0), Vec3::new(1.0, 1.0 - t, 1.0), Vec3::new(1.0, 1.0, 1.0 - t)]);
@@ -978,7 +996,7 @@ mod tests {
     /// spokes a vertex at the polar angle `gamma`, half way round. With
     /// `rho` infinite, the same on the plane z = 0, the polar angles read
     /// as their sines.
-    fn five_round(rho: Option<f64>, beta: f64, gamma: f64) -> PolyMesh {
+    pub(super) fn five_round(rho: Option<f64>, beta: f64, gamma: f64) -> PolyMesh {
         let at = |polar: f64, azimuth: f64| match rho {
             Some(rho) => rho * Vec3::new(polar.sin() * azimuth.cos(), polar.sin() * azimuth.sin(), polar.cos()),
             None => Vec3::new(polar.sin() * azimuth.cos(), polar.sin() * azimuth.sin(), 0.0),
@@ -1073,7 +1091,7 @@ mod tests {
 
     /// A regular pentagon of circumradius `r` in the plane z = 0, its
     /// first vertex on the y axis raised by `h`.
-    fn raised_pentagon(r: f64, h: f64) -> PolyMesh {
+    pub(super) fn raised_pentagon(r: f64, h: f64) -> PolyMesh {
         let positions = (0..5)
             .map(|i| {
                 let angle = (90.0 + 72.0 * i as f64).to_radians();
@@ -1111,7 +1129,7 @@ mod tests {
     }
 
     /// A dart: tips (0, 3), (-2, -1) and (2, -1), its notch at (0, a).
-    fn dart(a: f64) -> PolyMesh {
+    pub(super) fn dart(a: f64) -> PolyMesh {
         let positions = vec![
             Vec3::new(0.0, 3.0, 0.0),
             Vec3::new(-2.0, -1.0, 0.0),
