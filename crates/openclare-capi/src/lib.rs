@@ -1716,52 +1716,21 @@ pub unsafe extern "C" fn openclare_reflection_check(
     thin_ratio: f64,
 ) -> *mut OpenclareReflection {
     let outcome = catch_unwind(AssertUnwindSafe(|| -> Result<openclare::reflection::Check, String> {
-        if (positions.is_null() && vertex_count > 0)
-            || (face_sizes.is_null() && face_count > 0)
-            || (corner_vertices.is_null() && corner_count > 0)
-        {
-            return Err("the mesh arrays are missing".into());
-        }
-        if crease_count > 0 && (crease_edges.is_null() || crease_weights.is_null()) {
-            return Err("the crease arrays are missing".into());
-        }
-        // SAFETY (all four): not null where the count is not 0, and as long
-        // as the caller says.
-        let coordinates = unsafe { read(positions, 3 * vertex_count) };
-        let sizes = unsafe { read(face_sizes, face_count) };
-        let corners = unsafe { read(corner_vertices, corner_count) };
-        let crease_pairs = unsafe { read(crease_edges, 2 * crease_count) };
-        let weights = unsafe { read(crease_weights, crease_count) };
-        let total: usize = sizes.iter().map(|&size| size as usize).sum();
-        if total != corner_count {
-            return Err(format!("the faces have {total} corners in all, and {corner_count} are given"));
-        }
-        if let Some(&beyond) = corners.iter().chain(crease_pairs).find(|&&v| v as usize >= vertex_count) {
-            return Err(format!("vertex {beyond} is named, of {vertex_count} vertices"));
-        }
-        let mut faces = Vec::with_capacity(face_count);
-        let mut start = 0;
-        for &size in sizes {
-            faces.push(corners[start..start + size as usize].to_vec());
-            start += size as usize;
-        }
-        let mesh = PolyMesh {
-            positions: coordinates.chunks_exact(3).map(|p| Vec3::new(p[0] as f64, p[1] as f64, p[2] as f64)).collect(),
-            faces,
+        // SAFETY: as the caller says.
+        let (mesh, creases) = unsafe {
+            read_cage(
+                positions,
+                vertex_count,
+                face_sizes,
+                face_count,
+                corner_vertices,
+                corner_count,
+                crease_edges,
+                crease_weights,
+                crease_count,
+            )?
         };
-        let creases: Vec<([u32; 2], f64)> = crease_pairs
-            .chunks_exact(2)
-            .zip(weights)
-            .map(|(pair, &weight)| ([pair[0], pair[1]], weight as f64))
-            .collect();
-        let defaults = openclare::reflection::Settings::default();
-        let or = |given: f64, default: f64| if given.is_finite() && given >= 0.0 { given } else { default };
-        let settings = openclare::reflection::Settings {
-            flat_tolerance: or(flat_tolerance, defaults.flat_tolerance),
-            angle_tolerance: or(angle_tolerance, defaults.angle_tolerance),
-            thin_ratio: or(thin_ratio, defaults.thin_ratio),
-            ..defaults
-        };
+        let settings = check_settings(flat_tolerance, angle_tolerance, thin_ratio);
         Ok(openclare::reflection::check(&mesh, &creases, &settings))
     }));
     let (check, error) = match outcome {
@@ -1969,6 +1938,457 @@ pub unsafe extern "C" fn openclare_reflection_free(reflection: *mut OpenclareRef
     if !reflection.is_null() {
         // SAFETY: made by `Box::into_raw` in `openclare_reflection_check`.
         drop(unsafe { Box::from_raw(reflection) });
+    }
+}
+
+/// A cage from the flat arrays of [`openclare_reflection_check`] and
+/// [`openclare_reflection_repair`], checked.
+///
+/// # Safety
+///
+/// Each pointer null where its count is 0, or valid for the number of
+/// elements said of it.
+#[allow(clippy::too_many_arguments)]
+unsafe fn read_cage(
+    positions: *const f32,
+    vertex_count: usize,
+    face_sizes: *const u32,
+    face_count: usize,
+    corner_vertices: *const u32,
+    corner_count: usize,
+    crease_edges: *const u32,
+    crease_weights: *const f32,
+    crease_count: usize,
+) -> Result<(PolyMesh, Vec<([u32; 2], f64)>), String> {
+    if (positions.is_null() && vertex_count > 0)
+        || (face_sizes.is_null() && face_count > 0)
+        || (corner_vertices.is_null() && corner_count > 0)
+    {
+        return Err("the mesh arrays are missing".into());
+    }
+    if crease_count > 0 && (crease_edges.is_null() || crease_weights.is_null()) {
+        return Err("the crease arrays are missing".into());
+    }
+    // SAFETY (all five): not null where the count is not 0, and as long as
+    // the caller says.
+    let coordinates = unsafe { read(positions, 3 * vertex_count) };
+    let sizes = unsafe { read(face_sizes, face_count) };
+    let corners = unsafe { read(corner_vertices, corner_count) };
+    let crease_pairs = unsafe { read(crease_edges, 2 * crease_count) };
+    let weights = unsafe { read(crease_weights, crease_count) };
+    let total: usize = sizes.iter().map(|&size| size as usize).sum();
+    if total != corner_count {
+        return Err(format!("the faces have {total} corners in all, and {corner_count} are given"));
+    }
+    if let Some(&beyond) = corners.iter().chain(crease_pairs).find(|&&v| v as usize >= vertex_count) {
+        return Err(format!("vertex {beyond} is named, of {vertex_count} vertices"));
+    }
+    let mut faces = Vec::with_capacity(face_count);
+    let mut start = 0;
+    for &size in sizes {
+        faces.push(corners[start..start + size as usize].to_vec());
+        start += size as usize;
+    }
+    let mesh = PolyMesh {
+        positions: coordinates.chunks_exact(3).map(|p| Vec3::new(p[0] as f64, p[1] as f64, p[2] as f64)).collect(),
+        faces,
+    };
+    let creases =
+        crease_pairs.chunks_exact(2).zip(weights).map(|(pair, &weight)| ([pair[0], pair[1]], weight as f64)).collect();
+    Ok((mesh, creases))
+}
+
+/// A setting given, or its default where it is negative or not finite.
+fn or_default(given: f64, default: f64) -> f64 {
+    if given.is_finite() && given >= 0.0 { given } else { default }
+}
+
+/// The thresholds of the check, each its default where it is negative or
+/// not finite.
+fn check_settings(flat_tolerance: f64, angle_tolerance: f64, thin_ratio: f64) -> openclare::reflection::Settings {
+    let defaults = openclare::reflection::Settings::default();
+    openclare::reflection::Settings {
+        flat_tolerance: or_default(flat_tolerance, defaults.flat_tolerance),
+        angle_tolerance: or_default(angle_tolerance, defaults.angle_tolerance),
+        thin_ratio: or_default(thin_ratio, defaults.thin_ratio),
+        ..defaults
+    }
+}
+
+/// What a call to [`openclare_reflection_repair`] gives back: the cage
+/// repaired in place, the creases proposed, the scores before and after,
+/// the faults left and why; or why there is none of that.
+pub struct OpenclareRepair {
+    repaired: Option<openclare::reflection::repair::Repaired>,
+    /// Empty when all went well.
+    error: CString,
+}
+
+/// The scores [`openclare_repair_copy_score`] writes: of the cage given;
+/// after the moves, with the creases given; after the moves with the
+/// proposed creases set too.
+pub const OPENCLARE_REPAIR_BEFORE: u32 = 0;
+pub const OPENCLARE_REPAIR_AFTER: u32 = 1;
+pub const OPENCLARE_REPAIR_WITH_CREASES: u32 = 2;
+
+/// Why a fault is left, as [`openclare_repair_copy_left`] writes it, in the
+/// order of `openclare::reflection::repair::Reason`.
+pub const OPENCLARE_REASON_CHANGE_TOPOLOGY: u8 = 0;
+pub const OPENCLARE_REASON_TOO_FAR: u8 = 1;
+pub const OPENCLARE_REASON_WOULD_WORSEN: u8 = 2;
+pub const OPENCLARE_REASON_PROPOSED_CREASE: u8 = 3;
+pub const OPENCLARE_REASON_OUTSIDE_SELECTION: u8 = 4;
+pub const OPENCLARE_REASON_OUT_OF_PASSES: u8 = 5;
+
+/// The reflection repair of a cage, in place (see
+/// `openclare::reflection::repair`): every vertex, edge and face kept;
+/// vertices moved to flatten the n-gons off their plane and to make the
+/// faces whose corner quads fold or are thin star-shaped again; creases
+/// proposed on the edges already sharp where they cure a pinch or a pole on
+/// a curved zone, never set. Each repair is kept only if the score of the
+/// reflection check gets better. Angles are measured on the cage, not on
+/// the subdivided surface.
+///
+/// - The cage and its creases as for [`openclare_reflection_check`].
+/// - `within`: `within_count` faces, the only ones repaired (only their
+///   vertices move, only their edges get a crease); null and 0 for the
+///   whole cage.
+/// - `flat_tolerance`, `angle_tolerance` and `thin_ratio` as for the check;
+///   `bound`, the largest displacement of a vertex as a share of the
+///   shortest of its edges (default 0.1); `crease_fold`, the fold in
+///   degrees between two faces from which an edge may get a crease
+///   (default 30). A negative or non-finite one takes its default.
+///
+/// Returns a handle to free with [`openclare_repair_free`], never null.
+///
+/// # Safety
+///
+/// Each pointer must be null where allowed, or valid for the number of
+/// elements said of it, for the time of the call.
+#[unsafe(no_mangle)]
+#[allow(clippy::too_many_arguments)]
+pub unsafe extern "C" fn openclare_reflection_repair(
+    positions: *const f32,
+    vertex_count: usize,
+    face_sizes: *const u32,
+    face_count: usize,
+    corner_vertices: *const u32,
+    corner_count: usize,
+    crease_edges: *const u32,
+    crease_weights: *const f32,
+    crease_count: usize,
+    within: *const u32,
+    within_count: usize,
+    flat_tolerance: f64,
+    angle_tolerance: f64,
+    thin_ratio: f64,
+    bound: f64,
+    crease_fold: f64,
+) -> *mut OpenclareRepair {
+    use openclare::reflection::repair::{RepairSettings, repair};
+    let outcome = catch_unwind(AssertUnwindSafe(|| -> Result<openclare::reflection::repair::Repaired, String> {
+        // SAFETY: as the caller says.
+        let (mesh, creases) = unsafe {
+            read_cage(
+                positions,
+                vertex_count,
+                face_sizes,
+                face_count,
+                corner_vertices,
+                corner_count,
+                crease_edges,
+                crease_weights,
+                crease_count,
+            )?
+        };
+        if within.is_null() && within_count > 0 {
+            return Err("the faces to repair are missing".into());
+        }
+        // SAFETY: not null where the count is not 0, and as long as said.
+        let chosen = unsafe { read(within, within_count) };
+        if let Some(&beyond) = chosen.iter().find(|&&f| f as usize >= face_count) {
+            return Err(format!("face {beyond} is named, of {face_count} faces"));
+        }
+        let defaults = RepairSettings::default();
+        let settings = RepairSettings {
+            check: check_settings(flat_tolerance, angle_tolerance, thin_ratio),
+            bound: or_default(bound, defaults.bound),
+            crease_fold: or_default(crease_fold, defaults.crease_fold),
+            ..defaults
+        };
+        Ok(repair(&mesh, &creases, (!within.is_null()).then_some(chosen), &settings))
+    }));
+    let (repaired, error) = match outcome {
+        Ok(Ok(repaired)) => (Some(repaired), CString::default()),
+        Ok(Err(message)) => (None, text(message)),
+        Err(_) => (None, text("openclare failed unexpectedly while repairing".to_string())),
+    };
+    Box::into_raw(Box::new(OpenclareRepair { repaired, error }))
+}
+
+/// The repair behind a handle, if there is one.
+///
+/// # Safety
+///
+/// `repair` must be null or a live handle.
+unsafe fn repaired<'a>(repair: *const OpenclareRepair) -> Option<&'a openclare::reflection::repair::Repaired> {
+    // SAFETY: null or a live handle, by contract.
+    unsafe { repair.as_ref() }.and_then(|repair| repair.repaired.as_ref())
+}
+
+/// 1 if the cage was repaired (even with nothing to change), 0 if not or if
+/// `repair` is null.
+///
+/// # Safety
+///
+/// `repair` must be null or a handle from [`openclare_reflection_repair`]
+/// not yet freed; the same goes for every function below.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_repair_ok(repair: *const OpenclareRepair) -> i32 {
+    // SAFETY: by contract.
+    unsafe { repaired(repair) }.is_some() as i32
+}
+
+/// Why the cage could not be repaired; empty if it was. Valid until freed.
+///
+/// # Safety
+///
+/// See [`openclare_repair_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_repair_error(repair: *const OpenclareRepair) -> *const c_char {
+    // SAFETY: null or a live handle, by contract.
+    match unsafe { repair.as_ref() } {
+        Some(repair) => repair.error.as_ptr(),
+        None => c"no reflection repair".as_ptr(),
+    }
+}
+
+/// How many vertices the cage has: those
+/// [`openclare_repair_copy_positions`] writes.
+///
+/// # Safety
+///
+/// See [`openclare_repair_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_repair_vertex_count(repair: *const OpenclareRepair) -> usize {
+    // SAFETY: by contract.
+    unsafe { repaired(repair) }.map_or(0, |r| r.positions.len())
+}
+
+/// How many of them moved.
+///
+/// # Safety
+///
+/// See [`openclare_repair_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_repair_moved_count(repair: *const OpenclareRepair) -> usize {
+    // SAFETY: by contract.
+    unsafe { repaired(repair) }.map_or(0, |r| r.moved)
+}
+
+/// How far the furthest vertex moved; with `share` not null, the largest
+/// displacement over the shortest edge of its vertex is written there.
+///
+/// # Safety
+///
+/// See [`openclare_repair_ok`]; `share` null or room for one number.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_repair_largest_displacement(repair: *const OpenclareRepair, share: *mut f64) -> f64 {
+    // SAFETY: by contract.
+    let Some(r) = (unsafe { repaired(repair) }) else { return 0.0 };
+    // SAFETY: room for one number if not null.
+    unsafe { write(share, 0, r.largest_share) };
+    r.largest_displacement
+}
+
+/// How many repairs were kept; with `passes` not null, how many passes ran
+/// is written there.
+///
+/// # Safety
+///
+/// See [`openclare_repair_ok`]; `passes` null or room for one number.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_repair_repair_count(repair: *const OpenclareRepair, passes: *mut usize) -> usize {
+    // SAFETY: by contract.
+    let Some(r) = (unsafe { repaired(repair) }) else { return 0 };
+    // SAFETY: room for one number if not null.
+    unsafe { write(passes, 0, r.passes) };
+    r.repairs
+}
+
+/// Writes the positions of the repaired cage, three numbers per vertex,
+/// numbered as given; a vertex not moved is written as it was given.
+///
+/// # Safety
+///
+/// See [`openclare_repair_ok`]; `positions` must have room for three times
+/// [`openclare_repair_vertex_count`] numbers.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_repair_copy_positions(repair: *const OpenclareRepair, positions: *mut f32) {
+    // SAFETY: by contract.
+    let Some(r) = (unsafe { repaired(repair) }) else { return };
+    for (i, p) in r.positions.iter().enumerate() {
+        // SAFETY: room as documented.
+        unsafe {
+            write(positions, 3 * i, p.x as f32);
+            write(positions, 3 * i + 1, p.y as f32);
+            write(positions, 3 * i + 2, p.z as f32);
+        }
+    }
+}
+
+/// Writes one score, `stage` [`OPENCLARE_REPAIR_BEFORE`],
+/// [`OPENCLARE_REPAIR_AFTER`] or [`OPENCLARE_REPAIR_WITH_CREASES`]: for each
+/// of the six kinds of fault, in the order of the `OPENCLARE_FAULT_*`, how
+/// many, the worst value and the median one (NaN where there is none), into
+/// each array not null. Returns how many poles were looked at; 0 for a stage
+/// unknown.
+///
+/// # Safety
+///
+/// See [`openclare_repair_ok`]; each array not null must have room for six
+/// numbers.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_repair_copy_score(
+    repair: *const OpenclareRepair,
+    stage: u32,
+    counts: *mut u32,
+    worst: *mut f64,
+    median: *mut f64,
+) -> usize {
+    // SAFETY: by contract.
+    let Some(r) = (unsafe { repaired(repair) }) else { return 0 };
+    let score = match stage {
+        OPENCLARE_REPAIR_BEFORE => &r.before,
+        OPENCLARE_REPAIR_AFTER => &r.after,
+        OPENCLARE_REPAIR_WITH_CREASES => &r.with_creases,
+        _ => return 0,
+    };
+    for (i, kind) in score.kinds.iter().enumerate() {
+        // SAFETY: room for six numbers in each array not null.
+        unsafe {
+            write(counts, i, kind.count as u32);
+            write(worst, i, kind.worst.unwrap_or(f64::NAN));
+            write(median, i, kind.median.unwrap_or(f64::NAN));
+        }
+    }
+    score.poles
+}
+
+/// How many creases are proposed.
+///
+/// # Safety
+///
+/// See [`openclare_repair_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_repair_crease_count(repair: *const OpenclareRepair) -> usize {
+    // SAFETY: by contract.
+    unsafe { repaired(repair) }.map_or(0, |r| r.creases.len())
+}
+
+/// Writes the creases proposed, into each array not null: `edges`, two
+/// vertices per crease; `folds`, the fold between its two faces in degrees;
+/// and the fault each is proposed for: its kind (`OPENCLARE_FAULT_*`), its
+/// element (0 a face, 1 a vertex) and index, its angle in degrees, and in
+/// `cured` 1 if it is gone once every proposed crease is set.
+///
+/// # Safety
+///
+/// See [`openclare_repair_ok`]; `edges` must have room for twice
+/// [`openclare_repair_crease_count`] numbers, the others for that count.
+#[unsafe(no_mangle)]
+#[allow(clippy::too_many_arguments)]
+pub unsafe extern "C" fn openclare_repair_copy_creases(
+    repair: *const OpenclareRepair,
+    edges: *mut u32,
+    folds: *mut f64,
+    kinds: *mut u8,
+    elements: *mut u8,
+    indices: *mut u32,
+    values: *mut f64,
+    cured: *mut u8,
+) {
+    use openclare::reflection::Element;
+    // SAFETY: by contract.
+    let Some(r) = (unsafe { repaired(repair) }) else { return };
+    for (i, crease) in r.creases.iter().enumerate() {
+        let (element, index) = match crease.at {
+            Element::Face(f) => (0, f),
+            Element::Vertex(v) => (1, v),
+        };
+        // SAFETY: room as documented in each array not null.
+        unsafe {
+            write(edges, 2 * i, crease.edge[0]);
+            write(edges, 2 * i + 1, crease.edge[1]);
+            write(folds, i, crease.fold);
+            write(kinds, i, crease.kind as u8);
+            write(elements, i, element);
+            write(indices, i, index);
+            write(values, i, crease.value);
+            write(cured, i, crease.cured as u8);
+        }
+    }
+}
+
+/// How many faults are left after the moves, with the creases given.
+///
+/// # Safety
+///
+/// See [`openclare_repair_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_repair_left_count(repair: *const OpenclareRepair) -> usize {
+    // SAFETY: by contract.
+    unsafe { repaired(repair) }.map_or(0, |r| r.left.len())
+}
+
+/// Writes the faults left, worst first, as
+/// [`openclare_reflection_copy_faults`] does, and in `reasons` why each is
+/// left (`OPENCLARE_REASON_*`); any array may be null.
+///
+/// # Safety
+///
+/// See [`openclare_repair_ok`]; each array not null must have room for
+/// [`openclare_repair_left_count`] numbers.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_repair_copy_left(
+    repair: *const OpenclareRepair,
+    kinds: *mut u8,
+    elements: *mut u8,
+    indices: *mut u32,
+    sides: *mut u32,
+    values: *mut f64,
+    reasons: *mut u8,
+) {
+    use openclare::reflection::Element;
+    // SAFETY: by contract.
+    let Some(r) = (unsafe { repaired(repair) }) else { return };
+    for (i, left) in r.left.iter().enumerate() {
+        let fault = &left.fault;
+        let (element, index) = match fault.at {
+            Element::Face(f) => (0, f),
+            Element::Vertex(v) => (1, v),
+        };
+        // SAFETY: room for one number per fault in each array not null.
+        unsafe {
+            write(kinds, i, fault.kind as u8);
+            write(elements, i, element);
+            write(indices, i, index);
+            write(sides, i, fault.sides as u32);
+            write(values, i, fault.value);
+            write(reasons, i, left.reason as u8);
+        }
+    }
+}
+
+/// # Safety
+///
+/// `repair` must be null or a handle from [`openclare_reflection_repair`]
+/// not yet freed.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_repair_free(repair: *mut OpenclareRepair) {
+    if !repair.is_null() {
+        // SAFETY: made by `Box::into_raw` in `openclare_reflection_repair`.
+        drop(unsafe { Box::from_raw(repair) });
     }
 }
 

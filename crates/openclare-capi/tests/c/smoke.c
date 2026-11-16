@@ -199,6 +199,28 @@ int main(int argc, char **argv) {
         openclare_reflection_free(reflection);
         check(openclare_reflection_ok(NULL) == 0 && openclare_reflection_fault_count(NULL) == 0, "a NULL check is empty");
         openclare_reflection_free(NULL);
+
+        /* Repaired in place: nothing to move; each of its twelve edges is a
+         * fold of 90 degrees, proposed as a crease, and with them nothing is
+         * left. */
+        OpenclareRepair *repair = openclare_reflection_repair(cube, 8, cube_sizes, 6, cube_corners, 24, NULL, NULL, 0,
+                                                              NULL, 0, -1.0, -1.0, -1.0, -1.0, -1.0);
+        check(openclare_repair_ok(repair) == 1, openclare_repair_error(repair));
+        check(openclare_repair_moved_count(repair) == 0 && openclare_repair_vertex_count(repair) == 8, "nothing moves");
+        check(openclare_repair_crease_count(repair) == 12, "twelve creases proposed");
+        double folds[12];
+        openclare_repair_copy_creases(repair, NULL, folds, NULL, NULL, NULL, NULL, NULL);
+        check(fabs(folds[0] - 90.0) < 1e-9, "a cube edge folds by 90 degrees");
+        uint32_t counts[6];
+        check(openclare_repair_copy_score(repair, OPENCLARE_REPAIR_WITH_CREASES, counts, NULL, NULL) == 0
+                  && counts[OPENCLARE_FAULT_CURVED_POLE] == 0,
+              "with the creases, no pole is left");
+        float repaired[24];
+        openclare_repair_copy_positions(repair, repaired);
+        check(memcmp(repaired, cube, sizeof cube) == 0, "the positions come back as given");
+        openclare_repair_free(repair);
+        check(openclare_repair_ok(NULL) == 0, "a NULL repair is empty");
+        openclare_repair_free(NULL);
     }
 
     /* NULL handles are allowed everywhere. */
