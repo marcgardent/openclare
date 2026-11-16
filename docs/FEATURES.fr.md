@@ -35,6 +35,7 @@ Le panneau *openclare* de l'éditeur Properties, dans l'onglet du maillage.
 | *Output: Triangles*, pour *Simulation* | expérimental | quelques triangles en traversent un autre sur 3 modèles sur 12 ([TRIANGLES.fr.md](TRIANGLES.fr.md), #226) |
 | *Output: Triangles*, pour *Shape* (le *Decimate* de Blender) | stable | ne suit ni arête vive, ni courbe, ni matériau, comme le panneau le dit |
 | *Output: N-gons* | expérimental | les parties plates en faces à nombreux côtés, pliées sur tout leur bord ; mesuré sur six formes mécaniques et un demi-cylindre, à trois niveaux de subdivision ; sans courbes, pôles ni symétrie pour les parties qui ne prennent aucun quad |
+| *Optimize for Subdivision Surface* | expérimental | nouveau au 16 novembre 2026 : le résultat réparé sur place, ses creases toujours portés ; les pôles ne sont pas déplacés (un glissement vers des endroits plus plats a été mesuré et écarté) ; mesuré par le contrôle des reflets sur la cage, pas sur la surface subdivisée ; pas encore essayé dans une vraie session Blender ni sur une carrosserie (#330) |
 | *Ask For: Number* | stable | |
 | *Ask For: Sizes* (*Largest*, *Smallest*) | expérimental | tailles proposées à partir d'une constante cachée, doigts perdus sur un corps (#253) |
 | *Analyse* | expérimental | la même chose (#253) |
@@ -110,6 +111,7 @@ Le panneau *Reflection Check* de l'éditeur de propriétés, sur l'onglet du mai
 | `--curves` | expérimental | comme *Draw Curve* (#195, #196, #44) |
 | `--poles`, `--poles-out` | expérimental | comme les pôles du greffon (#249) |
 | `--faces ngons`, `--creases-out` | expérimental | comme *Output: N-gons* |
+| `--for-subdivision` | expérimental | comme *Optimize for Subdivision Surface* ; les creases écrits à côté du résultat, en `<sortie>.creases` (#330) |
 | `--edge-angle` | expérimental | arêtes vives du maillage de travail, désactivé par défaut, pas encore dans le greffon |
 | `--method triangles` | expérimental | comme *Output: Triangles* (#226) |
 | `--method integer-grid`, `--method instant-meshes` | expérimental | autres chaînes, gardées pour comparer (#9) |

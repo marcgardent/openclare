@@ -66,6 +66,7 @@ the engine does (symmetry, adaptive size, thin parts, curvature); *Output*, what
 | Setting | What it does |
 |---|---|
 | Output | *Quads* (the default), or *Triangles*: triangles close to equilateral, of one size or as the shape asks, for simulation, 3D printing and collision meshes. The same settings apply but those of quads alone (Follow Curvature, Fewer Irregular Vertices, Volume Fit); the result says how many triangles cut through another one, which a printer cannot make sense of. How they compare with Blender's *Decimate*: [docs/TRIANGLES.md](docs/TRIANGLES.md). *N-gons* (experimental): quads, and each flat part as a few faces of many sides, creased all round, which a Subdivision Surface subdivides as it does the quads; a flat part one face can stand for takes no quads at all, so a cube comes out as its 6 faces and the quads asked for a cylinder all go round it. The creases are always set on the result |
+| Optimize for Subdivision Surface | Experimental, off by default, with *Quads* or *N-gons*: for a result to be subdivided (a car body, a product shot). The result is repaired in place as *Repair in Place* does, with its creases, which are always set. Judged by the reflection check, on the cage, not on the subdivided surface |
 | For | With *Triangles*: *Simulation* (the default), the triangles of openclare, close to equilateral; or *Shape*, Blender's own *Decimate* in *Collapse* mode, which keeps closest to the shape at the same number of triangles and is the better one for printing and collision meshes: openclare uses it rather than make a worse one. Decimate reads the number, the symmetry and the painted density (kept denser); hard edges, curves and materials are not followed, and their settings are greyed |
 | Ask For | *Number*: a number of quads, kept; the shape says where they are smaller. *Sizes*: the largest and the smallest quad; the shape says which where, and the number of quads is what that makes |
 | Quads | With *Number*: the number of quads asked for. A part that is thin all along (a ring, a strap, a wire) is given the quads its thickness calls for out of that number |
@@ -149,6 +150,11 @@ a share of its shortest edge. It works on the selected faces, or on the whole ca
 in one undo step, and the panel then shows the score before and after per kind, and what is left and why:
 an n-gon or a pole on a curved zone needs a change of topology, and is listed, not flattened. "Repaired"
 means by the check, whose angles are measured on the cage. `openclare repair` does the same on a file.
+
+*Optimize for Subdivision Surface* (experimental, in the *Output* block) does it for a result as it is
+made: the repair runs at the end of the chain with the creases of the result, and those creases are
+always set (`remesh --for-subdivision` on the command line). Sliding the poles towards flatter places was
+tried with it, and left out (ALGORITHM.md, "A result to be subdivided").
 
 ## Further
 

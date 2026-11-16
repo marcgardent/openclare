@@ -756,6 +756,26 @@ budget = [2970, 3000, 3030]
 ref = ["main"]
 
 [[batch]]
+name = "for-subdivision"
+description = "Issue #330: the twelve models at 2970, 3000 and 3030 quads without and with the option for a subdivided result (remesh --for-subdivision), one job each: the remesh, its creases, and its measure with them (the reflection columns beside the usual ones in {out}/measure.json). The sides are the axis option, on the same commit: off, on, and on with the experiment that slides the singularities towards flatter places (OPENCLARE_SLIDE, not part of the option; slide the tuning the session measured, slide-held the same with the alignment held to a quarter as well). The report compares them budget by budget, and the per-model lines follow. The engine of the commit and the sources are dependencies, made once and shared. No time is reported."
+category = "quick-bench"
+needs = ["engine", "source"]
+command = "OPENCLARE_SLIDE={slide} {engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} --creases-out {out}/mesh.creases {flags} && {engine} measure {source} {out}/mesh.obj --target {budget} --creases {out}/mesh.creases --json > {out}/measure.json"
+report = "python3 bench/before_after.py {records} --side option --by budget --keys valid,quads,irregular_vertices,loop_edges_spiral,hausdorff,angle_deviation_mean,base_complex_patches,reflection_curved_pole,reflection_curved_pole_median,reflection_curved_pole_worst,reflection_folded,reflection_thin --out {out}"
+checkout = "ask"
+parameters = { preset = "organic", flags = "", slide = "" }
+memory_limit_gb = 32
+timing_matters = false
+
+[batch.axes]
+model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock",
+         { value = "cage", preset = "hard-surface" }, { value = "part", preset = "hard-surface" }]
+budget = [2970, 3000, 3030]
+option = [{ value = "off", flags = "" }, { value = "on", flags = "--for-subdivision" },
+          { value = "slide", flags = "--for-subdivision", slide = "3,0.95,0.25,inf,3" },
+          { value = "slide-held", flags = "--for-subdivision", slide = "3,0.95,0.25,0.25,3" }]
+
+[[batch]]
 name = "pole-pairs-115-male-body"
 description = "Ticket #115, the male body: the export on the engine of each side, then conflicts.py on it (one job a side: conflicts reads the export), on main and on 5e73f2f (the head of claude/pole-pairs-115-on-main: 12a6675 rebased on main, with the scene, which 12a6675 has not, and the layout chosen without the other draws). Its source is the dependency source of bench/scenes/human_male.blend (the file of research/NIGHT.md, MD5 f1fe33002b731d1d41846daed6c59f5e). The whole thread setting for each, one side after the other."
 category = "quick-bench"
