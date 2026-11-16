@@ -833,3 +833,195 @@ fn poles_placed_come_back_where_they_were_placed() {
         openclare_result_free(result);
     }
 }
+
+/// A unit cube of six quads, as Blender keeps its polygons: the number of
+/// corners of each face and the vertex of each corner; vertex `v` at
+/// (v & 1, v >> 1 & 1, v >> 2).
+fn cube() -> (Vec<f32>, Vec<u32>, Vec<u32>) {
+    let positions = (0..8u32).flat_map(|v| [(v & 1) as f32, ((v >> 1) & 1) as f32, (v >> 2) as f32]).collect();
+    let corners = vec![0, 2, 3, 1, 4, 5, 7, 6, 0, 1, 5, 4, 2, 6, 7, 3, 0, 4, 6, 2, 1, 3, 7, 5];
+    (positions, vec![4; 6], corners)
+}
+
+/// The faults of a check, as the arrays a host gets: kind, element, index,
+/// sides, count and value of each, and the parts of each.
+#[allow(clippy::type_complexity)]
+fn faults_of(reflection: *const OpenclareReflection) -> Vec<(u8, u8, u32, u32, u32, f64, Vec<(u8, u32)>)> {
+    unsafe {
+        let n = openclare_reflection_fault_count(reflection);
+        let (mut kinds, mut elements, mut indices) = (vec![0u8; n], vec![0u8; n], vec![0u32; n]);
+        let (mut sides, mut counts, mut values) = (vec![0u32; n], vec![0u32; n], vec![0f64; n]);
+        openclare_reflection_copy_faults(
+            reflection,
+            kinds.as_mut_ptr(),
+            elements.as_mut_ptr(),
+            indices.as_mut_ptr(),
+            sides.as_mut_ptr(),
+            counts.as_mut_ptr(),
+            values.as_mut_ptr(),
+        );
+        let parts = openclare_reflection_part_count(reflection);
+        let (mut offsets, mut part_kinds, mut part_indices) = (vec![0u32; n + 1], vec![0u8; parts], vec![0u32; parts]);
+        openclare_reflection_copy_parts(
+            reflection,
+            offsets.as_mut_ptr(),
+            part_kinds.as_mut_ptr(),
+            part_indices.as_mut_ptr(),
+        );
+        assert_eq!(offsets[n] as usize, parts);
+        (0..n)
+            .map(|i| {
+                let own =
+                    (offsets[i] as usize..offsets[i + 1] as usize).map(|p| (part_kinds[p], part_indices[p])).collect();
+                (kinds[i], elements[i], indices[i], sides[i], counts[i], values[i], own)
+            })
+            .collect()
+    }
+}
+
+#[test]
+fn a_cage_is_checked_for_its_reflections_through_flat_arrays() {
+    let (positions, sizes, corners) = cube();
+    let corner = (1.0f64 / 3f64.sqrt()).acos().to_degrees();
+    unsafe {
+        // No crease: each corner is a pole of three faces at right angles,
+        // acos(1 / √3) from their mean.
+        let bare = openclare_reflection_check(
+            positions.as_ptr(),
+            8,
+            sizes.as_ptr(),
+            6,
+            corners.as_ptr(),
+            24,
+            null(),
+            null(),
+            0,
+            -1.0,
+            -1.0,
+            -1.0,
+        );
+        assert_eq!(openclare_reflection_ok(bare), 1, "{}", text(openclare_reflection_error(bare)));
+        assert_eq!(openclare_reflection_pole_count(bare), 8);
+        let faults = faults_of(bare);
+        assert_eq!(faults.len(), 8);
+        let mut seen: Vec<u32> = faults.iter().map(|f| f.2).collect();
+        seen.sort();
+        assert_eq!(seen, (0..8).collect::<Vec<_>>());
+        for (kind, element, _, sides, count, value, parts) in &faults {
+            assert_eq!((*kind, *element, *sides, *count), (OPENCLARE_FAULT_CURVED_POLE, 1, 3, 3));
+            assert!((value - corner).abs() < 1e-5, "{value}");
+            assert!(parts.is_empty());
+        }
+        // Drawn at the vertex, facing out along the diagonal, as wide as an
+        // edge is long.
+        let (mut centres, mut normals, mut radius) = (vec![0f32; 24], vec![0f32; 24], vec![0f32; 8]);
+        openclare_reflection_copy_frames(
+            bare,
+            centres.as_mut_ptr(),
+            normals.as_mut_ptr(),
+            null_mut(),
+            radius.as_mut_ptr(),
+        );
+        let v = faults[0].2;
+        assert_eq!(&centres[0..3], &[(v & 1) as f32, ((v >> 1) & 1) as f32, (v >> 2) as f32]);
+        assert!(normals[0..3].iter().all(|n| (n.abs() - 1.0 / 3f32.sqrt()).abs() < 1e-6), "{:?}", &normals[0..3]);
+        assert!((radius[0] - 1.0).abs() < 1e-6);
+        openclare_reflection_free(bare);
+
+        // Creased all round: every corner is on three creases, not looked at.
+        let edges: Vec<u32> = vec![0, 1, 2, 3, 4, 5, 6, 7, 0, 2, 1, 3, 4, 6, 5, 7, 0, 4, 1, 5, 2, 6, 3, 7];
+        let weights = vec![1.0f32; 12];
+        let creased = openclare_reflection_check(
+            positions.as_ptr(),
+            8,
+            sizes.as_ptr(),
+            6,
+            corners.as_ptr(),
+            24,
+            edges.as_ptr(),
+            weights.as_ptr(),
+            12,
+            0.002,
+            1.0,
+            0.15,
+        );
+        assert_eq!(openclare_reflection_ok(creased), 1);
+        assert_eq!((openclare_reflection_fault_count(creased), openclare_reflection_pole_count(creased)), (0, 0));
+        openclare_reflection_free(creased);
+    }
+}
+
+#[test]
+fn a_triangle_on_a_cube_corner_pinches_and_says_which_edges() {
+    // The unit cube with its corner (1, 1, 1) cut off by a triangle through
+    // the middles of its three edges: the triangle faces (1, 1, 1) / √3, the
+    // pentagons round it an axis each, acos(1 / √3) from it.
+    let mut positions: Vec<f32> =
+        (0..7u32).flat_map(|v| [(v & 1) as f32, ((v >> 1) & 1) as f32, (v >> 2) as f32]).collect();
+    positions.extend([0.5, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 0.5]);
+    let faces: Vec<Vec<u32>> = vec![
+        vec![0, 2, 3, 1],
+        vec![0, 1, 5, 4],
+        vec![0, 4, 6, 2],
+        vec![4, 5, 8, 7, 6],
+        vec![2, 6, 7, 9, 3],
+        vec![1, 3, 9, 8, 5],
+        vec![7, 8, 9],
+    ];
+    let sizes: Vec<u32> = faces.iter().map(|f| f.len() as u32).collect();
+    let corners: Vec<u32> = faces.concat();
+    unsafe {
+        let reflection = openclare_reflection_check(
+            positions.as_ptr(),
+            10,
+            sizes.as_ptr(),
+            sizes.len(),
+            corners.as_ptr(),
+            corners.len(),
+            null(),
+            null(),
+            0,
+            -1.0,
+            -1.0,
+            -1.0,
+        );
+        assert_eq!(openclare_reflection_ok(reflection), 1);
+        let faults = faults_of(reflection);
+        let triangle = faults.iter().find(|f| f.0 == OPENCLARE_FAULT_PINCH && f.2 == 6).expect("the triangle pinches");
+        let corner = (1.0f64 / 3f64.sqrt()).acos().to_degrees();
+        assert_eq!((triangle.1, triangle.3, triangle.4), (0, 3, 3));
+        assert!((triangle.5 - corner).abs() < 1e-5, "{}", triangle.5);
+        // All three edges, then all three corners.
+        assert_eq!(triangle.6, [(1, 0), (1, 1), (1, 2), (0, 0), (0, 1), (0, 2)]);
+        // The pentagons meet everything round them at right angles: first
+        // in the ranking.
+        assert!(faults[..3].iter().all(|f| f.0 == OPENCLARE_FAULT_PINCH && f.3 == 5 && (f.5 - 90.0).abs() < 1e-5));
+        openclare_reflection_free(reflection);
+
+        // What is wrong is said, not thrown.
+        let wrong = openclare_reflection_check(
+            positions.as_ptr(),
+            10,
+            sizes.as_ptr(),
+            sizes.len(),
+            corners.as_ptr(),
+            corners.len() - 1,
+            null(),
+            null(),
+            0,
+            -1.0,
+            -1.0,
+            -1.0,
+        );
+        assert_eq!(openclare_reflection_ok(wrong), 0);
+        assert!(
+            text(openclare_reflection_error(wrong)).contains("corners"),
+            "{}",
+            text(openclare_reflection_error(wrong))
+        );
+        assert_eq!(openclare_reflection_fault_count(wrong), 0);
+        openclare_reflection_free(wrong);
+        assert_eq!(openclare_reflection_ok(null()), 0);
+        openclare_reflection_free(null_mut());
+    }
+}
