@@ -74,7 +74,7 @@ The panel *Reflection Check* of the Properties editor, on the tab of the mesh, f
 | Feature | State | What it lacks |
 |---|---|---|
 | The faults of the cage, worst first, one angle each: n-gons off their plane, triangles and n-gons that pinch, poles on a curved zone, corner quads that fold or are thin; *Show the N Worst*, the tolerances, a row selects its face or vertex | experimental | new on 16 November 2026, not yet tried on a hand-made car body; the angles are measured on the cage, not on the subdivided surface (#328) |
-| The overlay of the N worst in the 3D viewport, one colour per kind | experimental | the same; not drawn while a change is being checked (#328) |
+| The overlay of the N worst in the 3D viewport, one colour per kind | experimental | the same; not drawn while the cage is being edited, until it has been still for 0.2 s; a cage of more than about 25 000 faces is checked on demand, with *Check* (#328) |
 
 ## Platforms
 

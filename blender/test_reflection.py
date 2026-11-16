@@ -8,6 +8,7 @@ Exits with an error if anything is not as it should be.
 
 import math
 import sys
+import time
 from pathlib import Path
 
 import bmesh
@@ -86,7 +87,7 @@ def cage(name, points, faces, crease=None):
 
 def edited(owner):
     bpy.ops.object.mode_set(mode="EDIT")
-    report = reflection.refresh(bpy.context)
+    report = reflection.look(bpy.context)
     assert report is not None, "no check of the cage in Edit Mode"
     return report
 
@@ -237,11 +238,191 @@ assert len(lines) == reflection.CIRCLE_SEGMENTS + 5 and all(colour == yellow for
 assert len(vertices) == 5
 bpy.ops.object.mode_set(mode="OBJECT")
 
+# ---------------------------------------------------------------- what starts a check
+#
+# Timers do not run here: what the timer would do once the cage is still,
+# `reflection.look()`, is run by hand where it would be due.
+
+
+class Update:
+    def __init__(self, owner, geometry):
+        self.id, self.is_updated_geometry = owner, geometry
+
+
+class Signalled:
+    """A depsgraph as an update handler sees it: its list of updates."""
+
+    def __init__(self, *updates):
+        self.updates = list(updates)
+
+
+def due():
+    """Runs the look the timer would run, if one is due; True if it was."""
+    if not reflection._pending:
+        return False
+    reflection.look(bpy.context)
+    return True
+
+
+empty = bpy.data.objects.new("empty", None)
+ball = cage("ball", [corner_of(v) for v in range(8)], CUBE)
+bpy.ops.object.mode_set(mode="EDIT")
+reflection.look(bpy.context)
+bpy.context.view_layer.update()
+reflection._pending = False
+stats = reflection.STATS
+generation, checks, looks = reflection._generation, stats.checks, stats.looks
+
+
+def changes(action):
+    """What `action` makes of the check: how many times the generation was
+    raised, looks and checks run, once Blender has signalled it."""
+    global generation, checks, looks
+    action()
+    bpy.context.view_layer.update()
+    due()
+    out = (reflection._generation - generation, stats.looks - looks, stats.checks - checks)
+    generation, checks, looks = reflection._generation, stats.checks, stats.looks
+    return out
+
+
+# A selection, another object, a modifier setting: nothing.
+assert changes(lambda: bpy.ops.mesh.select_all(action="SELECT")) == (0, 0, 0)
+assert changes(lambda: setattr(box, "location", (4.0, 0.0, 0.0))) == (0, 0, 0)
+assert changes(lambda: setattr(ball.modifiers["subdivide"], "levels", 2)) in ((0, 0, 0), (1, 1, 0))
+
+
+def move():
+    bm = bmesh.from_edit_mesh(ball.data)
+    bm.verts.ensure_lookup_table()
+    bm.verts[0].co.x += 0.25
+    bmesh.update_edit_mesh(ball.data)
+
+
+# A vertex moved: one check.
+assert changes(move) == (1, 1, 1), changes(lambda: None)
+# Our own look signals nothing back: run again and again at rest, nothing.
+for _ in range(10):
+    reflection.look(bpy.context)
+    assert changes(lambda: None) == (0, 0, 0)
+
+
+def select_through_the_edit_mesh():
+    bm = bmesh.from_edit_mesh(ball.data)
+    bm.verts.ensure_lookup_table()
+    bm.verts[3].select_set(True)
+    bmesh.update_edit_mesh(ball.data, loop_triangles=False, destructive=False)
+
+
+# A selection made through the edit mesh is signalled as an edit of its
+# geometry: the cage is read, found the same, and not checked again.
+before = stats.unchanged
+assert changes(select_through_the_edit_mesh) == (1, 1, 0)
+assert stats.unchanged == before + 1
+
+# Many signals at rest, edits of the cage or not, while still: one look at
+# most, never a check, and none at all for those that are not edits.
+for _ in range(20):
+    reflection._changed(None, Signalled(Update(ball, False), Update(empty, True), Update(ball.data, False)))
+assert not reflection._pending and changes(lambda: None) == (0, 0, 0)
+for _ in range(20):
+    reflection._changed(None, Signalled(Update(ball.data, True)))
+assert reflection._pending and changes(lambda: None) == (20, 1, 0)
+# A change signalled while this module looks is not one.
+reflection._looking = True
+reflection._changed(None, Signalled(Update(ball.data, True)))
+reflection._looking = False
+assert not reflection._pending and changes(lambda: None) == (0, 0, 0)
+
+# A drag: many moves, the cage looked at once it is still, checked once.
+for _ in range(5):
+    move()
+    bpy.context.view_layer.update()
+assert reflection._pending and stats.checks == checks
+assert changes(lambda: None)[1:] == (1, 1)
+
+# The overlay: built once for a report and a view, the same thing given back
+# after; while the view moves, what was built is drawn as it is; once the
+# view has been still, built again for it.
+report = reflection.look(bpy.context)
+cut_report = reflection.report_of(cut, settings)[0]
+builds = stats.builds
+first, built = reflection.overlay_for("region", cut, cut_report, 20, "view A", reflection.SeeAll, now=100.0)
+assert built and stats.builds == builds + 1
+again, built = reflection.overlay_for("region", cut, cut_report, 20, "view A", reflection.SeeAll, now=100.1)
+assert not built and again is first and again.segments is first.segments
+moving, built = reflection.overlay_for("region", cut, cut_report, 20, "view B", reflection.SeeAll, now=101.0)
+assert not built and moving is first
+still, built = reflection.overlay_for("region", cut, cut_report, 20, "view B", reflection.SeeAll,
+                                      now=101.0 + reflection.SETTLE_SECONDS)
+assert built and still is not first and still.built_for == "view B"
+fewer, built = reflection.overlay_for("region", cut, cut_report, 3, "view B", reflection.SeeAll,
+                                      now=101.0 + 2 * reflection.SETTLE_SECONDS)
+assert built and len(fewer.segments[0]) < len(still.segments[0])
+# The rows of the panel are made once per report and number shown.
+assert cut_report.rows(3) is cut_report.rows(3)
+
+# With Developer Extras, the panel says what the check has cost.
+bpy.context.preferences.view.show_developer_ui = True
+log = []
+reflection.draw_panel(Drawn(log), bpy.context)
+assert any("checks of" in text and "rays" in text for kind, text, _ in log if kind == "label"), log
+bpy.context.preferences.view.show_developer_ui = False
+log = []
+reflection.draw_panel(Drawn(log), bpy.context)
+assert not any("checks of" in text for kind, text, _ in log if kind == "label")
+print("STATS", stats.line())
+# ---------------------------------------------------------------- off
+#
+# With the toggle off, or the experimental features hidden, the handlers and
+# the draw read the toggle and return: nothing looked at, nothing scheduled.
+from openclare import experimental  # noqa: E402
+
+calls = []
+real_checked, real_edits, real_look = reflection.checked_object, reflection.edits_a_cage, reflection.look
+reflection.checked_object = lambda context: calls.append("checked_object") or real_checked(context)
+reflection.edits_a_cage = lambda *args: calls.append("edits_a_cage") or real_edits(*args)
+reflection.look = lambda *args, **kwargs: calls.append("look") or real_look(*args, **kwargs)
+signals = Signalled(Update(ball, True), Update(ball.data, True), Update(empty, True))
+for off in ("toggle", "experimental"):
+    if off == "toggle":
+        settings.show = False
+    else:
+        settings.show = True
+        experimental.assumed = False
+    reflection._pending = False
+    generation, checks = reflection._generation, stats.checks
+    start = time.perf_counter()
+    for _ in range(10000):
+        reflection._changed(None, signals)
+    handler = (time.perf_counter() - start) / 10000
+    start = time.perf_counter()
+    for _ in range(10000):
+        reflection.draw_view()
+    drawing = (time.perf_counter() - start) / 10000
+    reflection._undone()
+    assert calls == [] and not reflection._pending and reflection._generation == generation, calls
+    assert stats.checks == checks and reflection._missed
+    print(f"OFF ({off}): a signal handled in {1e6 * handler:.2f} µs, a draw in {1e6 * drawing:.2f} µs, "
+          "nothing scheduled")
+experimental.assumed = True
+reflection.checked_object, reflection.edits_a_cage, reflection.look = real_checked, real_edits, real_look
+# On again: everything found is out of date and looked at; the cage is the
+# same, so the engine is not called.
+settings.show = False
+settings.show = True
+assert reflection._pending and not reflection._missed
+looks, checks = stats.looks, stats.checks
+due()
+assert (stats.looks - looks, stats.checks - checks) == (1, 0)
+
+bpy.ops.object.mode_set(mode="OBJECT")
+
 # Without a Catmull-Clark modifier, nothing is checked.
 plain = cage("plain cube", [corner_of(v) for v in range(8)], CUBE)
 plain.modifiers.clear()
 bpy.ops.object.mode_set(mode="EDIT")
-assert reflection.checked_object(bpy.context) is None and reflection.refresh(bpy.context) is None
+assert reflection.checked_object(bpy.context) is None and reflection.look(bpy.context) is None
 bpy.ops.object.mode_set(mode="OBJECT")
 
 # The overlay's shaders exist where a GPU does.

@@ -76,7 +76,7 @@ Le panneau *Reflection Check* de l'éditeur de propriétés, sur l'onglet du mai
 | Fonction | État | Ce qui lui manque |
 |---|---|---|
 | Les fautes de la cage, la pire d'abord, un angle chacune : n-gones hors de leur plan, triangles et n-gones qui pincent, pôles sur une zone courbe, quads de coin qui se replient ou s'étirent ; *Show the N Worst*, les tolérances, une ligne sélectionne sa face ou son sommet | expérimental | nouveau au 16 novembre 2026, pas encore essayé sur une carrosserie modelée à la main ; les angles sont mesurés sur la cage, pas sur la surface subdivisée (#328) |
-| La surimpression des N pires dans la vue 3D, une couleur par sorte | expérimental | la même chose ; rien de dessiné le temps qu'un changement soit contrôlé (#328) |
+| La surimpression des N pires dans la vue 3D, une couleur par sorte | expérimental | la même chose ; rien de dessiné pendant qu'on édite la cage, jusqu'à ce qu'elle soit immobile depuis 0,2 s ; une cage de plus de 25 000 faces environ se contrôle à la demande, avec *Check* (#328) |
 
 ## Plateformes
 

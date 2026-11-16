@@ -3,10 +3,10 @@ Subdivision Surface, the faults that will make a reflection pinch or wobble
 once it is subdivided, worst first, each ranked by one number.
 
 The criteria are the engine's (`openclare::reflection`, called through
-`engine.reflection_check`): none is worked out here. This module takes the
-cage out of Edit Mode, keeps the faults found until Blender says something
-changed, lists the N worst in a panel and draws them in the 3D viewport,
-with one colour per kind of fault:
+`engine.reflection_check`): none is worked out here. This module reads the
+cage out of Edit Mode, keeps the faults found until the cage changes, lists
+the N worst in a panel and draws them in the 3D viewport, with one colour
+per kind of fault:
 
 - folded corner quads (red) and thin ones (orange): a dashed star from the
   centre of the face to the corners whose quad folds or is thin;
@@ -20,14 +20,34 @@ The angles are measured on the cage, not on the subdivided surface: they
 rank faults against one another, they are not the actual wobble of the
 reflection.
 
-The faults are found again when Blender signals a change (an edit, a
-selection, an undo) or the settings change, as long as a check of the cage
-takes less than `AUTO_SECONDS`; a cage that takes longer is checked on
-demand, with the Check button. Out of X-ray, each point drawn is tested for
-being seen (see `Visibility`); a segment is drawn if both its ends are.
+When the check runs. Only an edit of the geometry of the cage, as Blender
+signals it (an update of the object or of its mesh with its geometry
+changed), an undo, or a change of the settings makes what was found out of
+date; a selection, another object, a material do not. The cage is then
+looked at once it has been still for `SETTLE_SECONDS`, if a check of it
+takes less than `AUTO_SECONDS`, else on demand with the Check button. A
+look reads the cage from the edit mesh and writes nothing: no data, no
+mesh, no property, so nothing it does can be signalled back as a change.
+And a look only ever brings what was found up to date: it never makes it
+out of date, so no look can lead to another. When the cage read is the one
+already checked (a selection made through the edit mesh is signalled as a
+change of its geometry), the engine is not called again. With the toggle
+off, or the experimental features hidden, the handlers and the draw read
+the toggle and return: nothing is looked at, nothing scheduled, and what
+was found is taken as out of date once the check is on again.
+
+While out of date, nothing is drawn. The overlay is built once per result
+and per view, and drawn from what was built otherwise; while the view
+moves, the last one built is drawn as it is, and once the view has been
+still for `SETTLE_SECONDS`, it is built again for that view, out of X-ray
+with each point tested for being seen (see `Visibility`).
+
+With Blender's Developer Extras on, the panel says in one line what the
+check has cost (see `Stats`).
 """
 
 import time
+from itertools import chain
 from math import cos, pi, radians, sin
 
 import bmesh
@@ -46,7 +66,6 @@ COLOURS = {
     "curved_pole": (0.30, 0.70, 1.00, 1.0),
     "thin": (1.00, 0.65, 0.15, 1.0),
 }
-CENTRE = (1.0, 1.0, 1.0, 1.0)
 # What each kind of fault is mended by, and the icon that says it.
 REPAIRS = {
     "degenerate": "topology",
@@ -59,39 +78,100 @@ REPAIRS = {
 REPAIR_ICONS = {"move": "EMPTY_ARROWS", "topology": "MESH_GRID"}
 REPAIR_WORDS = {"move": "move vertices", "topology": "change the topology"}
 
-# A check of the cage refreshed on every change only if it took less than
-# this, in seconds; beyond it, on demand.
+# How long, in seconds, the cage, or the view, must have been still before
+# it is looked at again: a drag runs no check, an orbit casts no ray.
+SETTLE_SECONDS = 0.2
+# A cage is looked at again by itself only if a check of it takes less than
+# this, in seconds; beyond it, on demand. Before its first check, a cage is
+# reckoned at `SECONDS_PER_FACE` (reading it, about 1.5 microseconds a face,
+# and the engine, about 0.6 on 4 threads, measured on an i7-7700K): a cage
+# of up to some 25 000 faces is kept up to date by itself.
 AUTO_SECONDS = 0.05
+SECONDS_PER_FACE = 2e-6
 DASH_PX = 8          # length of a dash on screen
 CIRCLE_SEGMENTS = 48
-MAX_RAYS = 1000      # points tested for being seen, per view
-# The mesh the cage is copied to, to be read in a few calls rather than
-# vertex by vertex; used by no object.
-SCRATCH = ".openclare reflection check"
+MAX_RAYS = 1000      # points tested for being seen, per build of the overlay
 
-_generation = 0      # raised on every change Blender signals
-_reports = {}        # pointer of the mesh -> Report
-_handles = []
+_generation = 0      # raised by an edit of the cage; never by this module's work
+_last_change = 0.0   # when it was last raised, or a look last asked for
+_pending = False     # a look is due
 _timer_set = False
+_view_timer_set = False
+_looking = False
+_missed = False      # a change may have gone by while the check was off
+_reports = {}        # pointer of the mesh -> Report
+_drawn = {}          # pointer of the region -> Drawn
+_handles = []
+
+
+class Stats:
+    """What the check has cost since the add-on was enabled, kept in memory
+    and shown with Developer Extras."""
+
+    def __init__(self):
+        self.looks = 0           # the cage read
+        self.checks = 0          # the engine called
+        self.unchanged = 0       # read, and found the one already checked
+        self.read_seconds = 0.0  # of the last look
+        self.engine_seconds = 0.0
+        self.builds = 0          # the overlay built
+        self.build_seconds = 0.0
+        self.rays = 0            # cast by the last build
+        self.rays_total = 0
+
+    def line(self):
+        return (f"{self.checks} checks of {self.looks} looks ({self.unchanged} unchanged); last read "
+                f"{1000 * self.read_seconds:.1f} ms, engine {1000 * self.engine_seconds:.1f} ms; overlay built "
+                f"{self.builds}×, last {1000 * self.build_seconds:.1f} ms, {self.rays} rays ({self.rays_total} in all)")
+
+
+STATS = Stats()
 
 
 class Report:
     """The faults of one cage, as the engine found them (`faults`, an
-    `engine.Faults`), with what drawing and listing them asks for: the
-    positions of the cage (a numpy array of three floats per vertex, in the
-    space of the object), the vertices of each face (`starts`, where the
-    corners of each face start in `corners`), the key it was found under, and
-    how long finding it took, in seconds."""
+    `engine.Faults`), with what drawing and listing them asks for: the arrays
+    the cage was read as (positions, three floats per vertex in the space of
+    the object; sizes and corners of the faces; creased edges), the
+    `generation` and the `tolerances` it was found under, and how long
+    reading and checking it took, in seconds."""
 
-    def __init__(self, faults, positions, sizes, corners, key, seconds):
+    def __init__(self, faults, arrays, tolerances, seconds):
         import numpy
 
-        self.faults, self.positions, self.corners, self.key, self.seconds = faults, positions, corners, key, seconds
+        self.faults, self.arrays, self.tolerances, self.seconds = faults, arrays, tolerances, seconds
+        self.generation = _generation
+        positions, sizes, corners = arrays[:3]
+        self.positions, self.corners = positions.reshape(-1, 3), corners
         self.starts = numpy.concatenate(([0], numpy.cumsum(sizes, dtype=numpy.int64)))
+        self._rows = {}
 
     def face(self, index):
         """The vertices of face `index`, in order."""
         return self.corners[self.starts[index]:self.starts[index + 1]]
+
+    def same_cage(self, arrays):
+        """Whether `arrays` read the cage this report was found on."""
+        import numpy
+
+        def same(a, b):
+            if a is None or b is None:
+                return a is None and b is None
+            return a.shape == b.shape and numpy.array_equal(a, b)
+
+        return all(same(a, b) for a, b in zip(self.arrays, arrays))
+
+    def rows(self, worst):
+        """What the panel lists, made once per number shown: for each of
+        the `worst` first faults, its index, its words and the icon of its
+        repair."""
+        if worst not in self._rows:
+            out = []
+            for i in range(min(worst, len(self))):
+                kind = engine.FAULT_KINDS[self.faults.kinds[i]]
+                out.append((i, fault_name(self, i), REPAIR_ICONS[REPAIRS[kind]]))
+            self._rows[worst] = out
+        return self._rows[worst]
 
     def __len__(self):
         return len(self.faults.kinds)
@@ -114,62 +194,66 @@ def uses_creases(owner):
 def checked_object(context):
     """The object whose cage is checked: the one in Edit Mode, if it is a mesh
     under a Catmull-Clark Subdivision Surface."""
-    owner = context.edit_object
+    owner = getattr(context, "edit_object", None)
     if owner is None or owner.type != "MESH" or not subsurf_modifiers(owner):
         return None
     return owner
 
 
-def key_of(owner, settings):
-    return (_generation, round(settings.flat_tolerance, 6), round(settings.angle_tolerance, 9), uses_creases(owner))
-
-
-def scratch_mesh():
-    mesh = bpy.data.meshes.get(SCRATCH)
-    if mesh is None or mesh.users:
-        mesh = bpy.data.meshes.new(SCRATCH)
-    return mesh
+def tolerances_of(owner, settings):
+    return (round(settings.flat_tolerance, 6), round(settings.angle_tolerance, 9), uses_creases(owner))
 
 
 def cage_arrays(owner, creases=True):
     """The cage of `owner`, in Edit Mode, as the engine takes it: positions,
     the number of corners of each face, the vertex of each corner, and the
-    creased edges with their weights (from the attribute crease_edge), or
-    None and None when `creases` is false or there are none. Vertices and
-    faces are numbered as the edit mesh numbers them."""
+    creased edges with their weights (from the layer crease_edge), or None
+    and None when `creases` is false or there are none. Vertices and faces
+    are numbered as the edit mesh numbers them.
+
+    Read element by element from the edit mesh, which costs about a
+    microsecond a face, and writes nothing: a copy to a mesh would be
+    quicker, but a write to Blender's data is signalled as an update, and
+    nothing this module does must be."""
     import numpy
 
-    mesh = scratch_mesh()
-    bmesh.from_edit_mesh(owner.data).to_mesh(mesh)
-    positions = numpy.empty(3 * len(mesh.vertices), numpy.float32)
-    mesh.vertices.foreach_get("co", positions)
-    sizes = numpy.empty(len(mesh.polygons), numpy.uint32)
-    mesh.polygons.foreach_get("loop_total", sizes)
-    corners = numpy.empty(len(mesh.loops), numpy.uint32)
-    mesh.loops.foreach_get("vertex_index", corners)
+    bm = bmesh.from_edit_mesh(owner.data)
+    # The indices of the edit mesh, written into it and nowhere else: what
+    # Blender itself does before reading it.
+    bm.verts.index_update()
+    positions = numpy.fromiter(chain.from_iterable(v.co for v in bm.verts), numpy.float32, 3 * len(bm.verts))
+    sizes = numpy.fromiter((len(f.verts) for f in bm.faces), numpy.uint32, len(bm.faces))
+    corners = numpy.fromiter((v.index for f in bm.faces for v in f.verts), numpy.uint32, int(sizes.sum()))
     pairs = weights = None
-    crease = mesh.attributes.get("crease_edge")
-    if creases and crease is not None and crease.domain == "EDGE" and len(mesh.edges):
-        weights = numpy.empty(len(mesh.edges), numpy.float32)
-        crease.data.foreach_get("value", weights)
-        ends = numpy.empty(2 * len(mesh.edges), numpy.uint32)
-        mesh.edges.foreach_get("vertices", ends)
-        keep = weights > 0.0
-        pairs, weights = ends.reshape(-1, 2)[keep].ravel(), weights[keep]
+    layer = bm.edges.layers.float.get("crease_edge") if creases else None
+    if layer is not None:
+        found = [(e.verts[0].index, e.verts[1].index, e[layer]) for e in bm.edges if e[layer] > 0.0]
+        if found:
+            pairs = numpy.array([(a, b) for a, b, _ in found], numpy.uint32).ravel()
+            weights = numpy.array([w for _, _, w in found], numpy.float32)
     return positions, sizes, corners, pairs, weights
 
 
-def check(owner, settings):
-    """Checks the cage of `owner` afresh and keeps what was found. Returns
-    the `Report`."""
+def check(owner, settings, previous=None):
+    """Reads the cage of `owner` and checks it, unless it is the one
+    `previous` was found on under the same tolerances: then `previous` is
+    brought up to date. Returns the `Report`, which is kept."""
     start = time.perf_counter()
-    positions, sizes, corners, pairs, weights = cage_arrays(owner, uses_creases(owner))
+    tolerances = tolerances_of(owner, settings)
+    arrays = cage_arrays(owner, tolerances[2])
+    read = time.perf_counter()
+    STATS.looks += 1
+    STATS.read_seconds = read - start
+    if previous is not None and previous.tolerances == tolerances and previous.same_cage(arrays):
+        STATS.unchanged += 1
+        previous.generation = _generation
+        return previous
     faults = engine.reflection_check(
-        positions, sizes, corners, pairs, weights,
-        flat_tolerance=settings.flat_tolerance / 100.0, angle_tolerance=settings.angle_tolerance * 180.0 / pi,
+        *arrays, flat_tolerance=settings.flat_tolerance / 100.0, angle_tolerance=settings.angle_tolerance * 180.0 / pi,
     )
-    report = Report(faults, positions.reshape(-1, 3), sizes, corners, key_of(owner, settings),
-                    time.perf_counter() - start)
+    STATS.checks += 1
+    STATS.engine_seconds = time.perf_counter() - read
+    report = Report(faults, arrays, tolerances, time.perf_counter() - start)
     _reports[owner.data.as_pointer()] = report
     return report
 
@@ -180,13 +264,15 @@ def report_of(owner, settings):
     report = _reports.get(owner.data.as_pointer())
     if report is None:
         return None, False
-    return report, report.key == key_of(owner, settings)
+    return report, report.generation == _generation and report.tolerances == tolerances_of(owner, settings)
 
 
-def automatic(report):
-    """Whether a cage is checked again on every change: one that was quick
-    to check."""
-    return report is None or report.seconds < AUTO_SECONDS
+def affordable(owner, report):
+    """Whether a cage is looked at by itself: one that was quick to check,
+    or, never checked, that is small enough to be."""
+    if report is not None:
+        return report.seconds < AUTO_SECONDS
+    return len(bmesh.from_edit_mesh(owner.data).faces) * SECONDS_PER_FACE < AUTO_SECONDS
 
 
 def fault_name(report, i):
@@ -217,91 +303,153 @@ def fault_name(report, i):
 
 
 def rows(report, worst):
-    """The faults the panel lists: for each of the `worst` first, its index,
-    its words and the icon of its repair."""
-    out = []
-    for i in range(min(worst, len(report))):
-        kind = engine.FAULT_KINDS[report.faults.kinds[i]]
-        out.append((i, fault_name(report, i), REPAIR_ICONS[REPAIRS[kind]]))
-    return out
+    return report.rows(worst)
 
 
-# ---------------------------------------------------------------- refresh
+# ---------------------------------------------------------------- looking again
 
 
-def refresh(context=None):
-    """Checks the cage in Edit Mode again if it is shown, out of date and
-    quick to check. Returns the report, or None."""
+def look(context=None, force=False):
+    """Brings what was found of the cage in Edit Mode up to date, if the
+    check is shown and the cage quick enough to check, or `force`. Returns
+    the report, or None. Never makes anything out of date."""
+    global _pending, _looking
     context = context or bpy.context
+    _pending = False
     scene = getattr(context, "scene", None)
-    if scene is None or not settings_of(scene).show or not experimental.shown():
+    if scene is None or not active(scene):
         return None
     owner = checked_object(context)
     if owner is None:
         return None
     settings = settings_of(scene)
     report, current = report_of(owner, settings)
-    if current:
+    if current or not (force or affordable(owner, report)):
         return report
-    if not automatic(report):
-        return report
-    return check(owner, settings)
+    _looking = True
+    try:
+        report = check(owner, settings, report)
+    finally:
+        _looking = False
+    tag_redraw(context)
+    return report
 
 
-def _refresh_soon():
+def _wait():
+    """The timer: looks once the cage has been still for SETTLE_SECONDS."""
     global _timer_set
+    left = SETTLE_SECONDS - (time.monotonic() - _last_change)
+    if left > 1e-3:
+        return left
     _timer_set = False
     try:
-        if refresh() is not None:
-            tag_redraw()
+        look()
     except (ReferenceError, RuntimeError, ValueError, engine.EngineError) as error:
         print(f"openclare: reflection check: {error}")
     return None
 
 
-def _schedule():
-    global _timer_set
+def _ask_for_look():
+    """A look is due: one, once the cage has been still for SETTLE_SECONDS,
+    however many times this is asked meanwhile."""
+    global _pending, _timer_set, _last_change
+    _pending = True
+    _last_change = time.monotonic()
     if not _timer_set and not bpy.app.background:
         _timer_set = True
-        bpy.app.timers.register(_refresh_soon, first_interval=0.0)
+        bpy.app.timers.register(_wait, first_interval=SETTLE_SECONDS)
+
+
+def _cage_changed():
+    global _generation
+    _generation += 1
+    _ask_for_look()
+
+
+def edits_a_cage(depsgraph, owner=None):
+    """Whether an update Blender signals is an edit of the geometry of a
+    cage: of the object `owner` or of its mesh, or of a mesh something was
+    found on (edited in Object Mode, say, between two sessions of Edit
+    Mode), with its geometry changed."""
+    for update in depsgraph.updates:
+        if not update.is_updated_geometry:
+            continue
+        original = update.id.original
+        if owner is not None and (original == owner or original == owner.data):
+            return True
+        mesh = original.data if isinstance(original, bpy.types.Object) else original
+        if isinstance(mesh, bpy.types.Mesh) and mesh.as_pointer() in _reports:
+            return True
+    return False
+
+
+def active(scene):
+    """Whether the check is on: its toggle, and the experimental features
+    shown. Read first by every handler and by the draw, which return at once
+    when it is not."""
+    settings = getattr(scene, "openclare_reflection", None)
+    return settings is not None and settings.show and experimental.shown()
+
+
+def _catch_up():
+    """What was found may have been made out of date while the check was off:
+    taken as such, and looked at."""
+    global _missed
+    _missed = False
+    _cage_changed()
 
 
 @persistent
 def _changed(_scene=None, depsgraph=None):
-    """Blender signals a change. Copying the cage to the scratch mesh signals
-    one with nothing in it: that one is not a change of the cage."""
-    global _generation
-    if depsgraph is not None and not len(depsgraph.updates):
+    """Blender signals an update. Only an edit of the geometry of a cage
+    counts, and none while this module is looking. While the check is off,
+    nothing is looked at, and the next time it is on, everything found is
+    out of date."""
+    global _missed
+    if _looking or depsgraph is None:
         return
-    _generation += 1
-    _schedule()
+    if not active(bpy.context.scene):
+        _missed = True
+        return
+    if _missed or edits_a_cage(depsgraph, checked_object(bpy.context)):
+        _catch_up()
 
 
 @persistent
 def _undone(*_args):
-    global _generation
-    _generation += 1
-    _schedule()
+    global _missed
+    if not active(bpy.context.scene):
+        _missed = True
+        return
+    _catch_up()
 
 
 @persistent
 def _loaded(*_args):
+    global _missed
     _reports.clear()
-    _undone()
+    _drawn.clear()
+    _missed = True
 
 
 def settings_changed(_settings, context):
-    # The tolerances are in the key of what was found: changed, it is out of
-    # date and found again.
-    _schedule()
+    # The toggle and the tolerances: what was found may be out of date, and
+    # is looked at again (and found the same, if the cage is).
+    if active(context.scene):
+        _catch_up()
     tag_redraw(context)
 
 
-def tag_redraw(context=None):
+def worst_changed(_settings, context):
+    # Show the N Worst only redraws.
+    tag_redraw(context)
+
+
+def tag_redraw(context=None, kinds=("VIEW_3D", "PROPERTIES")):
     wm = (context or bpy.context).window_manager
     for window in wm.windows:
         for area in window.screen.areas if window.screen else ():
-            if area.type in {"VIEW_3D", "PROPERTIES"}:
+            if area.type in kinds:
                 area.tag_redraw()
 
 
@@ -325,7 +473,7 @@ class OpenclareReflectionSettings(bpy.types.PropertyGroup):
         default=20,
         min=1,
         soft_max=200,
-        update=settings_changed,
+        update=worst_changed,
     )
     flat_tolerance: bpy.props.FloatProperty(
         name="Off the Plane",
@@ -381,7 +529,9 @@ class OPENCLARE_OT_reflection_check(bpy.types.Operator):
         return checked_object(context) is not None
 
     def execute(self, context):
-        report = check(checked_object(context), settings_of(context.scene))
+        owner = checked_object(context)
+        settings = settings_of(context.scene)
+        report = check(owner, settings, report_of(owner, settings)[0])
         tag_redraw(context)
         self.report({"INFO"}, f"{len(report)} faults, {1000.0 * report.seconds:.0f} ms")
         return {"FINISHED"}
@@ -405,8 +555,8 @@ class OPENCLARE_OT_reflection_select(bpy.types.Operator):
         settings = settings_of(context.scene)
         report, current = report_of(owner, settings)
         if report is None or not current:
-            # The numbering of the cage may have changed: found afresh.
-            report = check(owner, settings)
+            # The numbering of the cage may have changed: read afresh.
+            report = check(owner, settings, report)
         if self.index >= len(report):
             self.report({"WARNING"}, "No such fault: the cage was checked again")
             return {"CANCELLED"}
@@ -423,6 +573,8 @@ class OPENCLARE_OT_reflection_select(bpy.types.Operator):
         bm.select_history.add(element)
         if not on_vertex:
             bm.faces.active = element
+        # Signalled as an edit of the geometry: the cage is read again once
+        # still, found the same, and not checked again.
         bmesh.update_edit_mesh(owner.data, loop_triangles=False, destructive=False)
         frame_selected(context)
         return {"FINISHED"}
@@ -457,23 +609,28 @@ class OPENCLARE_PT_reflection(bpy.types.Panel):
 
 
 def draw_panel(layout, context):
-    """The panel, on `layout`: the settings, then the faults found."""
+    """The panel, on `layout`: the settings, then the faults found. It reads
+    what was found and changes nothing: no look, no check."""
     settings = settings_of(context.scene)
     layout.label(text="Angles are measured on the cage, not on the subdivided surface", icon=experimental.ICON)
     column = layout.column(align=True)
     column.prop(settings, "worst")
     column.prop(settings, "flat_tolerance")
     column.prop(settings, "angle_tolerance")
+    if context.preferences.view.show_developer_ui:
+        layout.label(text=STATS.line())
     if not settings.show:
         return
+    if _missed:
+        # Back on: what was found is taken as out of date and looked at
+        # again (a timer, not here).
+        _catch_up()
     owner = checked_object(context)
     if owner is None:
         layout.label(text="In Edit Mode, the faults of the cage are listed here", icon="INFO")
         return
-    # Found again after each change by a timer, not here: a panel is drawn,
-    # it does not change data.
     report, current = report_of(owner, settings)
-    if report is None or not (current or automatic(report)):
+    if report is None or not (current or _pending):
         row = layout.row()
         row.operator(OPENCLARE_OT_reflection_check.bl_idname, icon="FILE_REFRESH")
         if report is not None:
@@ -482,7 +639,7 @@ def draw_panel(layout, context):
         return
     if not uses_creases(owner):
         layout.label(text="Use Creases is off: only borders are sharp", icon="INFO")
-    listed = rows(report, settings.worst)
+    listed = report.rows(settings.worst)
     layout.label(text=f"{len(listed)} shown out of {len(report)}; {report.faults.poles} poles looked at")
     box = layout.column(align=True)
     for index, words, icon in listed:
@@ -523,7 +680,10 @@ def circle(centre, normal, radius, colour):
 
 
 class SeeAll:
-    """In X-ray, and with no view to test against, everything is seen."""
+    """In X-ray, while the view moves, and with no view to test against,
+    everything is seen."""
+
+    rays = 0
 
     def sees(self, owner, co):
         return True
@@ -536,18 +696,20 @@ class Visibility:
     something before. In Edit Mode, scene.ray_cast hits the cage of the
     object edited, not its subdivided surface: the cage hides itself
     exactly, and other objects hide it by their surface. One ray per point,
-    kept while neither the view nor the mesh changes."""
+    at most MAX_RAYS for one build of the overlay. The depsgraph is the one
+    the view drew with, taken as it is: asking for it evaluated could make
+    Blender evaluate it, from inside a draw."""
 
     def __init__(self, context):
         self.region, self.view = context.region, context.region_data
         self.scene = context.scene
-        self.depsgraph = context.evaluated_depsgraph_get()
+        self.depsgraph = context.view_layer.depsgraph
         self.rays = 0
         self.known = {}
 
     def sees(self, owner, co):
         """`co` in the space of the object."""
-        key = (owner.name, tuple(round(x, 6) for x in co))
+        key = tuple(round(x, 6) for x in co)
         if key not in self.known:
             self.known[key] = self._sees(owner, co)
         return self.known[key]
@@ -572,26 +734,9 @@ class Visibility:
         return not hit
 
 
-_views = {}   # pointer of the region -> (key of the view, Visibility)
-
-
 def xray(space):
     shading = space.shading
     return shading.show_xray_wireframe if shading.type == "WIREFRAME" else shading.show_xray
-
-
-def visibility(context):
-    if xray(context.space_data):
-        return SeeAll()
-    region, view = context.region, context.region_data
-    key = (_generation, tuple(map(tuple, view.perspective_matrix)), region.width, region.height)
-    pointer = region.as_pointer()
-    cached = _views.get(pointer)
-    if cached is not None and cached[0] == key:
-        return cached[1]
-    seen = Visibility(context)
-    _views[pointer] = (key, seen)
-    return seen
 
 
 def overlay(owner, report, worst, seen=None, region=None, view=None):
@@ -649,62 +794,119 @@ def overlay(owner, report, worst, seen=None, region=None, view=None):
     return lines, vertices, centres
 
 
-def _lines(segments, width):
+class Drawn:
+    """The overlay built for one region: from which report, how many faults,
+    for which view and the matrix of the object, what (`segments`, as
+    `overlay` gives them) and its GPU batches once made; and when the view
+    last moved."""
+
+    def __init__(self, report, worst, view, segments, moved_at, rays):
+        self.report, self.worst, self.built_for, self.segments = report, worst, view, segments
+        self.view, self.moved_at, self.rays = view, moved_at, rays
+        self.batches = None
+
+
+def overlay_for(key, owner, report, worst, view, seen, region=None, region_view=None, now=None):
+    """The overlay of region `key` for `report` seen from `view` (anything
+    that changes when the view or the object moves), built only when the
+    report, the number shown, or a view still for SETTLE_SECONDS is not what
+    it was built for; `seen()` makes what tells which points are seen.
+    Returns the `Drawn` and whether it was built now."""
+    now = time.monotonic() if now is None else now
+    drawn = _drawn.get(key)
+    if drawn is not None and drawn.view != view:
+        drawn.view, drawn.moved_at = view, now
+    moving = drawn is not None and now - drawn.moved_at < SETTLE_SECONDS
+    if drawn is not None and drawn.report is report and drawn.worst == worst and (moving or drawn.built_for == view):
+        return drawn, False
+    start = time.perf_counter()
+    looker = SeeAll() if moving else seen()
+    segments = overlay(owner, report, worst, looker, region, region_view)
+    drawn = Drawn(report, worst, view if not moving else None, segments,
+                  drawn.moved_at if drawn is not None else now - SETTLE_SECONDS, looker.rays)
+    drawn.view = view
+    _drawn[key] = drawn
+    STATS.builds += 1
+    STATS.build_seconds = time.perf_counter() - start
+    STATS.rays = looker.rays
+    STATS.rays_total += looker.rays
+    return drawn, True
+
+
+def _view_settled():
+    global _view_timer_set
+    _view_timer_set = False
+    tag_redraw(kinds=("VIEW_3D",))
+    return None
+
+
+def _batches(segments):
     import gpu
     from gpu_extras.batch import batch_for_shader
 
-    if not segments:
-        return
-    region = bpy.context.region
-    shader = gpu.shader.from_builtin("POLYLINE_SMOOTH_COLOR")
-    positions, colours = [], []
-    for a, b, c in segments:
-        positions += [a, b]
-        colours += [c, c]
-    batch = batch_for_shader(shader, "LINES", {"pos": positions, "color": colours})
-    shader.bind()
-    shader.uniform_float("viewportSize", (region.width, region.height))
-    shader.uniform_float("lineWidth", width)
-    batch.draw(shader)
-
-
-def _points(points, size):
-    import gpu
-    from gpu_extras.batch import batch_for_shader
-
-    if not points:
-        return
+    lines, vertices, centres = segments
+    out = []
+    if lines:
+        shader = gpu.shader.from_builtin("POLYLINE_SMOOTH_COLOR")
+        positions = [p for a, b, _ in lines for p in (a, b)]
+        colours = [c for _, _, c in lines for _ in (0, 1)]
+        out.append(("lines", shader, batch_for_shader(shader, "LINES", {"pos": positions, "color": colours})))
     shader = gpu.shader.from_builtin("POINT_FLAT_COLOR")
-    batch = batch_for_shader(shader, "POINTS", {"pos": [p for p, _ in points], "color": [c for _, c in points]})
-    gpu.state.point_size_set(size)
-    batch.draw(shader)
+    for name, points in (("vertices", vertices), ("centres", centres)):
+        if points:
+            batch = batch_for_shader(shader, "POINTS", {"pos": [p for p, _ in points], "color": [c for _, c in points]})
+            out.append((name, shader, batch))
+    return out
 
 
 def draw_view():
     """Draws the worst faults of the cage in Edit Mode, when the check is
-    shown, the overlays are, and what was found is up to date."""
+    shown, the overlays are, and what was found is up to date: from the
+    batches already built, unless they are for another report or view."""
+    global _view_timer_set
     import gpu
 
     context = bpy.context
+    if not active(context.scene):
+        return
     space = context.space_data
-    if space is None or not space.overlay.show_overlays or not experimental.shown():
+    if space is None or not space.overlay.show_overlays:
+        return
+    if _missed:
+        _catch_up()
         return
     settings = settings_of(context.scene)
-    owner = checked_object(context) if settings.show else None
+    owner = checked_object(context)
     if owner is None:
         return
     report, current = report_of(owner, settings)
     if report is None or not current:
         return
-    lines, vertices, centres = overlay(
-        owner, report, settings.worst, visibility(context), context.region, context.region_data
+    region, region_view = context.region, context.region_data
+    see_all = xray(space)
+    view = (tuple(map(tuple, region_view.perspective_matrix)), region.width, region.height, see_all,
+            tuple(map(tuple, owner.matrix_world)))
+    drawn, built = overlay_for(
+        region.as_pointer(), owner, report, settings.worst, view,
+        SeeAll if see_all else (lambda: Visibility(context)), region, region_view,
     )
+    if drawn.built_for != view and not _view_timer_set:
+        # Drawn as last built while the view moves; built again once it stops.
+        _view_timer_set = True
+        bpy.app.timers.register(_view_settled, first_interval=SETTLE_SECONDS)
+    if built or drawn.batches is None:
+        drawn.batches = _batches(drawn.segments)
     scale = context.preferences.system.ui_scale
     gpu.state.blend_set("ALPHA")
     gpu.state.depth_test_set("NONE")
-    _lines(lines, 3.0 * scale)
-    _points(vertices, 9 * scale)
-    _points(centres, 6 * scale)
+    for name, shader, batch in drawn.batches:
+        shader.bind()
+        if name == "lines":
+            shader.uniform_float("viewportSize", (region.width, region.height))
+            shader.uniform_float("lineWidth", 3.0 * scale)
+        else:
+            gpu.state.point_size_set((9 if name == "vertices" else 6) * scale)
+        batch.draw(shader)
     gpu.state.point_size_set(1.0)
     gpu.state.blend_set("NONE")
 
@@ -736,16 +938,19 @@ def register():
 
 
 def unregister():
+    global _timer_set, _view_timer_set
     for handle in _handles:
         bpy.types.SpaceView3D.draw_handler_remove(handle, "WINDOW")
     _handles.clear()
     for handlers, handler in HANDLERS:
         if handler in handlers:
             handlers.remove(handler)
-    if bpy.app.timers.is_registered(_refresh_soon):
-        bpy.app.timers.unregister(_refresh_soon)
+    for timer in (_wait, _view_settled):
+        if bpy.app.timers.is_registered(timer):
+            bpy.app.timers.unregister(timer)
+    _timer_set = _view_timer_set = False
     _reports.clear()
-    _views.clear()
+    _drawn.clear()
     del bpy.types.Scene.openclare_reflection
     for cls in reversed(CLASSES):
         bpy.utils.unregister_class(cls)
