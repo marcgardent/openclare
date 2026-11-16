@@ -99,9 +99,7 @@ pub struct RemeshConfig {
     /// place for the reflection check with its creases (see
     /// [`crate::reflection::repair`]), and the creases are part of the
     /// result. Off by default: a mesh that is never subdivided has no use
-    /// for it. Experimental. The slide of the singularities towards flatter
-    /// places that was tried with it is not part of it (see
-    /// [`crate::singularity::Slide`]).
+    /// for it. Experimental.
     pub for_subdivision: bool,
     /// In the slow quality mode, the time each solve may take, in seconds:
     /// a bound for safety, which depends on the load of the machine.

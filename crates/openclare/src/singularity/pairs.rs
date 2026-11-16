@@ -134,11 +134,7 @@ impl SingularityOptimizer for PairCancellation {
             }
         }
 
-        if let Some(slide) = &request.slide {
-            graph.slide(&mut angles, &frames, slide, &mut report);
-        }
-
-        if report.cancelled == 0 && report.split == 0 && report.slid == 0 {
+        if report.cancelled == 0 && report.split == 0 {
             report.singularities_after = report.singularities_before;
             report.energy_after = report.energy_before;
             return Ok((field.clone(), report));
@@ -344,107 +340,6 @@ impl<'a> Graph<'a> {
             }
         }
         split
-    }
-
-    /// Each simple singularity left slides, within reach, to where the
-    /// surface bends least over a quad ([`super::Bend`]), when that is
-    /// clearly flatter than where it is and the field round the way can
-    /// afford it: the index is moved along the shortest way there, the field
-    /// solved again round it, and the move undone if the energy there rose
-    /// by more than the tolerance. The most bent first, so that the worst
-    /// placed take the room there is.
-    fn slide(&self, angles: &mut AngleField, frames: &FaceFrames, tuning: &super::Slide, report: &mut Report) {
-        let edge_length = tuning.edge_length;
-        let charge = super::Bend::new(self.work, edge_length);
-        let bend = |v: u32| charge.at(v as usize);
-        let mut singular: Vec<(u32, i32)> = self
-            .singular_vertices(angles)
-            .into_iter()
-            .filter(|&(v, index)| index.abs() == 1 && !self.imposed(v) && !self.on_line[v as usize])
-            .collect();
-        singular.sort_by(|a, b| bend(b.0).total_cmp(&bend(a.0)).then(a.0.cmp(&b.0)));
-        let mut occupied: HashSet<u32> = self.singular_vertices(angles).into_iter().map(|(v, _)| v).collect();
-        for (v, index) in singular {
-            let here = bend(v);
-            let mut places: Vec<(f64, f64, Vec<u32>)> = self
-                .ways_out(angles, v, tuning.reach * edge_length, &occupied)
-                .into_iter()
-                .map(|(distance, path)| (bend(*path.last().unwrap()), distance, path))
-                .filter(|&(flat, _, _)| flat <= tuning.gain * here)
-                .collect();
-            places.sort_by(|a, b| a.0.total_cmp(&b.0).then(a.1.total_cmp(&b.1)).then_with(|| a.2.cmp(&b.2)));
-            for (_, _, path) in places.into_iter().take(tuning.tries) {
-                report.slides_tried += 1;
-                let region = self.faces_around(&path, 2 * path.len(), frames);
-                angles.select(&region, true);
-                let before = angles.energy(&region);
-                let saved = angles.snapshot(&region);
-                // A positive quarter turn goes out along the way; a negative
-                // one is moved by bringing a positive one back.
-                self.shift_along(angles, &path, index);
-                angles.solve(&region);
-                let after = angles.energy(&region);
-                let to = *path.last().unwrap();
-                let moved = self.index(angles, v) == 0 && self.index(angles, to) == index;
-                // The pull towards the curvature directions may be held to
-                // a tolerance of its own: on the bench a slide raises it more
-                // than the whole energy.
-                let kept = moved
-                    && after.total() <= (1.0 + tuning.tolerance) * before.total()
-                    && after.alignment <= (1.0 + tuning.alignment_tolerance) * before.alignment + 1e-12;
-                if !kept {
-                    self.shift_along(angles, &path, -index);
-                    angles.restore(&region, saved);
-                }
-                angles.select(&region, false);
-                if kept {
-                    report.slid += 1;
-                    occupied.remove(&v);
-                    occupied.insert(to);
-                    break;
-                }
-            }
-        }
-    }
-
-    /// Every vertex `start` can reach within `limit` (measured in quads, as
-    /// for the pairs) over interior edges, through no singular vertex, no
-    /// border and no line the field is held to, with the shortest way there
-    /// from `start`.
-    fn ways_out(&self, angles: &AngleField, start: u32, limit: f64, occupied: &HashSet<u32>) -> Vec<(f64, Vec<u32>)> {
-        let positions = &self.work.mesh.positions;
-        let mut distance: HashMap<u32, f64> = HashMap::from([(start, 0.0)]);
-        let mut previous: HashMap<u32, u32> = HashMap::new();
-        let mut queue = BinaryHeap::from([Reverse((0u64, start))]);
-        let mut found = Vec::new();
-        while let Some(Reverse((bits, v))) = queue.pop() {
-            let reached = f64::from_bits(bits);
-            if reached > distance[&v] {
-                continue;
-            }
-            if v != start {
-                let mut path = vec![v];
-                while let Some(&before) = previous.get(path.last().unwrap()) {
-                    path.push(before);
-                }
-                path.reverse();
-                found.push((reached, path));
-            }
-            for &next in &self.topology.neighbors[v as usize] {
-                let wall = occupied.contains(&next) || angles.on_border[next as usize] || self.on_line[next as usize];
-                if wall || self.interior_half_edge(v, next).is_none() {
-                    continue;
-                }
-                let size = 0.5 * (self.work.sizing[v as usize] + self.work.sizing[next as usize]);
-                let through = reached + positions[v as usize].distance(positions[next as usize]) / size;
-                if through <= limit && distance.get(&next).is_none_or(|&known| through < known) {
-                    distance.insert(next, through);
-                    previous.insert(next, v);
-                    queue.push(Reverse((through.to_bits(), next)));
-                }
-            }
-        }
-        found
     }
 
     /// The faces within six rings of `path` and `more`: enough for the field

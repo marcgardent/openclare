@@ -660,9 +660,6 @@ fn remesh(args: &[String]) -> Result<(), String> {
         println!("flat     {} faces made of the quads of flat parts", report.merged_faces);
     }
     if let Some(repair) = &report.subdivision_repair {
-        if report.singularities_slid > 0 {
-            println!("slid     {} singularities towards a flatter place (OPENCLARE_SLIDE)", report.singularities_slid);
-        }
         println!(
             "repair   for subdivision: {} vertices moved (the farthest by {:.3} of its shortest edge); folded faces {} -> {}, thin {} -> {}",
             repair.moved, repair.largest_share, repair.folded.0, repair.folded.1, repair.thin.0, repair.thin.1
@@ -1100,12 +1097,8 @@ fn field_command(args: &[String]) -> Result<(), String> {
     if let Some(quad_edges) = simplify {
         let quad_edge = work_request.curvature_scale.ok_or("--simplify needs --quads or --scale")?;
         let optimizer = singularity::create(singularity::Kind::PairCancellation);
-        let options = singularity::Request {
-            alignment: request.alignment,
-            tolerance,
-            reach: Some(quad_edges * quad_edge),
-            ..Default::default()
-        };
+        let options =
+            singularity::Request { alignment: request.alignment, tolerance, reach: Some(quad_edges * quad_edge) };
         let start = std::time::Instant::now();
         let (simplified, report) = optimizer.optimize(&work, &field, &options).map_err(|e| e.to_string())?;
         let frames = crossfield::FaceFrames::build(&work.mesh, &Topology::build(&work.mesh));

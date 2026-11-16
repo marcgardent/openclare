@@ -1,5 +1,4 @@
-//! The option for a result to be subdivided (#330): singularities slid
-//! towards flatter places, the mesh repaired in place for the reflection
+//! The option for a result to be subdivided (#330): the mesh repaired in place for the reflection
 //! check with its creases, and nothing else changed.
 
 use openclare::mesh::primitives;
@@ -10,7 +9,7 @@ use openclare::{RemeshConfig, Target};
 #[test]
 fn a_cube_keeps_its_faces_and_its_creased_edges() {
     // Every singularity of a cube sits on a corner, on the lines of its
-    // edges, where none slides; its quads are flat, and none folds or is
+    // edges; its quads are flat, and none folds or is
     // thin. So the option gives the faces it gives without, every crease
     // with them, and the repair finds nothing to do.
     let cube = primitives::cube(16);
@@ -18,7 +17,6 @@ fn a_cube_keeps_its_faces_and_its_creased_edges() {
     let (without, report_without) = plain.remesh(&cube).unwrap();
     let (with, report) = RemeshConfig { for_subdivision: true, ..plain }.remesh(&cube).unwrap();
     assert_eq!(with.faces, without.faces);
-    assert_eq!(report.singularities_slid, 0);
     assert_eq!(report.creases, report_without.creases);
     let repair = report.subdivision_repair.unwrap();
     assert_eq!((repair.folded, repair.thin), ((0, 0), (0, 0)));

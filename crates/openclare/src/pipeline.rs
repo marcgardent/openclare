@@ -88,9 +88,6 @@ pub struct Report {
     pub feature_edges: usize,
     /// Orientation-field singularities of index +1/4 and -1/4.
     pub singularities: (usize, usize),
-    /// Singularities slid towards a flatter place: 0 but in the experiment
-    /// of [`crate::singularity::Slide`].
-    pub singularities_slid: usize,
     /// Loops of the extracted graph left without a face (see
     /// [`crate::extract::FaceExtraction::open_loops`]).
     pub open_loops: usize,
@@ -213,7 +210,6 @@ impl Report {
         self.feature_edges += piece.feature_edges;
         self.singularities.0 += piece.singularities.0;
         self.singularities.1 += piece.singularities.1;
-        self.singularities_slid += piece.singularities_slid;
         self.open_loops += piece.open_loops;
         self.map_inversions += piece.map_inversions;
         self.pieces_fell_back += piece.fell_back as usize;

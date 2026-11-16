@@ -182,8 +182,7 @@ two things:
 It is off by default: a mesh that is never subdivided has no use for it. What it gains is
 measured by the reflection check, on the cage, not on the subdivided surface. Moving the poles
 towards flatter places was tried with it and left out: it paid for its gain in alignment, spirals
-and thin faces (ALGORITHM.md, "A result to be subdivided"); `OPENCLARE_SLIDE=on` with
-`--for-subdivision` runs that experiment.
+and thin faces (ALGORITHM.md, "A result to be subdivided").
 
 ## Symmetry
 

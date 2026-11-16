@@ -2166,8 +2166,8 @@ it; two are in it.
   given on request (`--creases-out`, *Carry: Creases*); with the option they always are: the
   command line writes them beside the output, the add-on sets them whatever *Carry* says.
 - **A cost "curvature under the pole"**, to move the poles towards flatter places. Tried, measured,
-  and left out of the option: see below. It stays in the engine as an experiment
-  (`singularity::Slide`), run only when `OPENCLARE_SLIDE` asks for it.
+  and left out: see below. Its code is not in the engine; it is kept on the branch
+  `pole-slide-experiment`.
 
 **Measured** on the twelve models of the quick batch at 2970, 3000 and 3030 quads (36 runs a
 side), each measured with the creases it was made with; means over the three budgets. The pole
@@ -2209,10 +2209,10 @@ normals of the faces round it and their mean. On a smooth surface that angle gro
 curvature across the faces, in the direction the surface bends most, times their size. The cost
 must act before the cage exists, so it reads the source: at a vertex of the work mesh, the largest
 principal curvature (read at the scale of the quads) met within one quad edge of it, times that
-edge (`singularity::Bend`). The largest within reach and not the value at the vertex: on a rounded
+edge. The largest within reach and not the value at the vertex: on a rounded
 box, the value at the vertex, averaged with the flat beside it, is lower on the rim of a rounded
 corner than at its middle, and poles slid there by that reading scored worse by the check (7.6°
-of mean pole angle went to 9.4°). Checked by hand on known cases (`tests/singularity.rs`): on the
+of mean pole angle went to 9.4°). Checked by hand on known cases (tests on the branch): on the
 spheroid x² + y² + (z/2)² = 1 the cost at the tip is 2 per unit of edge and 1.06 at cos t = 1/3,
 and the check of a quad sphere laid on it with a corner of its cube at each of those two places
 ranks the two the same way; on a cube, the cost is 0 on the flat of a face and large at a corner,
