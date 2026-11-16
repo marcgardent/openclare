@@ -4,10 +4,11 @@ use openclare::config::{PRESETS, Quality, RemeshConfig};
 use openclare::crossfield;
 use openclare::math::{Vec3, tangent_frame};
 use openclare::mesh::{Topology, obj, primitives};
-use openclare::metrics::{LoopKind, layout, measure};
+use openclare::metrics::{LoopKind, layout, measure, measure_with_creases};
 use openclare::parametrization;
 use openclare::preprocess;
 use openclare::quantization;
+use openclare::reflection::Kind as Fault;
 use openclare::singularity;
 use openclare::tmesh::TMesh;
 use openclare::{Guides, PolyMesh, Target, TriMesh};
@@ -18,7 +19,7 @@ openclare - field-aligned automatic quad retopology
 USAGE:
     openclare remesh <input.obj> <output.obj> [options]
     openclare presets
-    openclare measure <source.obj> <quads.obj> [--target <N>] [--json]
+    openclare measure <source.obj> <quads.obj> [--target <N>] [--creases <FILE>] [--json]
     openclare layout <quads.obj>
     openclare analyse <input.obj> [--preset <NAME>] [--largest <L>]
     openclare preprocess <input.obj> <output.obj> [options]
@@ -133,6 +134,9 @@ OPTIONS (quantize): those of tmesh up to --rounds, and
 
 OPTIONS (measure):
     --target <N>           face count that was asked for
+    --creases <FILE>       the creases the mesh is to be subdivided with, as remesh --creases-out writes
+                           them; an OBJ carries none, and without them only the borders are sharp to the
+                           reflection check
     --json                 print the metrics as one JSON object
 
 layout prints, as one JSON object, what measure counts of the poles and edge
@@ -723,10 +727,12 @@ fn layout_command(args: &[String]) -> Result<(), String> {
 
 fn measure_command(args: &[String]) -> Result<(), String> {
     let (mut target, mut json, mut paths) = (None, false, Vec::new());
+    let mut creases = None::<&String>;
     let mut args = args.iter();
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--target" => target = Some(parse(arg, args.next().ok_or("--target expects a value")?)?),
+            "--creases" => creases = Some(args.next().ok_or("--creases expects a value")?),
             "--json" => json = true,
             flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
             path => paths.push(path),
@@ -737,7 +743,11 @@ fn measure_command(args: &[String]) -> Result<(), String> {
     };
     let source = obj::read_obj(source).map_err(|e| format!("{source}: {e}"))?;
     let mesh = obj::read_obj_poly(quads).map_err(|e| format!("{quads}: {e}"))?;
-    let m = measure(&source, &mesh, target);
+    let creases = match creases {
+        Some(path) => Some(read_creases(path, mesh.positions.len()).map_err(|e| format!("{path}: {e}"))?),
+        None => None,
+    };
+    let m = measure_with_creases(&source, &mesh, target, creases.as_deref());
     if json {
         println!("{}", m.to_json());
         return Ok(());
@@ -783,7 +793,59 @@ fn measure_command(args: &[String]) -> Result<(), String> {
         optional(m.feature_edges_kept.map(|kept| format!("{:.1} % kept", 100.0 * kept))),
     );
     println!("budget       {}", optional(m.budget_error.map(|e| format!("{:.1} % off target", 100.0 * e))));
+    print_reflection(&m.reflection);
     Ok(())
+}
+
+/// The reflection check of `measure`, kind by kind.
+fn print_reflection(score: &openclare::reflection::Score) {
+    let of = |kind: Fault| score.of(kind);
+    let angles = |kind: Fault, what: &str| {
+        let s = of(kind);
+        match (s.worst, s.median) {
+            (Some(worst), Some(median)) => format!("{} {what}, worst {worst:.1} deg, median {median:.1}", s.count),
+            _ => format!("0 {what}"),
+        }
+    };
+    let shares = |kind: Fault, what: &str| {
+        let s = of(kind);
+        match s.worst {
+            Some(worst) => format!("{} {what} (smallest corner triangle {worst:.3} of the mean)", s.count),
+            None => format!("0 {what}"),
+        }
+    };
+    match score.creases {
+        Some(n) => println!("reflection   on the cage, under Catmull-Clark, with {n} creases (sharp from 0.999)"),
+        None => println!("reflection   on the cage, under Catmull-Clark, with no crease given: only borders are sharp"),
+    }
+    println!("             {}; {}", angles(Fault::Pinch, "pinched faces"), angles(Fault::NotFlat, "faces not flat"));
+    println!("             {} poles, {}", score.poles, angles(Fault::CurvedPole, "on a curved zone"),);
+    println!(
+        "             {}, {}, {} degenerate",
+        shares(Fault::Folded, "folded faces"),
+        shares(Fault::Thin, "thin faces"),
+        of(Fault::Degenerate).count,
+    );
+}
+
+/// The creases in the form remesh --creases-out writes them: one edge per
+/// line, two vertices numbered from 1 and a weight.
+fn read_creases(path: &str, vertices: usize) -> Result<Vec<openclare::creases::Crease>, String> {
+    let text = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
+    let mut creases = Vec::new();
+    for (line, content) in text.lines().enumerate() {
+        let fields: Vec<&str> = content.split_whitespace().collect();
+        if fields.is_empty() {
+            continue;
+        }
+        let error = || format!("line {}: expected two vertices from 1 to {vertices} and a weight", line + 1);
+        let [a, b, weight] = fields[..] else { return Err(error()) };
+        let vertex = |text: &str| {
+            text.parse::<usize>().ok().filter(|v| (1..=vertices).contains(v)).map(|v| v as u32 - 1).ok_or_else(error)
+        };
+        creases.push(([vertex(a)?, vertex(b)?], weight.parse::<f64>().map_err(|_| error())?));
+    }
+    Ok(creases)
 }
 
 fn preprocess_command(args: &[String]) -> Result<(), String> {

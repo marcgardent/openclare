@@ -192,6 +192,11 @@ METRICS = [
     ("loop_edges_open", "Edges on loops that stop at an irregular vertex, % (L)", "{:.1f}", True),
     ("longest_open_loop", "Longest loop that stops at an irregular vertex, edges (L)", "{:.0f}", True),
     ("loop_edges_border", "Edges on loops from a border to a border, % (L)", "{:.1f}", False),
+    # The reflection check of `openclare measure`, without creases: an OBJ carries none, and
+    # the other tools write none, so every tool is measured alike, only its borders sharp.
+    ("reflection_curved_pole", "Poles on a curved zone, no crease (R)", "{:.0f}", True),
+    ("reflection_curved_pole_median", "Median angle of those poles, degrees (R)", "{:.1f}", True),
+    ("reflection_folded", "Faces whose corner quads fold under Catmull-Clark (R)", "{:.0f}", True),
     ("budget_error", "Off budget, % (N)", "{:.1f}", True),
     ("seconds", "Time, seconds (T)", "{:.2f}", True),
 ]

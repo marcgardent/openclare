@@ -284,6 +284,18 @@ A `.rrd` is read by the viewer of the version that wrote it, here 0.36.
 ./target/release/openclare measure source.obj quads.obj --target 3000
 ```
 
+Its last lines are the reflection check: what of the mesh, taken as a cage for Catmull-Clark,
+will make a reflection pinch or wobble once subdivided. Triangles and n-gons on a curved zone
+(pinch), n-gons off their plane, poles on a curved zone, each ranked by an angle in degrees;
+faces whose corner quads fold or are thin. The angle is measured on the cage, not on the
+subdivided surface. An OBJ carries no crease: without them only the borders of the mesh are
+sharp, and the creases `remesh --creases-out` wrote are given back with `--creases`:
+
+```bash
+./target/release/openclare remesh source.obj quads.obj --faces ngons --creases-out quads.creases
+./target/release/openclare measure source.obj quads.obj --creases quads.creases
+```
+
 The marks from 0 to 100 the bench gives, for any mesh against its source:
 
 ```bash

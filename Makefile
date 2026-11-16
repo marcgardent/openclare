@@ -76,6 +76,11 @@ help:
 # machine down. The bench has the same cap (MEMORY_CAP in bench/run.py).
 MEMORY_CAP = 12000000
 
+# The same for a run of Blender, which needs more room than the engine: under
+# the cap above its graphics device fails to start and the tests end in a
+# segmentation fault.
+BLENDER_MEMORY_CAP = 32000000
+
 build:
 	cargo build --release
 
@@ -86,7 +91,7 @@ test:
 # object and the settings of the add-on, from bench/corpus/<model>.obj or, for
 # a BlenderKit model, from the file downloaded.
 scenes:
-	ulimit -v $(MEMORY_CAP); blender -b --factory-startup --python bench/make_scenes.py -- \
+	ulimit -v $(BLENDER_MEMORY_CAP); blender -b --factory-startup --python bench/make_scenes.py -- \
 		$(if $(MODELS),--models $(MODELS)) $(if $(REFRESH),--refresh)
 
 # Download and install AutoRemesher (huxingyi/autoremesher) into ~/.local/bin
@@ -282,7 +287,8 @@ test-trace:
 	python3 blender/test_cut.py
 
 addon-test: addon test-trace
-	ulimit -v $(MEMORY_CAP); blender -b --factory-startup --python-exit-code 1 --python blender/test_addon.py
+	ulimit -v $(BLENDER_MEMORY_CAP); blender -b --factory-startup --python-exit-code 1 --python blender/test_addon.py
+	ulimit -v $(BLENDER_MEMORY_CAP); blender -b --factory-startup --python-exit-code 1 --python blender/test_reflection.py
 
 # The C interface called from C: crates/openclare-capi/tests/c/smoke.c, built
 # with the header crates/openclare-capi/include/openclare.h and linked to the

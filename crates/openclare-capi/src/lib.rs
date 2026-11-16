@@ -1659,3 +1659,341 @@ pub unsafe extern "C" fn openclare_hard_edges_free(found: *mut OpenclareHardEdge
         drop(unsafe { Box::from_raw(found) });
     }
 }
+
+/// What a call to [`openclare_reflection_check`] gives back: the faults of a
+/// cage under Catmull-Clark, worst first, or why there are none.
+pub struct OpenclareReflection {
+    check: openclare::reflection::Check,
+    /// Empty when all went well.
+    error: CString,
+}
+
+/// The kinds of fault [`openclare_reflection_copy_faults`] writes, in the
+/// order of `openclare::reflection::Kind`.
+pub const OPENCLARE_FAULT_DEGENERATE: u8 = 0;
+pub const OPENCLARE_FAULT_FOLDED: u8 = 1;
+pub const OPENCLARE_FAULT_NOT_FLAT: u8 = 2;
+pub const OPENCLARE_FAULT_PINCH: u8 = 3;
+pub const OPENCLARE_FAULT_CURVED_POLE: u8 = 4;
+pub const OPENCLARE_FAULT_THIN: u8 = 5;
+
+/// The reflection check of a cage: what of it will make a reflection pinch
+/// or wobble once Catmull-Clark subdivides it, fault by fault, worst first
+/// (see `openclare::reflection`). Angles are measured on the cage, not on
+/// the subdivided surface.
+///
+/// - `positions`: `3 * vertex_count` numbers.
+/// - `face_sizes`: the number of corners of each of `face_count` faces;
+///   `corner_vertices`: the vertex of each corner, `corner_count` of them,
+///   face after face, as Blender keeps its polygons.
+/// - `crease_edges`: `2 * crease_count` vertices, two per edge, and
+///   `crease_weights` one weight from 0 to 1 per edge; both null, and
+///   `crease_count` 0, for none: only the borders are then sharp.
+/// - `flat_tolerance` (a share of the radius of a face), `angle_tolerance`
+///   (degrees) and `thin_ratio`: the thresholds of what counts as a fault;
+///   a negative or non-finite one takes its default (0.002, 1, 0.15).
+///
+/// Returns a handle to free with [`openclare_reflection_free`], never null.
+///
+/// # Safety
+///
+/// Each pointer must be null where allowed, or valid for the number of
+/// elements said of it, for the time of the call.
+#[unsafe(no_mangle)]
+#[allow(clippy::too_many_arguments)]
+pub unsafe extern "C" fn openclare_reflection_check(
+    positions: *const f32,
+    vertex_count: usize,
+    face_sizes: *const u32,
+    face_count: usize,
+    corner_vertices: *const u32,
+    corner_count: usize,
+    crease_edges: *const u32,
+    crease_weights: *const f32,
+    crease_count: usize,
+    flat_tolerance: f64,
+    angle_tolerance: f64,
+    thin_ratio: f64,
+) -> *mut OpenclareReflection {
+    let outcome = catch_unwind(AssertUnwindSafe(|| -> Result<openclare::reflection::Check, String> {
+        if (positions.is_null() && vertex_count > 0)
+            || (face_sizes.is_null() && face_count > 0)
+            || (corner_vertices.is_null() && corner_count > 0)
+        {
+            return Err("the mesh arrays are missing".into());
+        }
+        if crease_count > 0 && (crease_edges.is_null() || crease_weights.is_null()) {
+            return Err("the crease arrays are missing".into());
+        }
+        // SAFETY (all four): not null where the count is not 0, and as long
+        // as the caller says.
+        let coordinates = unsafe { read(positions, 3 * vertex_count) };
+        let sizes = unsafe { read(face_sizes, face_count) };
+        let corners = unsafe { read(corner_vertices, corner_count) };
+        let crease_pairs = unsafe { read(crease_edges, 2 * crease_count) };
+        let weights = unsafe { read(crease_weights, crease_count) };
+        let total: usize = sizes.iter().map(|&size| size as usize).sum();
+        if total != corner_count {
+            return Err(format!("the faces have {total} corners in all, and {corner_count} are given"));
+        }
+        if let Some(&beyond) = corners.iter().chain(crease_pairs).find(|&&v| v as usize >= vertex_count) {
+            return Err(format!("vertex {beyond} is named, of {vertex_count} vertices"));
+        }
+        let mut faces = Vec::with_capacity(face_count);
+        let mut start = 0;
+        for &size in sizes {
+            faces.push(corners[start..start + size as usize].to_vec());
+            start += size as usize;
+        }
+        let mesh = PolyMesh {
+            positions: coordinates.chunks_exact(3).map(|p| Vec3::new(p[0] as f64, p[1] as f64, p[2] as f64)).collect(),
+            faces,
+        };
+        let creases: Vec<([u32; 2], f64)> = crease_pairs
+            .chunks_exact(2)
+            .zip(weights)
+            .map(|(pair, &weight)| ([pair[0], pair[1]], weight as f64))
+            .collect();
+        let defaults = openclare::reflection::Settings::default();
+        let or = |given: f64, default: f64| if given.is_finite() && given >= 0.0 { given } else { default };
+        let settings = openclare::reflection::Settings {
+            flat_tolerance: or(flat_tolerance, defaults.flat_tolerance),
+            angle_tolerance: or(angle_tolerance, defaults.angle_tolerance),
+            thin_ratio: or(thin_ratio, defaults.thin_ratio),
+            ..defaults
+        };
+        Ok(openclare::reflection::check(&mesh, &creases, &settings))
+    }));
+    let (check, error) = match outcome {
+        Ok(Ok(check)) => (check, CString::default()),
+        Ok(Err(message)) => (Default::default(), text(message)),
+        Err(_) => (Default::default(), text("openclare failed unexpectedly while checking".to_string())),
+    };
+    Box::into_raw(Box::new(OpenclareReflection { check, error }))
+}
+
+/// 1 if the cage was checked, 0 if not or if `reflection` is null.
+///
+/// # Safety
+///
+/// `reflection` must be null or a handle from [`openclare_reflection_check`]
+/// not yet freed; the same goes for every function below.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_reflection_ok(reflection: *const OpenclareReflection) -> i32 {
+    // SAFETY: null or a live handle, by contract.
+    unsafe { reflection.as_ref() }.is_some_and(|reflection| reflection.error.as_bytes().is_empty()) as i32
+}
+
+/// Why the cage could not be checked; empty if it was. Valid until freed.
+///
+/// # Safety
+///
+/// See [`openclare_reflection_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_reflection_error(reflection: *const OpenclareReflection) -> *const c_char {
+    // SAFETY: null or a live handle, by contract.
+    match unsafe { reflection.as_ref() } {
+        Some(reflection) => reflection.error.as_ptr(),
+        None => c"no reflection check".as_ptr(),
+    }
+}
+
+/// How many faults were found.
+///
+/// # Safety
+///
+/// See [`openclare_reflection_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_reflection_fault_count(reflection: *const OpenclareReflection) -> usize {
+    // SAFETY: null or a live handle, by contract.
+    unsafe { reflection.as_ref() }.map_or(0, |reflection| reflection.check.faults.len())
+}
+
+/// How many poles were looked at, on a curved zone or not.
+///
+/// # Safety
+///
+/// See [`openclare_reflection_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_reflection_pole_count(reflection: *const OpenclareReflection) -> usize {
+    // SAFETY: null or a live handle, by contract.
+    unsafe { reflection.as_ref() }.map_or(0, |reflection| reflection.check.poles)
+}
+
+/// How many parts (corners and edges of faces) the faults name in all.
+///
+/// # Safety
+///
+/// See [`openclare_reflection_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_reflection_part_count(reflection: *const OpenclareReflection) -> usize {
+    // SAFETY: null or a live handle, by contract.
+    unsafe { reflection.as_ref() }.map_or(0, |reflection| reflection.check.faults.iter().map(|f| f.parts.len()).sum())
+}
+
+/// Writes the faults, worst first, one number per fault into each array
+/// that is not null:
+///
+/// - `kinds`: [`OPENCLARE_FAULT_DEGENERATE`] (0) for a face of no area,
+///   [`OPENCLARE_FAULT_FOLDED`] (1) for corner quads that fold,
+///   [`OPENCLARE_FAULT_NOT_FLAT`] (2), [`OPENCLARE_FAULT_PINCH`] (3),
+///   [`OPENCLARE_FAULT_CURVED_POLE`] (4) for a pole on a curved zone,
+///   [`OPENCLARE_FAULT_THIN`] (5) for thin corner quads;
+/// - `elements`: 0 for a face, 1 for a vertex; `indices`: which one;
+/// - `sides`: the sides of the face, or the valence of the vertex;
+///   `counts`: how many of its parts the fault concerns;
+/// - `values`: the number that ranks it, an angle in degrees for kinds 2, 3
+///   and 4, the smallest triangle (centre, edge) over the mean one for 1
+///   and 5, 0 for 0.
+///
+/// # Safety
+///
+/// See [`openclare_reflection_ok`]; each array not null must have room for
+/// [`openclare_reflection_fault_count`] numbers.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_reflection_copy_faults(
+    reflection: *const OpenclareReflection,
+    kinds: *mut u8,
+    elements: *mut u8,
+    indices: *mut u32,
+    sides: *mut u32,
+    counts: *mut u32,
+    values: *mut f64,
+) {
+    use openclare::reflection::Element;
+    // SAFETY: null or a live handle, by contract.
+    let Some(reflection) = (unsafe { reflection.as_ref() }) else { return };
+    for (i, fault) in reflection.check.faults.iter().enumerate() {
+        let (element, index) = match fault.at {
+            Element::Face(f) => (0, f),
+            Element::Vertex(v) => (1, v),
+        };
+        // SAFETY: room for one number per fault in each array not null.
+        unsafe {
+            write(kinds, i, fault.kind as u8);
+            write(elements, i, element);
+            write(indices, i, index);
+            write(sides, i, fault.sides as u32);
+            write(counts, i, fault.count as u32);
+            write(values, i, fault.value);
+        }
+    }
+}
+
+/// Writes where each fault is to be drawn, into each array that is not
+/// null: `centres` and `normals`, three numbers per fault (the centre of the
+/// face or the vertex; the unit normal of the face or the mean one round the
+/// vertex, zero for a degenerate face); `inner` and `radius`, one per fault
+/// (for a face, the distance from its centre to its nearest edge and to its
+/// furthest vertex; for a vertex, the mean length of its edges, twice).
+///
+/// # Safety
+///
+/// See [`openclare_reflection_ok`]; `centres` and `normals`, if not null,
+/// must have room for three times [`openclare_reflection_fault_count`]
+/// numbers, `inner` and `radius` for that count.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_reflection_copy_frames(
+    reflection: *const OpenclareReflection,
+    centres: *mut f32,
+    normals: *mut f32,
+    inner: *mut f32,
+    radius: *mut f32,
+) {
+    // SAFETY: null or a live handle, by contract.
+    let Some(reflection) = (unsafe { reflection.as_ref() }) else { return };
+    for (i, fault) in reflection.check.faults.iter().enumerate() {
+        let frame = &fault.frame;
+        let (centre, normal) = (frame.centre.to_array(), frame.normal.to_array());
+        // SAFETY: room as documented in each array not null.
+        unsafe {
+            for axis in 0..3 {
+                write(centres, 3 * i + axis, centre[axis] as f32);
+                write(normals, 3 * i + axis, normal[axis] as f32);
+            }
+            write(inner, i, frame.inner as f32);
+            write(radius, i, frame.radius as f32);
+        }
+    }
+}
+
+/// Writes the parts of the faces at fault: `offsets`, fault count + 1
+/// numbers, the parts of fault `i` being those from `offsets[i]` to
+/// `offsets[i + 1]`; then for each part, its kind in `part_kinds` (0 a
+/// corner, 1 an edge) and its place in the face in `part_indices` (corner
+/// `k` is the face's vertex `k`; edge `k` runs from its vertex `k` to its
+/// vertex `k + 1`). Any array may be null.
+///
+/// # Safety
+///
+/// See [`openclare_reflection_ok`]; `offsets` must have room for
+/// [`openclare_reflection_fault_count`] + 1 numbers, `part_kinds` and
+/// `part_indices` for [`openclare_reflection_part_count`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_reflection_copy_parts(
+    reflection: *const OpenclareReflection,
+    offsets: *mut u32,
+    part_kinds: *mut u8,
+    part_indices: *mut u32,
+) {
+    use openclare::reflection::Part;
+    // SAFETY: null or a live handle, by contract.
+    let Some(reflection) = (unsafe { reflection.as_ref() }) else { return };
+    let mut at = 0;
+    for (i, fault) in reflection.check.faults.iter().enumerate() {
+        // SAFETY: room as documented in each array not null.
+        unsafe { write(offsets, i, at as u32) };
+        for part in &fault.parts {
+            let (kind, index) = match *part {
+                Part::Corner(k) => (0, k),
+                Part::Edge(k) => (1, k),
+            };
+            // SAFETY: likewise.
+            unsafe {
+                write(part_kinds, at, kind);
+                write(part_indices, at, index);
+            }
+            at += 1;
+        }
+    }
+    // SAFETY: likewise.
+    unsafe { write(offsets, reflection.check.faults.len(), at as u32) };
+}
+
+/// # Safety
+///
+/// `reflection` must be null or a handle from [`openclare_reflection_check`]
+/// not yet freed.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_reflection_free(reflection: *mut OpenclareReflection) {
+    if !reflection.is_null() {
+        // SAFETY: made by `Box::into_raw` in `openclare_reflection_check`.
+        drop(unsafe { Box::from_raw(reflection) });
+    }
+}
+
+/// The `count` elements at `array`, none when `count` is 0.
+///
+/// # Safety
+///
+/// `array` must be valid for `count` elements when `count` is not 0.
+unsafe fn read<'a, T>(array: *const T, count: usize) -> &'a [T] {
+    if count == 0 {
+        &[]
+    } else {
+        // SAFETY: as the caller says.
+        unsafe { std::slice::from_raw_parts(array, count) }
+    }
+}
+
+/// Writes `value` at `array[index]`, unless `array` is null.
+///
+/// # Safety
+///
+/// `array` must be null or have room for `index + 1` elements.
+unsafe fn write<T>(array: *mut T, index: usize, value: T) {
+    if !array.is_null() {
+        // SAFETY: room as the caller says.
+        unsafe { array.add(index).write(value) };
+    }
+}

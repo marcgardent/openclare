@@ -9,11 +9,13 @@ use std::fmt::Write;
 
 use rayon::prelude::*;
 
+use crate::creases::Crease;
 use crate::curvature::TensorField;
 use crate::geometry::{vertex_areas, vertex_normals};
 use crate::math::{INVALID, Vec3};
 use crate::mesh::topology::half_edge_vertices;
 use crate::mesh::{PolyMesh, Topology, TriMesh};
+use crate::reflection;
 use crate::spatial::{Bvh, closest_point_on_triangle};
 
 /// Everything [`measure`] reports. Lengths are relative to the diagonal of
@@ -106,6 +108,13 @@ pub struct Metrics {
     // Budget.
     /// `|faces - target| / target`.
     pub budget_error: Option<f64>,
+
+    // Reflections.
+    /// What the [reflection check](crate::reflection) finds wrong with the
+    /// mesh as a cage for Catmull-Clark, kind by kind, measured on the
+    /// mesh itself, not on its subdivision. Without creases given (an OBJ
+    /// carries none), only its borders are sharp.
+    pub reflection: reflection::Score,
 }
 
 impl Metrics {
@@ -196,6 +205,16 @@ impl Metrics {
         for (name, value) in &loop_fields {
             write!(json, "\"{name}\": {value}, ").unwrap();
         }
+        let reflection = &self.reflection;
+        write!(json, "\"reflection_creases\": {}, ", optional(reflection.creases)).unwrap();
+        write!(json, "\"reflection_poles\": {}, ", reflection.poles).unwrap();
+        for kind in reflection::Kind::ALL {
+            let score = reflection.of(kind);
+            let name = kind.name();
+            write!(json, "\"reflection_{name}\": {}, ", score.count).unwrap();
+            write!(json, "\"reflection_{name}_worst\": {}, ", optional(score.worst)).unwrap();
+            write!(json, "\"reflection_{name}_median\": {}, ", optional(score.median)).unwrap();
+        }
         write!(json, "\"budget_error\": {}}}", optional(self.budget_error)).unwrap();
         json
     }
@@ -258,7 +277,22 @@ pub fn layout(mesh: &PolyMesh) -> Layout {
 /// Measures `mesh` against the `source` surface it approximates.
 /// `target_faces` is the face count that was asked for, when known.
 pub fn measure(source: &TriMesh, mesh: &PolyMesh, target_faces: Option<usize>) -> Metrics {
+    measure_with_creases(source, mesh, target_faces, None)
+}
+
+/// [`measure`], with the `creases` the mesh is to be subdivided with, when
+/// known: the reflection check takes the sharp ones as such, besides the
+/// borders. Nothing else depends on them.
+pub fn measure_with_creases(
+    source: &TriMesh,
+    mesh: &PolyMesh,
+    target_faces: Option<usize>,
+    creases: Option<&[Crease]>,
+) -> Metrics {
+    let reflection = reflection::check(mesh, creases.unwrap_or(&[]), &reflection::Settings::default())
+        .score(creases.map(<[Crease]>::len));
     let mut metrics = Metrics {
+        reflection,
         vertices: mesh.positions.len(),
         faces: mesh.faces.len(),
         quads: mesh.faces.iter().filter(|f| f.len() == 4).count(),

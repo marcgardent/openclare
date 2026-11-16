@@ -42,6 +42,7 @@ OpenclareResult *result = openclare_remesh(
     NULL,                       /* no groups of triangles */
     NULL, 0,                    /* no edge kept hard whatever its angle */
     NULL, NULL, NULL, 0,        /* no guide curve */
+    NULL, NULL, 0,              /* no pole placed by hand */
     "organic",                  /* preset: organic, animation, hard-surface */
     "quads = 3000\n",           /* settings on top of it */
     NULL, NULL);                /* nobody follows the run */
@@ -62,9 +63,10 @@ Who frees what:
 
 - What you pass in stays yours: the library reads it during the call and keeps nothing.
 - `openclare_remesh`, `openclare_bake_height`, `openclare_analyse`, `openclare_hard_edges`,
-  `openclare_hard_edge_finder` and `openclare_hard_edge_finder_find` never return NULL. Each
-  handle they return is freed once, by `openclare_result_free`, `openclare_baked_free`,
-  `openclare_analysis_free`, `openclare_hard_edges_free` or `openclare_hard_edge_finder_free`,
+  `openclare_hard_edge_finder`, `openclare_hard_edge_finder_find` and
+  `openclare_reflection_check` never return NULL. Each handle they return is freed once, by
+  `openclare_result_free`, `openclare_baked_free`, `openclare_analysis_free`,
+  `openclare_hard_edges_free`, `openclare_hard_edge_finder_free` or `openclare_reflection_free`,
   whether it holds what was asked for or an error.
 - A hard edge finder copies the mesh it is given, which is the caller's again on return; it is
   used by one thread at a time.

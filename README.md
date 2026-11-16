@@ -96,7 +96,7 @@ square in the scene.
 Some features are experimental: they run, but are not tested enough yet, or have a known issue.
 They carry the icon of a flask, *Experimental* starts their tooltip, and an option of the
 add-on's preferences, *Experimental Features* (on by default), hides them all: their settings,
-the *Curves* and *Poles* blocks, and the tools *Draw Curve*, *Cut Volume* and *Poles*. Hidden,
+the *Curves* and *Poles* blocks, the *Reflection Check* panel, and the tools *Draw Curve*, *Cut Volume* and *Poles*. Hidden,
 a remesh gives their settings the default values, asks for a number of quads, makes triangles
 with Blender's *Decimate*, and follows no curve and no pole placed by hand.
 
@@ -129,6 +129,17 @@ part that could not be meshed, hard edges let go, halves of a symmetric result t
 their quads).
 The arrow beside the name of the original selects it; *Remesh Again* remeshes the original with
 the settings it has now, in place of the result, which keeps its name and place.
+
+### Reflection check
+
+For a cage that will be subdivided, a car body say, the *Reflection Check* panel (experimental) lists in
+Edit Mode, under a Catmull-Clark *Subdivision Surface*, what will make a reflection pinch or wobble,
+the worst first, and draws the N worst in the viewport: n-gons off their plane, triangles and n-gons on a
+curved zone whose border is not creased, poles on a curved zone, corner quads that fold or are thin. Each
+fault is ranked by an angle, and an icon says whether moving vertices mends it or the topology must
+change; a click on a row selects the face or the vertex and frames the view on it. The angles are measured
+on the cage, not on the subdivided surface: they rank the faults, they are not the wobble itself. The
+creases count unless the modifier's *Use Creases* is off. `openclare measure` gives the same score.
 
 ## Further
 

@@ -13,13 +13,14 @@
  * Ownership, in short:
  * - Arrays and texts given to the library belong to the caller; they are
  *   read during the call only, never kept.
- * - The four calls that do work (openclare_remesh, openclare_bake_height,
+ * - The calls that do work (openclare_remesh, openclare_bake_height,
  *   openclare_analyse, openclare_hard_edges, openclare_hard_edge_finder,
- *   openclare_hard_edge_finder_find) never return NULL: they return
- *   a handle, which holds either what was made or the reason it was not.
- *   Each handle is freed by its own function, once: openclare_result_free,
- *   openclare_baked_free, openclare_analysis_free, openclare_hard_edges_free,
- *   openclare_hard_edge_finder_free.
+ *   openclare_hard_edge_finder_find, openclare_reflection_check) never
+ *   return NULL: they return a handle, which holds either what was made or
+ *   the reason it was not. Each handle is freed by its own function, once:
+ *   openclare_result_free, openclare_baked_free, openclare_analysis_free,
+ *   openclare_hard_edges_free, openclare_hard_edge_finder_free,
+ *   openclare_reflection_free.
  *   Freeing NULL is allowed.
  * - The copy functions write into arrays the caller allocates, of the size
  *   the matching count function gives.
@@ -485,6 +486,117 @@ OpenclareHardEdges *openclare_hard_edge_finder_find(OpenclareHardEdgeFinder *fin
 
 /* Frees a finder. NULL is fine; twice is not. */
 void openclare_hard_edge_finder_free(OpenclareHardEdgeFinder *finder);
+
+/* ------------------------------------------------------------------------ */
+/* Reflection check                                                         */
+/* ------------------------------------------------------------------------ */
+
+/* What openclare_reflection_check gives back: the faults of a cage under
+ * Catmull-Clark, worst first. Opaque; free with openclare_reflection_free. */
+typedef struct OpenclareReflection OpenclareReflection;
+
+/* The kinds of fault openclare_reflection_copy_faults writes. */
+#define OPENCLARE_FAULT_DEGENERATE 0  /* a face of no area */
+#define OPENCLARE_FAULT_FOLDED 1      /* corner quads that fold */
+#define OPENCLARE_FAULT_NOT_FLAT 2    /* a face of 5 sides or more off its plane */
+#define OPENCLARE_FAULT_PINCH 3       /* a triangle or an n-gon on a curved zone */
+#define OPENCLARE_FAULT_CURVED_POLE 4 /* a pole on a curved zone */
+#define OPENCLARE_FAULT_THIN 5        /* corner quads much thinner than the others */
+
+/*
+ * The reflection check of a cage: what of it will make a reflection pinch or
+ * wobble once Catmull-Clark subdivides it, fault by fault, worst first.
+ * Angles are measured on the cage, not on the subdivided surface.
+ *
+ * - positions: 3 * vertex_count floats.
+ * - face_sizes: the number of corners of each of face_count faces;
+ *   corner_vertices: the vertex of each corner, corner_count of them, face
+ *   after face, as Blender keeps its polygons.
+ * - crease_edges: 2 * crease_count vertices, two per edge, and
+ *   crease_weights one weight from 0 to 1 per edge; both NULL and
+ *   crease_count 0 for none: only the borders are then sharp.
+ * - flat_tolerance (a share of the radius of a face), angle_tolerance
+ *   (degrees), thin_ratio: the thresholds of what counts as a fault; a
+ *   negative one takes its default (0.002, 1, 0.15).
+ *
+ * The arrays are read during the call only. Never returns NULL; free the
+ * handle with openclare_reflection_free.
+ */
+OpenclareReflection *openclare_reflection_check(const float *positions,
+                                                size_t vertex_count,
+                                                const uint32_t *face_sizes,
+                                                size_t face_count,
+                                                const uint32_t *corner_vertices,
+                                                size_t corner_count,
+                                                const uint32_t *crease_edges,
+                                                const float *crease_weights,
+                                                size_t crease_count,
+                                                double flat_tolerance,
+                                                double angle_tolerance,
+                                                double thin_ratio);
+
+/* The functions below take a handle from openclare_reflection_check not yet
+ * freed, or NULL. */
+
+/* 1 if the cage was checked, 0 if not or if reflection is NULL. */
+int32_t openclare_reflection_ok(const OpenclareReflection *reflection);
+
+/* Why the cage could not be checked; "" if it was. Owned by the handle. */
+const char *openclare_reflection_error(const OpenclareReflection *reflection);
+
+/* How many faults were found. */
+size_t openclare_reflection_fault_count(const OpenclareReflection *reflection);
+
+/* How many poles were looked at, on a curved zone or not. */
+size_t openclare_reflection_pole_count(const OpenclareReflection *reflection);
+
+/* How many parts (corners and edges of faces) the faults name in all. */
+size_t openclare_reflection_part_count(const OpenclareReflection *reflection);
+
+/*
+ * Writes the faults, worst first, one number per fault into each array that
+ * is not NULL: kinds (OPENCLARE_FAULT_*); elements, 0 for a face and 1 for a
+ * vertex, and indices, which one; sides, of the face or valence of the
+ * vertex; counts, how many of its parts the fault concerns; values, an angle
+ * in degrees for NOT_FLAT, PINCH and CURVED_POLE, the smallest triangle
+ * (centre, edge) over the mean one for FOLDED and THIN, 0 for DEGENERATE.
+ */
+void openclare_reflection_copy_faults(const OpenclareReflection *reflection,
+                                      uint8_t *kinds,
+                                      uint8_t *elements,
+                                      uint32_t *indices,
+                                      uint32_t *sides,
+                                      uint32_t *counts,
+                                      double *values);
+
+/*
+ * Writes where each fault is to be drawn, into each array that is not NULL:
+ * centres and normals, 3 floats per fault (the centre of the face or the
+ * vertex; the unit normal of the face or the mean one round the vertex,
+ * zero for a degenerate face); inner and radius, one per fault (for a face,
+ * the distance from its centre to its nearest edge and to its furthest
+ * vertex; for a vertex, the mean length of its edges, twice).
+ */
+void openclare_reflection_copy_frames(const OpenclareReflection *reflection,
+                                      float *centres,
+                                      float *normals,
+                                      float *inner,
+                                      float *radius);
+
+/*
+ * Writes the parts of the faces at fault: offsets, fault count + 1 numbers,
+ * the parts of fault i being those from offsets[i] to offsets[i + 1]; for
+ * each part, its kind in part_kinds (0 a corner, 1 an edge) and its place in
+ * the face in part_indices (corner k is the face's vertex k; edge k runs
+ * from its vertex k to its vertex k + 1). Any array may be NULL.
+ */
+void openclare_reflection_copy_parts(const OpenclareReflection *reflection,
+                                     uint32_t *offsets,
+                                     uint8_t *part_kinds,
+                                     uint32_t *part_indices);
+
+/* Frees a handle of a reflection check. NULL is fine; twice is not. */
+void openclare_reflection_free(OpenclareReflection *reflection);
 
 #ifdef __cplusplus
 } /* extern "C" */
