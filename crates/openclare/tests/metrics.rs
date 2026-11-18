@@ -3,7 +3,7 @@
 
 use openclare::math::Vec3;
 use openclare::mesh::primitives;
-use openclare::metrics::measure;
+use openclare::metrics::{DETAIL_SAMPLES, level_detail, measure, missing_detail, spread_by_area, stretched_edges};
 use openclare::{Params, Target, remesh};
 
 #[test]
@@ -515,4 +515,88 @@ fn the_grain_of_a_sculpt_is_no_sharp_edge() {
     let metrics = measure(&source, &sphere, None);
     assert_eq!((metrics.feature_edges_length, metrics.feature_chains), (0.0, 0), "{metrics:?}");
     assert_eq!(metrics.feature_edges_kept, None);
+}
+
+/// The cube cage on the unit sphere, then each Catmull-Clark level of it with
+/// its vertices put back on the sphere: what a Multires level placed by a
+/// perfect projection is.
+fn levels_on_a_sphere(levels: usize) -> Vec<openclare::PolyMesh> {
+    let mut level = primitives::cube_quads(1);
+    let mut made = Vec::new();
+    for step in 0..=levels {
+        if step > 0 {
+            let refined = openclare::subdivision::refine(&level.faces, level.positions.len());
+            let positions =
+                refined.rows.iter().map(|row| openclare::subdivision::apply(row, &level.positions)).collect();
+            level = openclare::PolyMesh { positions, faces: refined.faces };
+        }
+        for p in &mut level.positions {
+            *p = p.normalize();
+        }
+        made.push(level.clone());
+    }
+    made
+}
+
+#[test]
+fn missing_detail_falls_at_every_level_on_a_sphere() {
+    let source = primitives::icosphere(6);
+    let levels = levels_on_a_sphere(4);
+    let missing: Vec<f64> =
+        levels.iter().map(|level| level_detail(&source, level, DETAIL_SAMPLES, 1).missing_p99).collect();
+    for pair in missing.windows(2) {
+        assert!(pair[1] < pair[0], "{missing:?}");
+    }
+    // A chord of the sphere misses it by about the square of its half angle:
+    // each level halves the edge, so roughly quarters the gap, down to the
+    // icosphere's own facets.
+    assert!(missing[0] > 5.0 && missing[4] < 0.1, "{missing:?}");
+    for level in &levels {
+        assert_eq!(stretched_edges(level).count, 0);
+    }
+}
+
+#[test]
+fn missing_detail_is_the_same_for_the_same_seed() {
+    let source = primitives::icosphere(4);
+    let level = &levels_on_a_sphere(2)[2];
+    assert_eq!(level_detail(&source, level, 5_000, 7), level_detail(&source, level, 5_000, 7));
+    assert_ne!(missing_detail(&source, level, 5_000, 7), missing_detail(&source, level, 5_000, 8));
+    // A mesh on the source misses nothing.
+    let (p99, p50) = missing_detail(&primitives::cube(4), &primitives::cube_quads(4), 5_000, 1);
+    assert!(p99 < 1e-9 && p50 < 1e-9, "{p99} {p50}");
+}
+
+#[test]
+fn points_spread_by_area_follow_the_area() {
+    // Two triangles, one three times the area of the other.
+    let mesh = openclare::TriMesh {
+        positions: vec![
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(1.0, 0.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0),
+            Vec3::new(2.0, 0.0, 0.0),
+            Vec3::new(5.0, 0.0, 0.0),
+            Vec3::new(2.0, 1.0, 0.0),
+        ],
+        triangles: vec![[0, 1, 2], [3, 4, 5]],
+    };
+    let points = spread_by_area(&mesh, 40_000, 3);
+    let on_large = points.iter().filter(|p| p.x >= 2.0).count() as f64 / points.len() as f64;
+    assert!((on_large - 0.75).abs() < 0.01, "{on_large}");
+    assert!(points.iter().all(|p| p.z == 0.0 && p.x + p.y <= 5.0 + 1e-12));
+}
+
+#[test]
+fn a_vertex_thrown_away_stretches_its_edges() {
+    let mut grid = primitives::plane_quads(10);
+    assert_eq!(stretched_edges(&grid).count, 0);
+    assert!((stretched_edges(&grid).longest_over_median - 1.0).abs() < 1e-9);
+    // An inner vertex thrown far off the grid: its four edges.
+    let inner = grid.positions.iter().position(|p| p.x.abs() < 1e-9 && p.y.abs() < 1e-9).unwrap();
+    grid.positions[inner].z = 3.0;
+    let stretch = stretched_edges(&grid);
+    assert_eq!(stretch.count, 4);
+    // Each about 3 long, against a median of 0.2.
+    assert!((stretch.longest_over_median - 15.0).abs() < 0.1, "{stretch:?}");
 }

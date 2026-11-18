@@ -296,6 +296,15 @@ sharp, and the creases `remesh --creases-out` wrote are given back with `--creas
 ./target/release/openclare measure source.obj quads.obj --creases quads.creases
 ```
 
+`detail` measures what a subdivision level misses of its source (the Multires baseline, PRO #6):
+the distance from 60,000 points spread on the source by area to the level, its 99th percentile and
+median in % of the diagonal of the source's bounding box, and the edges longer than 4 times the
+median edge, a vertex thrown onto another part:
+
+```bash
+./target/release/openclare detail source.obj level-2.obj --json
+```
+
 `repair` cleans a cage up for its reflections in place, every vertex, edge and face kept: it
 flattens the n-gons off their plane, makes the faces whose corner quads fold or are thin
 star-shaped again, and proposes creases on edges already folding by `--crease-fold` degrees or more

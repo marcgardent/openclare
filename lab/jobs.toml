@@ -736,6 +736,17 @@ provides = "source.obj"
 memory_limit_gb = 32
 timeout = "10m"
 
+[[dependency]]
+name = "multires-cage"
+description = "A 1,000-quad cage of a scene of the bench for the Multires baseline (PRO #6): its source exported as the source dependency does, then `openclare remesh --quads 1000` with the cell's preset, its crease weights in creases.txt; source.obj and creases.txt beside cage.obj. The engine is built in the checkout: a dependency cannot read another."
+category = "bench"
+command = "cargo build --release -p openclare-cli && blender -b --factory-startup bench/scenes/{model}.blend --python-exit-code 1 --python bench/blender_run.py -- --out {out} --no-remesh && target/release/openclare remesh {out}/source.obj {out}/cage.obj --preset {preset} --quads 1000 --creases-out {out}/creases.txt"
+key = ["bench/scenes/{model}.blend", "bench/blender_run.py", "bench/blender_engine.py", "blender/openclare", "crates/openclare", "crates/openclare-cli", "crates/openclare-highs", "crates/openclare-rerun", "Cargo.toml", "Cargo.lock"]
+tools = ["blender", "rustc"]
+provides = "cage.obj"
+memory_limit_gb = 32
+timeout = "30m"
+
 # ---------------------------------------------------------------- before and after
 
 [[batch]]
@@ -822,6 +833,29 @@ model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "
          { value = "cage", preset = "hard-surface" }, { value = "part", preset = "hard-surface" }]
 budget = [2970, 3000, 3030]
 passes = [0, 2]
+
+# ---------------------------------------------------------------- multires (PRO #6)
+
+[[batch]]
+name = "multires-baseline"
+description = "Milestone 2 of the Multires feature (PRO #6 rebuilt in the repository): Blender's Multires on a 1,000-quad cage, each level placed by a Shrinkwrap applied into it (bench/multires.py), one job per row of #6 and top level, 0 the cage; the job builds every level up to its own, measures each with `openclare detail` and keeps the top one's OBJ and detail.json. Rows: #6's models and modes (part with hard-surface, with and without the cage's crease weights). The report prints #6's table beside the batch's, a cell off by more than 0.01 point marked. Seconds to a minute a job."
+category = "bench"
+needs = ["engine", "multires-cage"]
+command = "C=$(dirname {multires-cage}); blender -b --factory-startup --python-exit-code 1 --python bench/multires.py -- --source $C/source.obj --cage $C/cage.obj --mode {mode} {creases} --write {write} --levels {level} --out {out} --openclare {engine}"
+report = "python3 bench/multires_report.py {records} --out {out}"
+parameters = { model = "creature", preset = "organic", mode = "project", creases = "", write = "apply" }
+memory_limit_gb = 32
+timing_matters = false
+
+[batch.axes]
+row = [{ value = "creature-project", model = "creature", mode = "project" },
+       { value = "rock-project", model = "rock", mode = "project" },
+       { value = "part-limited", model = "part", preset = "hard-surface", mode = "project-limited" },
+       { value = "part-limited-creases", model = "part", preset = "hard-surface", mode = "project-limited", creases = "--creases $C/creases.txt" },
+       { value = "ogre-project", model = "ogre", mode = "project" },
+       { value = "ogre-nearest", model = "ogre", mode = "nearest" },
+       { value = "ogre-limited", model = "ogre", mode = "project-limited" }]
+level = [0, 1, 2, 3, 4]
 
 # ---------------------------------------------------------------- sequences
 
