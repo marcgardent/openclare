@@ -116,6 +116,7 @@ Le panneau *Reflection Check* de l'éditeur de propriétés, sur l'onglet du mai
 | `--quality slow`, `--slow-work-limit`, `--slow-time-limit` | expérimental | une piste de recherche, en ligne de commande seulement (#138, #144) |
 | `--skip-pieces-under`, `--no-close-loops` | expérimental | des outils pour regarder dans un calcul |
 | `--merge-singularities` | expérimental | un 3 et un 5 fusionnés à travers une bande sans largeur, désactivé par défaut (#171) |
+| `--map-distortion-passes` | expérimental | la carte raidie contre l'étirement et le cisaillement, pas seulement contre les replis, désactivé par défaut, pas mesuré sur le corpus |
 | `measure`, `layout`, `primitive` | stable | |
 | `repair` : la réparation des reflets d'une cage sur place, `--bound`, `--crease-fold`, `--apply-creases`, `--creases`, `--creases-out` | expérimental | comme *Repair in Place* (#329) |
 | `measure` : le contrôle des reflets, `--creases` | expérimental | comme *Reflection Check* ; un OBJ ne porte aucun crease : sans `--creases`, seuls les bords sont vifs (#328) |

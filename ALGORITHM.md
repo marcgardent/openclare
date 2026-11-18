@@ -830,7 +830,11 @@ What stays open, and should not be hidden:
   are still real. Making them whole (J4 bis, then J7) adds constraints, hence distortion:
   inversions may come back. The final verdict on the lineage will fall there.
 - **Very stretched faces**: some are not inverted but squashed (stretch up to 1000 near
-  singularities). They are valid, not pretty.
+  singularities). They are valid, not pretty. The option `map_distortion_passes` (off by
+  default) stiffens them too, as the local stiffening of Bommes et al. does: once the map has
+  no fold, the faces whose gradients are off by more than a factor 2 in length or 20° in
+  angle are made heavier, by at most the factor of a fold, and the map solved again. The map
+  kept never has more folds than without it. Not measured on the corpus yet.
 - **Distortion does not depend on the budget at this stage**: the size of the quad only scales
   the map. It will come into play only with the integers.
 - **Borders and hard edges**: since milestone 5, they are held on isolines of the map (one

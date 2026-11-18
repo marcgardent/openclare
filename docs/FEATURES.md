@@ -114,6 +114,7 @@ The panel *Reflection Check* of the Properties editor, on the tab of the mesh, f
 | `--quality slow`, `--slow-work-limit`, `--slow-time-limit` | experimental | a research track, on the command line only (#138, #144) |
 | `--skip-pieces-under`, `--no-close-loops` | experimental | tools to look into a run |
 | `--merge-singularities` | experimental | a 3 and a 5 merged across a strip of no width, off by default (#171) |
+| `--map-distortion-passes` | experimental | the map stiffened against stretch and skew as well as folds, off by default, not measured on the corpus |
 | `measure`, `layout`, `primitive` | stable | |
 | `repair`: the reflection repair of a cage in place, `--bound`, `--crease-fold`, `--apply-creases`, `--creases`, `--creases-out` | experimental | as *Repair in Place* (#329) |
 | `measure`: the reflection check, `--creases` | experimental | as *Reflection Check*; an OBJ carries no crease: without `--creases`, only borders are sharp (#328) |
