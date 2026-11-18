@@ -12,7 +12,7 @@ use rayon::prelude::*;
 use crate::creases::Crease;
 use crate::curvature::TensorField;
 use crate::geometry::{vertex_areas, vertex_normals};
-use crate::math::{INVALID, Vec3};
+use crate::math::{INVALID, Rng, Vec3};
 use crate::mesh::topology::half_edge_vertices;
 use crate::mesh::{PolyMesh, Topology, TriMesh};
 use crate::reflection;
@@ -1657,4 +1657,159 @@ fn fidelity(source: &TriMesh, surface: &Bvh, mesh: &PolyMesh, diagonal: f64, met
 
     metrics.hausdorff = worst / diagonal;
     metrics.mean_distance = sum / count.max(1) as f64 / diagonal;
+}
+
+/// Points [`missing_detail`] spreads on the source unless told otherwise: the
+/// count of PRO issue #6.
+pub const DETAIL_SAMPLES: usize = 60_000;
+
+/// An edge is stretched when it is longer than this many times the median
+/// edge of its mesh: a vertex thrown onto another part of the source.
+pub const STRETCH_FACTOR: f64 = 4.0;
+
+/// What a subdivision level misses of its source, and the edges it threw
+/// away: the measures of a Multires level (PRO issue #6).
+#[derive(Clone, Debug, PartialEq)]
+pub struct LevelDetail {
+    /// Points spread on the source.
+    pub samples: usize,
+    /// 99th percentile of the distance from those points to the mesh, in
+    /// percent of the diagonal of the source's bounding box.
+    pub missing_p99: f64,
+    /// Their median, in the same unit.
+    pub missing_p50: f64,
+    /// Edges longer than [`STRETCH_FACTOR`] times the median edge.
+    pub stretched: usize,
+    /// The longest edge over the median edge.
+    pub longest_over_median: f64,
+    /// The median edge, in percent of the diagonal.
+    pub median_edge: f64,
+}
+
+/// The missing detail and the stretched edges of `mesh` against `source`,
+/// `samples` points spread on the source by area from `seed`.
+pub fn level_detail(source: &TriMesh, mesh: &PolyMesh, samples: usize, seed: u64) -> LevelDetail {
+    let diagonal = bounding_diagonal(source);
+    let (missing_p99, missing_p50) = missing_detail(source, mesh, samples, seed);
+    let stretch = stretched_edges(mesh);
+    LevelDetail {
+        samples,
+        missing_p99,
+        missing_p50,
+        stretched: stretch.count,
+        longest_over_median: stretch.longest_over_median,
+        median_edge: 100.0 * stretch.median / diagonal,
+    }
+}
+
+fn bounding_diagonal(source: &TriMesh) -> f64 {
+    let (min, max) =
+        source.positions.iter().fold((Vec3::INFINITY, Vec3::NEG_INFINITY), |(lo, hi), &p| (lo.min(p), hi.max(p)));
+    (max - min).length().max(f64::MIN_POSITIVE)
+}
+
+/// The detail of `source` that `mesh` misses: `samples` points spread on the
+/// source with a density even by area, drawn from `seed`, and the distance
+/// from each to the closest point of `mesh` (its faces cut in fans). Returns
+/// the 99th percentile and the median of those distances, in percent of the
+/// diagonal of the source's bounding box. Percentiles are interpolated
+/// between ranks, as numpy's default. The same seed gives the same points.
+pub fn missing_detail(source: &TriMesh, mesh: &PolyMesh, samples: usize, seed: u64) -> (f64, f64) {
+    let points = spread_by_area(source, samples, seed);
+    let surface = Bvh::build(&mesh.triangulated());
+    let mut distances: Vec<f64> =
+        points.par_iter().filter_map(|&p| surface.closest_point(p).map(|hit| hit.distance_squared.sqrt())).collect();
+    if distances.is_empty() {
+        return (f64::NAN, f64::NAN);
+    }
+    distances.sort_unstable_by(f64::total_cmp);
+    let scale = 100.0 / bounding_diagonal(source);
+    (scale * percentile(&distances, 0.99), scale * percentile(&distances, 0.5))
+}
+
+/// The value at `share` of sorted `values`, interpolated between the two
+/// ranks around it.
+fn percentile(sorted: &[f64], share: f64) -> f64 {
+    let rank = share * (sorted.len() - 1) as f64;
+    let below = rank.floor() as usize;
+    let above = (below + 1).min(sorted.len() - 1);
+    sorted[below] + (rank - below as f64) * (sorted[above] - sorted[below])
+}
+
+/// `count` points on the triangles of `mesh`, as many on each as its area
+/// calls for on average: a triangle drawn with a chance in proportion to its
+/// area, then a point uniform in it.
+pub fn spread_by_area(mesh: &TriMesh, count: usize, seed: u64) -> Vec<Vec3> {
+    let mut running = 0.0;
+    let cumulative: Vec<f64> = (0..mesh.triangles.len())
+        .map(|t| {
+            running += mesh.area_vector(t).length();
+            running
+        })
+        .collect();
+    if running <= 0.0 {
+        return Vec::new();
+    }
+    let mut rng = Rng::new(seed);
+    (0..count)
+        .map(|_| {
+            let drawn = rng.next_f64() * running;
+            let t = cumulative.partition_point(|&c| c <= drawn).min(cumulative.len() - 1);
+            let [a, b, c] = mesh.corners(t);
+            // Uniform in the triangle: the square root keeps the density even.
+            let (r, s) = (rng.next_f64().sqrt(), rng.next_f64());
+            a * (1.0 - r) + b * (r * (1.0 - s)) + c * (r * s)
+        })
+        .collect()
+}
+
+/// The edges of a mesh against its median edge.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Stretch {
+    /// Edges longer than [`STRETCH_FACTOR`] times the median.
+    pub count: usize,
+    /// The median edge: the one at the middle rank of the sorted lengths
+    /// (the upper one of an even count).
+    pub median: f64,
+    pub longest_over_median: f64,
+}
+
+/// The stretched edges of `mesh`, each edge counted once.
+pub fn stretched_edges(mesh: &PolyMesh) -> Stretch {
+    let mut edges = HashSet::new();
+    for face in &mesh.faces {
+        for k in 0..face.len() {
+            let (a, b) = (face[k], face[(k + 1) % face.len()]);
+            edges.insert((a.min(b), a.max(b)));
+        }
+    }
+    let mut lengths: Vec<f64> =
+        edges.iter().map(|&(a, b)| mesh.positions[a as usize].distance(mesh.positions[b as usize])).collect();
+    if lengths.is_empty() {
+        return Stretch { count: 0, median: 0.0, longest_over_median: 0.0 };
+    }
+    lengths.sort_unstable_by(f64::total_cmp);
+    let median = lengths[lengths.len() / 2];
+    let count = lengths.iter().filter(|&&length| length > STRETCH_FACTOR * median).count();
+    let longest_over_median = if median > 0.0 { lengths[lengths.len() - 1] / median } else { f64::INFINITY };
+    Stretch { count, median, longest_over_median }
+}
+
+impl LevelDetail {
+    pub fn to_json(&self) -> String {
+        format!(
+            "{{\"samples\": {}, \"missing_p99\": {}, \"missing_p50\": {}, \"stretched\": {}, \
+             \"longest_over_median\": {}, \"median_edge\": {}}}",
+            self.samples,
+            json_number(self.missing_p99),
+            json_number(self.missing_p50),
+            self.stretched,
+            json_number(self.longest_over_median),
+            json_number(self.median_edge),
+        )
+    }
+}
+
+fn json_number(value: f64) -> String {
+    if value.is_finite() { format!("{value}") } else { "null".into() }
 }

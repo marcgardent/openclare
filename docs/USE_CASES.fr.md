@@ -42,7 +42,7 @@ dit ; *revue* est dans une pull request ; *prévu* a un ticket.
 | Usage | Qui | Ce qu'il demande | Ce qui y répond | Édition | État |
 |---|---|---|---|---|---|
 | Un asset prêt pour le jeu d'un seul geste | artistes de jeu | quads, UV, cartes cuites, niveaux de détail, export | le pipeline bâti sur le remaillage | PRO | prévu |
-| Une sculpture reportée sur un Multires | sculpteurs | le remaillage comme base d'une pile Multires reconstruite depuis la source | Multires depuis la source | PRO | prévu |
+| Une sculpture reportée sur un Multires | sculpteurs | le remaillage comme base d'une pile Multires reconstruite depuis la source | Multires depuis la source ; sa base de comparaison, le Shrinkwrap de Blender niveau par niveau, mesurée par `openclare detail` (batch lab `multires-baseline`) | PRO | prévu ; base en revue |
 | Beaucoup d'objets à la fois | studios | une collection remaillée en une fois | remaillage par lot | PRO | prévu |
 
 ## Hors de Blender

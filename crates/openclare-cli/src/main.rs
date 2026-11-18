@@ -4,7 +4,7 @@ use openclare::config::{PRESETS, Quality, RemeshConfig};
 use openclare::crossfield;
 use openclare::math::{Vec3, tangent_frame};
 use openclare::mesh::{Topology, obj, primitives};
-use openclare::metrics::{LoopKind, layout, measure, measure_with_creases};
+use openclare::metrics::{DETAIL_SAMPLES, LoopKind, layout, level_detail, measure, measure_with_creases};
 use openclare::parametrization;
 use openclare::preprocess;
 use openclare::quantization;
@@ -20,6 +20,7 @@ USAGE:
     openclare remesh <input.obj> <output.obj> [options]
     openclare presets
     openclare measure <source.obj> <quads.obj> [--target <N>] [--creases <FILE>] [--json]
+    openclare detail <source.obj> <level.obj> [--samples <N>] [--seed <S>] [--json]
     openclare repair <cage.obj> <output.obj> [options]
     openclare layout <quads.obj>
     openclare analyse <input.obj> [--preset <NAME>] [--largest <L>]
@@ -140,6 +141,13 @@ OPTIONS (measure):
                            reflection check
     --json                 print the metrics as one JSON object
 
+OPTIONS (detail): what a subdivision level misses of its source, and its stretched edges (PRO #6):
+the distance from points spread on the source by area to the level, its 99th percentile and median in
+% of the diagonal of the source's bounding box; the edges longer than 4 times the median edge
+    --samples <N>          points spread on the source (default 60000)
+    --seed <S>             seed of those points (default 1)
+    --json                 print the measures as one JSON object
+
 OPTIONS (repair): the reflection repair of a cage, in place: vertices moved, creases proposed,
 every vertex, edge and face kept; each repair kept only if the reflection check scores better
     --creases <FILE>       the creases the cage is subdivided with, as remesh --creases-out writes them
@@ -180,6 +188,7 @@ fn run(args: &[String]) -> Result<(), String> {
             Ok(())
         }
         Some("measure") => measure_command(&args[1..]),
+        Some("detail") => detail_command(&args[1..]),
         Some("layout") => layout_command(&args[1..]),
         Some("repair") => repair_command(&args[1..]),
         Some("analyse") => analyse_command(&args[1..]),
@@ -806,6 +815,40 @@ fn measure_command(args: &[String]) -> Result<(), String> {
     );
     println!("budget       {}", optional(m.budget_error.map(|e| format!("{:.1} % off target", 100.0 * e))));
     print_reflection(&m.reflection);
+    Ok(())
+}
+
+fn detail_command(args: &[String]) -> Result<(), String> {
+    let (mut samples, mut seed, mut json, mut paths) = (DETAIL_SAMPLES, 1u64, false, Vec::new());
+    let mut args = args.iter();
+    while let Some(arg) = args.next() {
+        let mut value = || args.next().ok_or(format!("{arg} expects a value"));
+        match arg.as_str() {
+            "--samples" => samples = parse(arg, value()?)?,
+            "--seed" => seed = parse(arg, value()?)?,
+            "--json" => json = true,
+            flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
+            path => paths.push(path),
+        }
+    }
+    let [source, level] = paths[..] else {
+        return Err("detail takes the source mesh and the level to measure".into());
+    };
+    let source = obj::read_obj(source).map_err(|e| format!("{source}: {e}"))?;
+    let mesh = obj::read_obj_poly(level).map_err(|e| format!("{level}: {e}"))?;
+    let detail = level_detail(&source, &mesh, samples, seed);
+    if json {
+        println!("{}", detail.to_json());
+        return Ok(());
+    }
+    println!(
+        "missing      p99 {:.4} %, median {:.4} % of the diagonal, from {} points on the source",
+        detail.missing_p99, detail.missing_p50, detail.samples
+    );
+    println!(
+        "stretched    {} edges over 4 times the median ({:.4} % of the diagonal), longest {:.1} times",
+        detail.stretched, detail.median_edge, detail.longest_over_median
+    );
     Ok(())
 }
 
