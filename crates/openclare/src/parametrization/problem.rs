@@ -453,7 +453,7 @@ impl<'a> Problem<'a> {
     /// Makes the faces that folded over, and the ones around them, stiffer.
     pub fn stiffen(&self, weights: &mut [f64], flipped: &[usize]) {
         for &f in flipped {
-            weights[f] *= 4.0;
+            weights[f] *= FOLD_FACTOR;
             for h in 3 * f..3 * f + 3 {
                 let g = self.frames.across[h];
                 if g != INVALID {
@@ -466,6 +466,103 @@ impl<'a> Problem<'a> {
     pub fn quality(&self, uv: &[[f64; 2]]) -> Quality {
         Quality::measure(uv, &self.ideal, &self.frames.area)
     }
+
+    /// How far beyond what is tolerated each face of the map is stretched
+    /// or skewed: 0 within the tolerance, 1 at twice the tolerance. Folded
+    /// faces count 0: they are the business of [`Self::stiffen`].
+    ///
+    /// The map of a face is read as the gradients of `u` and `v` over its
+    /// ideal triangle, which is already in units of the local edge length:
+    /// both should have length 1 and be at right angles. The spacing of the
+    /// grid lines is the inverse of a gradient's length and the angle of a
+    /// quad that of the two gradients, so this is the shape of the quads to
+    /// come there.
+    pub fn distortion(&self, uv: &[[f64; 2]]) -> Vec<f64> {
+        (0..self.ideal.len())
+            .map(|f| {
+                if self.frames.area[f] <= 0.0 || signed_area(&self.ideal[f]) <= 0.0 {
+                    return 0.0;
+                }
+                let Some(j) = jacobian(&self.ideal[f], &[uv[3 * f], uv[3 * f + 1], uv[3 * f + 2]]) else {
+                    return 0.0;
+                };
+                if j[0][0] * j[1][1] - j[0][1] * j[1][0] <= FOLDED {
+                    return 0.0;
+                }
+                let (along_u, along_v) = (j[0][0].hypot(j[0][1]), j[1][0].hypot(j[1][1]));
+                let length = along_u.ln().abs().max(along_v.ln().abs());
+                // The angle of the gradients, measured from a right angle.
+                let cosine = (j[0][0] * j[1][0] + j[0][1] * j[1][1]) / (along_u * along_v);
+                let skew = cosine.clamp(-1.0, 1.0).asin().abs();
+                ((length / TOLERATED_STRETCH).max(skew / TOLERATED_SKEW) - 1.0).max(0.0)
+            })
+            .collect()
+    }
+
+    /// Makes the faces that `distortion` (from [`Self::distortion`]) finds
+    /// stretched or skewed stiffer, and their neighbours less so.
+    ///
+    /// The excess is first averaged with that of the neighbours, the face
+    /// itself counting twice: a lone bad face then weighs on its
+    /// neighbours half as much as on itself, as a fold does, and a face
+    /// does not swing from one pass to the next on its own reading. The
+    /// average is then turned into a factor that rises from 1 to that of a
+    /// fold, never beyond: a face that is merely squashed is not made
+    /// heavier faster than one turned over.
+    pub fn stiffen_distorted(&self, weights: &mut [f64], distortion: &[f64]) {
+        let factors: Vec<f64> = (0..distortion.len())
+            .map(|f| {
+                let (mut sum, mut count) = (2.0 * distortion[f], 2.0);
+                for h in 3 * f..3 * f + 3 {
+                    let g = self.frames.across[h];
+                    if g != INVALID {
+                        sum += distortion[g as usize];
+                        count += 1.0;
+                    }
+                }
+                1.0 + (FOLD_FACTOR - 1.0) * (sum / count / SATURATION).min(1.0)
+            })
+            .collect();
+        for (weight, factor) in weights.iter_mut().zip(factors) {
+            *weight = (*weight * factor).min(super::seamless::MAX_STIFFNESS);
+        }
+    }
+}
+
+/// Below this Jacobian a face of the map counts as folded or squashed flat.
+const FOLDED: f64 = 1e-3;
+/// The factor a folded face is made stiffer by in one round.
+const FOLD_FACTOR: f64 = 4.0;
+/// A gradient up to this far from the length asked for, in logarithm, is
+/// left alone: a quad edge between half and twice the size asked for. The
+/// whole numbers of the layout move a short side by as much again (an arc
+/// of 1.5 quads becomes 1 or 2), and the sizing field may grade the size
+/// that fast; past it the map itself would make one quad stand for two.
+const TOLERATED_STRETCH: f64 = std::f64::consts::LN_2;
+/// The skew of the two gradients left alone, in radians (20 degrees). A
+/// feature edge is held on a grid line when the field is within about 18
+/// degrees of it (the 0.95 of [`Problem::edges_on_lines`]), which may skew
+/// the faces along it that much by construction: they are not to be
+/// punished for the line.
+const TOLERATED_SKEW: f64 = std::f64::consts::PI / 9.0;
+/// The averaged excess at which a face gets the whole factor of a fold:
+/// twice the tolerance (a quad edge four times too long or short, or a skew
+/// of 40 degrees).
+const SATURATION: f64 = 1.0;
+
+/// The map from the ideal triangle `ideal` onto `actual`, as the matrix
+/// whose rows are the gradients of `u` and `v` over the ideal triangle.
+fn jacobian(ideal: &[[f64; 2]; 3], actual: &[[f64; 2]; 3]) -> Option<[[f64; 2]; 2]> {
+    let edge = |t: &[[f64; 2]; 3], k: usize| [t[k][0] - t[0][0], t[k][1] - t[0][1]];
+    let (p1, p2, q1, q2) = (edge(ideal, 1), edge(ideal, 2), edge(actual, 1), edge(actual, 2));
+    let det = p1[0] * p2[1] - p1[1] * p2[0];
+    if det == 0.0 {
+        return None;
+    }
+    Some([
+        [(q1[0] * p2[1] - q2[0] * p1[1]) / det, (q2[0] * p1[0] - q1[0] * p2[0]) / det],
+        [(q1[1] * p2[1] - q2[1] * p1[1]) / det, (q2[1] * p1[0] - q1[1] * p2[0]) / det],
+    ])
 }
 
 pub(super) fn evaluate(row: &Row, x: &[f64]) -> f64 {
@@ -512,17 +609,12 @@ impl Quality {
                 continue;
             }
             let actual = [uv[3 * f], uv[3 * f + 1], uv[3 * f + 2]];
-            // J maps the edges of the ideal triangle onto the actual ones.
-            let edge = |t: &[[f64; 2]; 3], k: usize| [t[k][0] - t[0][0], t[k][1] - t[0][1]];
-            let (p1, p2, q1, q2) = (edge(corners, 1), edge(corners, 2), edge(&actual, 1), edge(&actual, 2));
-            let det = p1[0] * p2[1] - p1[1] * p2[0];
-            let j = [
-                [(q1[0] * p2[1] - q2[0] * p1[1]) / det, (q2[0] * p1[0] - q1[0] * p2[0]) / det],
-                [(q1[1] * p2[1] - q2[1] * p1[1]) / det, (q2[1] * p1[0] - q1[1] * p2[0]) / det],
-            ];
+            // J maps the edges of the ideal triangle onto the actual ones;
+            // the ideal one has a positive area, so J exists.
+            let j = self::jacobian(corners, &actual).expect("the ideal triangle has an area");
             let jacobian = j[0][0] * j[1][1] - j[0][1] * j[1][0];
             // A sliver in parameter space is as useless as a fold.
-            if jacobian <= 1e-3 {
+            if jacobian <= FOLDED {
                 quality.flipped.push(f);
             }
             let off = ((j[0][0] - 1.0).powi(2) + j[0][1].powi(2) + j[1][0].powi(2) + (j[1][1] - 1.0).powi(2)).sqrt();
@@ -533,7 +625,7 @@ impl Quality {
             let norm = j[0][0].powi(2) + j[0][1].powi(2) + j[1][0].powi(2) + j[1][1].powi(2);
             let gap = (norm * norm - 4.0 * jacobian * jacobian).max(0.0).sqrt();
             let (largest, smallest) = (((norm + gap) / 2.0).sqrt(), ((norm - gap) / 2.0).max(0.0).sqrt());
-            if jacobian > 1e-3 && smallest > 0.0 {
+            if jacobian > FOLDED && smallest > 0.0 {
                 quality.stretch_max = quality.stretch_max.max(largest / smallest);
             }
         }

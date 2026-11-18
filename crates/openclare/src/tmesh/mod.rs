@@ -618,6 +618,9 @@ pub fn create(kind: Kind) -> Box<dyn LayoutBuilder> {
 pub struct Motorcycle {
     /// Most stiffening rounds against inverted triangles in the map.
     pub stiffening_rounds: usize,
+    /// Passes against stretch and skew in the map (see
+    /// [`parametrization::Request::distortion_passes`]); 0 by default.
+    pub distortion_passes: usize,
     /// How far a trace may go before it is given up, in times the side of a
     /// square with the area of the map.
     pub max_trace_length: f64,
@@ -625,7 +628,7 @@ pub struct Motorcycle {
 
 impl Default for Motorcycle {
     fn default() -> Self {
-        Self { stiffening_rounds: 40, max_trace_length: 20.0 }
+        Self { stiffening_rounds: 40, distortion_passes: 0, max_trace_length: 20.0 }
     }
 }
 
@@ -636,8 +639,11 @@ impl LayoutBuilder for Motorcycle {
 
     fn build(&self, work: &WorkMesh, field: &CrossField, request: &Request) -> Result<Layout> {
         let parametrizer = parametrization::create(parametrization::Kind::Seamless);
-        let map_request =
-            parametrization::Request { edge_length: request.edge_length, stiffening_rounds: self.stiffening_rounds };
+        let map_request = parametrization::Request {
+            edge_length: request.edge_length,
+            stiffening_rounds: self.stiffening_rounds,
+            distortion_passes: self.distortion_passes,
+        };
         let map = parametrizer.parametrize(work, field, &map_request)?;
         let side = (work.mesh.surface_area().sqrt() / request.edge_length).max(1.0);
         let max_trace = self.max_trace_length * side;

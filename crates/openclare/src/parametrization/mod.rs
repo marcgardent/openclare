@@ -22,6 +22,11 @@ pub struct Request {
     pub edge_length: f64,
     /// How many times to stiffen the faces that folded over and solve again.
     pub stiffening_rounds: usize,
+    /// How many times, once the map has no fold, to stiffen the faces it
+    /// stretches or skews past what is tolerated and solve again (after
+    /// the local stiffening of Bommes et al. 2009). 0, the default of every
+    /// chain, stiffens against folds alone. Experimental.
+    pub distortion_passes: usize,
 }
 
 /// What a parametrizer achieved.
@@ -53,8 +58,10 @@ pub struct Report {
     /// The same at the end; anything but 0 means no valid mesh can be read
     /// off the map.
     pub flipped: usize,
-    /// Stiffening rounds used.
+    /// Stiffening rounds used, against folds and distortion together.
     pub rounds: usize,
+    /// Of those, the passes against stretch and skew.
+    pub distortion_passes: usize,
     /// Worst mismatch left across a seam, in parameter units.
     pub seam_error: f64,
     /// Mean deviation of the map from a rigid copy of each face (0 is ideal).

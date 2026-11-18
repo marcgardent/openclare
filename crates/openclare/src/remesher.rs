@@ -592,7 +592,11 @@ impl Remesher for IntegerGrid {
             fields(input, config, &size, None, &mut report, &mut clock, recorder)?;
 
         recorder.begin("parametrization")?;
-        let map_request = parametrization::Request { edge_length, stiffening_rounds: self.stiffening_rounds };
+        let map_request = parametrization::Request {
+            edge_length,
+            stiffening_rounds: self.stiffening_rounds,
+            distortion_passes: config.map_distortion_passes,
+        };
         let map =
             parametrization::create(parametrization::Kind::IntegerGrid).parametrize(&work, &field, &map_request)?;
         report.map_inversions = map.report.flipped;
@@ -1523,7 +1527,8 @@ impl QuadLayout {
             fields(input, config, &size, Some(guides), &mut report, &mut clock, recorder)?;
 
         recorder.begin("layout")?;
-        let layout = tmesh::create(tmesh::Kind::Motorcycle).build(&work, &field, &tmesh::Request { edge_length })?;
+        let builder = tmesh::Motorcycle { distortion_passes: config.map_distortion_passes, ..Default::default() };
+        let layout = tmesh::LayoutBuilder::build(&builder, &work, &field, &tmesh::Request { edge_length })?;
         report.map_inversions = layout.tmesh.report.map_inversions;
         report.guides_let_go = layout.map.report.guides_off_grid as usize;
         if layout.map.report.guides_off_grid {

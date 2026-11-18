@@ -19,7 +19,7 @@ fn field(work: &WorkMesh, alignment: f64) -> CrossField {
 }
 
 fn seamless(work: &WorkMesh, field: &CrossField, edge_length: f64) -> Parametrization {
-    let request = parametrization::Request { edge_length, stiffening_rounds: 40 };
+    let request = parametrization::Request { edge_length, stiffening_rounds: 40, distortion_passes: 0 };
     parametrization::create(parametrization::Kind::Seamless).parametrize(work, field, &request).unwrap()
 }
 

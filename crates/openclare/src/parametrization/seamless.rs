@@ -8,7 +8,7 @@ use std::collections::HashSet;
 use super::problem::{Constraint, Problem, Solver};
 use super::{Kind, Parametrization, Parametrizer, Report, Request};
 use crate::crossfield::CrossField;
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::mesh::Topology;
 use crate::preprocess::WorkMesh;
 
@@ -174,7 +174,15 @@ impl Seamless {
         let mut weights = vec![1.0; work.mesh.triangles.len()];
         let mut report =
             Report { seam_edges: problem.cut.seam_edges(), wedges: problem.cut.wedge_count, ..Default::default() };
-        let uv = untangle(&problem, &constraints, &mut weights, &self.solver, request.stiffening_rounds, &mut report)?;
+        let uv = untangle(
+            &problem,
+            &constraints,
+            &mut weights,
+            &self.solver,
+            request.stiffening_rounds,
+            request.distortion_passes,
+            &mut report,
+        )?;
         report.flipped_first = report.flipped_before_stiffening;
         if on_lines && report.flipped > 0 {
             return Ok(None);
@@ -196,7 +204,15 @@ impl Seamless {
         let mut weights = vec![1.0; work.mesh.triangles.len()];
         let mut report =
             Report { seam_edges: problem.cut.seam_edges(), wedges: problem.cut.wedge_count, ..Default::default() };
-        let uv = untangle(&problem, &constraints, &mut weights, &self.solver, request.stiffening_rounds, &mut report)?;
+        let uv = untangle(
+            &problem,
+            &constraints,
+            &mut weights,
+            &self.solver,
+            request.stiffening_rounds,
+            request.distortion_passes,
+            &mut report,
+        )?;
         report.flipped_first = report.flipped_before_stiffening;
         if report.flipped > 0 {
             return Ok(Err(problem.quality(&uv).flipped));
@@ -240,26 +256,51 @@ fn lines_of(edges: &[[u32; 2]]) -> Vec<Vec<[u32; 2]>> {
 }
 
 /// Beyond this weight a face is as stiff as it usefully gets.
-const MAX_STIFFNESS: f64 = 1.0e6;
+pub(super) const MAX_STIFFNESS: f64 = 1.0e6;
 
 /// Solves, then stiffens the faces that folded over and solves again, until
-/// none is left or the rounds run out. Fills in the quality part of `report`.
+/// none is left or the `rounds` run out. Then, up to `passes` times, stiffens
+/// the faces of the valid map that are stretched or skewed past what is
+/// tolerated (see [`Problem::distortion`]) and solves again, folds that come
+/// back being fought as before. Fills in the quality part of `report`.
+///
+/// With `passes` at 0 this is stiffening against folds alone, as it was.
 pub(super) fn untangle(
     problem: &Problem,
     constraints: &[Constraint],
     weights: &mut [f64],
     solver: &Solver,
     rounds: usize,
+    passes: usize,
     report: &mut Report,
 ) -> Result<Vec<[f64; 2]>> {
     // Stiffening can make things worse where a fold has no cure (two
     // singularities rounded onto the same point, say): keep the best map
-    // seen, and give up once the weights have grown past any use.
-    let mut best: Option<(usize, Vec<[f64; 2]>, Report)> = None;
-    for round in 0..=rounds {
-        let (x, mismatch) = problem.solve(weights, constraints, solver)?;
+    // seen, and give up once the weights have grown past any use. The best
+    // has the fewest folds and, against distortion, the least of it.
+    struct Best {
+        flipped: usize,
+        excess: f64,
+        uv: Vec<[f64; 2]>,
+        report: Report,
+        weights: Option<Vec<f64>>,
+    }
+    let total_area: f64 = problem.frames.area.iter().sum();
+    let mut best: Option<Best> = None;
+    let (mut round, mut fold_rounds, mut passes_done) = (0, 0, 0);
+    loop {
+        let (x, mismatch) = match problem.solve(weights, constraints, solver) {
+            Ok(solved) => solved,
+            // Stiffer faces make the system worse conditioned: where a pass
+            // against distortion breaks the solve, the map before it stands.
+            Err(Error::Numerical(_)) if passes_done > 0 => break,
+            Err(other) => return Err(other),
+        };
         let uv = problem.uv(&x);
         let quality = problem.quality(&uv);
+        let distortion = if passes > 0 { problem.distortion(&uv) } else { Vec::new() };
+        let excess = distortion.iter().zip(&problem.frames.area).map(|(d, a)| d * a).sum::<f64>()
+            / total_area.max(f64::MIN_POSITIVE);
         if round == 0 {
             report.flipped_before_stiffening = quality.flipped.len();
         }
@@ -268,16 +309,47 @@ pub(super) fn untangle(
         report.stretch_max = quality.stretch_max;
         report.seam_error = mismatch;
         report.rounds = round;
-        if best.as_ref().is_none_or(|(fewest, ..)| quality.flipped.len() < *fewest) {
-            best = Some((quality.flipped.len(), uv, report.clone()));
+        report.distortion_passes = passes_done;
+        let better = best.as_ref().is_none_or(|kept| {
+            quality.flipped.len() < kept.flipped
+                || (passes > 0 && quality.flipped.len() == kept.flipped && excess < kept.excess)
+        });
+        if better {
+            let kept_weights = (passes > 0).then(|| weights.to_vec());
+            best = Some(Best {
+                flipped: quality.flipped.len(),
+                excess,
+                uv,
+                report: report.clone(),
+                weights: kept_weights,
+            });
         }
-        let heaviest = quality.flipped.iter().map(|&f| weights[f]).fold(0.0, f64::max);
-        if quality.flipped.is_empty() || heaviest >= MAX_STIFFNESS {
+        if !quality.flipped.is_empty() {
+            let heaviest = quality.flipped.iter().map(|&f| weights[f]).fold(0.0, f64::max);
+            if heaviest >= MAX_STIFFNESS {
+                break;
+            }
+            problem.stiffen(weights, &quality.flipped);
+            fold_rounds += 1;
+            if fold_rounds > rounds {
+                break;
+            }
+        } else if passes_done < passes && distortion.iter().any(|&d| d > 0.0) {
+            problem.stiffen_distorted(weights, &distortion);
+            passes_done += 1;
+        } else {
             break;
         }
-        problem.stiffen(weights, &quality.flipped);
+        round += 1;
     }
-    let (_, uv, kept) = best.expect("at least one round ran");
-    *report = kept;
-    Ok(uv)
+    let kept = best.expect("the first solve either ran or returned its error");
+    // The weights go on to the solves that follow (the rounding of the
+    // integer map): those of the map kept, not of a pass that did worse.
+    if passes_done > 0
+        && let Some(kept_weights) = kept.weights
+    {
+        weights.copy_from_slice(&kept_weights);
+    }
+    *report = kept.report;
+    Ok(kept.uv)
 }

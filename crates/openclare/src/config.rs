@@ -89,6 +89,11 @@ pub struct RemeshConfig {
     /// zero, instead of holding open a strip of quads between them (#171).
     /// Off by default: an experiment.
     pub merge_singularities: bool,
+    /// Passes of the map against stretch and skew, once it has no fold:
+    /// the faces it stretches or skews past what is tolerated are made
+    /// stiffer and the map solved again. 0 stiffens against folds alone.
+    /// Off by default: an experiment.
+    pub map_distortion_passes: usize,
     /// How hard the loops are closed: by the engine alone, or, slowly, by
     /// an exact solver as well (see [`Quality`]).
     pub quality: Quality,
@@ -275,6 +280,7 @@ impl RemeshConfig {
             skip_pieces_under: 0.0,
             close_loops: true,
             merge_singularities: false,
+            map_distortion_passes: 0,
             quality: Quality::Standard,
             faces: Faces::Quads,
             slow_time_limit: SLOW_TIME_LIMIT,
@@ -522,6 +528,7 @@ impl RemeshConfig {
         writeln!(text, "skip_pieces_under = {}", self.skip_pieces_under).unwrap();
         writeln!(text, "close_loops = {}", self.close_loops).unwrap();
         writeln!(text, "merge_singularities = {}", self.merge_singularities).unwrap();
+        writeln!(text, "map_distortion_passes = {}", self.map_distortion_passes).unwrap();
         writeln!(text, "quality = {}", self.quality).unwrap();
         writeln!(text, "faces = {}", self.faces).unwrap();
         writeln!(text, "slow_time_limit = {}", self.slow_time_limit).unwrap();
@@ -599,6 +606,10 @@ impl RemeshConfig {
                 "merge_singularities" => {
                     config.merge_singularities =
                         value.parse().map_err(|_| error(format!("'{value}' is not true or false")))?
+                }
+                "map_distortion_passes" => {
+                    config.map_distortion_passes =
+                        value.parse().map_err(|_| error(format!("'{value}' is not a whole number")))?
                 }
                 "quality" => config.quality = value.parse().map_err(|e: Error| error(e.to_string()))?,
                 "faces" => config.faces = value.parse().map_err(|e: Error| error(e.to_string()))?,

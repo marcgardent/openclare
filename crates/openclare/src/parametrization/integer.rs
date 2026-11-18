@@ -86,7 +86,10 @@ impl IntegerGrid {
             Report { seam_edges: problem.cut.seam_edges(), wedges: problem.cut.wedge_count, ..Default::default() };
 
         // Start from the continuous solution, already rid of its folds.
-        untangle(&problem, &constraints, &mut weights, &self.solver, request.stiffening_rounds, &mut report)?;
+        // Not of its distortion: the weights carry over into the rounding,
+        // and stiffer faces there change which whole numbers are chosen,
+        // which on the test cases gave more folds at the end, not fewer.
+        untangle(&problem, &constraints, &mut weights, &self.solver, request.stiffening_rounds, 0, &mut report)?;
         report.flipped_first = report.flipped_before_stiffening;
         let (mut x, _) = problem.solve(&weights, &constraints, &self.solver)?;
 
@@ -149,8 +152,15 @@ impl IntegerGrid {
         }
 
         // Whole numbers bend the map: folds may be back.
-        let mut uv =
-            untangle(&problem, &constraints, &mut weights, &self.solver, request.stiffening_rounds, &mut report)?;
+        let mut uv = untangle(
+            &problem,
+            &constraints,
+            &mut weights,
+            &self.solver,
+            request.stiffening_rounds,
+            request.distortion_passes,
+            &mut report,
+        )?;
         for point in &mut uv {
             *point = [2.0 * point[0], 2.0 * point[1]];
         }

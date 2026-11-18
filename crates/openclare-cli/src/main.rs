@@ -73,6 +73,8 @@ OPTIONS (remesh):
     --no-close-loops             leave the lines of quads round a part as the lengths make them, helices or not
     --merge-singularities        let a 3 and a 5 (singularities whose valences add up to 3, 4 or 5) merge
                                  across a strip of no width instead of holding it one quad wide (experimental)
+    --map-distortion-passes <N>  once the map has no fold, make the faces it stretches or skews too much stiffer
+                                 and solve it again, up to N times (default 0: against folds only; experimental)
     --quality <standard|slow>    slow: after the engine, an exact solver (HiGHS) chooses which loops to close
                                  together, in three rounds; kept only where it makes fewer spirals. Seconds to
                                  minutes more per piece (default standard)
@@ -115,6 +117,7 @@ OPTIONS (parametrize):
     --simplify <R>         cancel opposite singularities closer than R quad edges
     --crease-angle <DEG>   treat input edges sharper than this as hard constraints
     --rounds <N>           most stiffening rounds against inverted triangles (default 40)
+    --distortion-passes <N>  passes against stretch and skew once no triangle is inverted (default 0)
     --kind <NAME>          seamless (default) or integer-grid
 
 OPTIONS (tmesh):
@@ -124,10 +127,11 @@ OPTIONS (tmesh):
     --simplify <R>         cancel opposite singularities closer than R quad edges
     --crease-angle <DEG>   treat input edges sharper than this as hard constraints
     --rounds <N>           most stiffening rounds against inverted triangles (default 40)
+    --distortion-passes <N>  passes against stretch and skew once no triangle is inverted (default 0)
     --traces <out.obj>     write the cuts as lines on the surface
     --json                 print the report as one JSON object
 
-OPTIONS (quantize): those of tmesh up to --rounds, and
+OPTIONS (quantize): those of tmesh up to --distortion-passes, and
     --tolerance <T>        how close to the number of quads is close enough (default 0.02)
     --keep-scale           keep the scale of the T-mesh instead of aiming for the number of quads
     --merge-singularities  let singularities merge where their valences add up to 3, 4 or 5
@@ -451,6 +455,7 @@ fn remesh(args: &[String]) -> Result<(), String> {
             "--skip-pieces-under" => config.skip_pieces_under = parse(arg, value(arg)?)?,
             "--no-close-loops" => config.close_loops = false,
             "--merge-singularities" => config.merge_singularities = true,
+            "--map-distortion-passes" => config.map_distortion_passes = parse(arg, value(arg)?)?,
             "--quality" => config.quality = value(arg)?.parse().map_err(|e: openclare::Error| e.to_string())?,
             "--slow-time-limit" => config.slow_time_limit = parse(arg, value(arg)?)?,
             "--slow-work-limit" => config.slow_work_limit = parse(arg, value(arg)?)?,
@@ -1170,6 +1175,7 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
     let mut work_request = preprocess::Request { triangles: 50_000, ..Default::default() };
     let mut field_request = crossfield::Request::default();
     let (mut quads, mut simplify, mut rounds, mut paths) = (None::<usize>, None::<f64>, 40usize, Vec::new());
+    let mut passes = 0usize;
     let mut kind = parametrization::Kind::Seamless;
     let mut args = args.iter();
     while let Some(arg) = args.next() {
@@ -1181,6 +1187,7 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
             "--simplify" => simplify = Some(parse(arg, value(arg)?)?),
             "--crease-angle" => work_request.crease_angle = Some(parse(arg, value(arg)?)?),
             "--rounds" => rounds = parse(arg, value(arg)?)?,
+            "--distortion-passes" => passes = parse(arg, value(arg)?)?,
             "--kind" => kind = value(arg)?.parse().map_err(|e: openclare::Error| e.to_string())?,
             flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
             path => paths.push(path),
@@ -1213,7 +1220,7 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
     let (positive, negative, other) = field.singularities();
 
     let start = std::time::Instant::now();
-    let request = parametrization::Request { edge_length, stiffening_rounds: rounds };
+    let request = parametrization::Request { edge_length, stiffening_rounds: rounds, distortion_passes: passes };
     let map = parametrization::create(kind).parametrize(&work, &field, &request).map_err(|e| e.to_string())?;
     let seconds = start.elapsed().as_secs_f64();
 
@@ -1224,6 +1231,9 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
         "inverted       {} after {} stiffening rounds ({} at first, {} before the last series)",
         report.flipped, report.rounds, report.flipped_first, report.flipped_before_stiffening
     );
+    if passes > 0 {
+        println!("distortion     {} of those rounds against stretch and skew", report.distortion_passes);
+    }
     println!("distortion     mean {:.4}, worst stretch {:.2}", report.distortion_mean, report.stretch_max);
     println!("conditions     worst mismatch {:.2e}, {} whole numbers imposed", report.seam_error, report.integers);
     println!("seconds        {seconds:.3}");
@@ -1238,6 +1248,7 @@ struct LayoutOptions {
     field: crossfield::Request,
     simplify: Option<f64>,
     rounds: usize,
+    distortion_passes: usize,
 }
 
 impl LayoutOptions {
@@ -1249,6 +1260,7 @@ impl LayoutOptions {
             field: crossfield::Request::default(),
             simplify: None,
             rounds: 40,
+            distortion_passes: 0,
         }
     }
 
@@ -1262,6 +1274,7 @@ impl LayoutOptions {
             "--simplify" => self.simplify = Some(parse(arg, value()?)?),
             "--crease-angle" => self.work.crease_angle = Some(parse(arg, value()?)?),
             "--rounds" => self.rounds = parse(arg, value()?)?,
+            "--distortion-passes" => self.distortion_passes = parse(arg, value()?)?,
             flag if flag.starts_with("--") => return Ok(false),
             path if self.input.is_none() => self.input = Some(path.to_string()),
             _ => return Err("expected a single input path".into()),
@@ -1294,7 +1307,11 @@ impl LayoutOptions {
                 .map_err(|e| e.to_string())?
                 .0;
         }
-        let request = parametrization::Request { edge_length, stiffening_rounds: self.rounds };
+        let request = parametrization::Request {
+            edge_length,
+            stiffening_rounds: self.rounds,
+            distortion_passes: self.distortion_passes,
+        };
         let map = parametrization::create(parametrization::Kind::Seamless)
             .parametrize(&work, &field, &request)
             .map_err(|e| e.to_string())?;
