@@ -805,6 +805,24 @@ model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "
 budget = [1000, 3000, 8000]
 pairs = [{ value = "joined", pairs_flag = "" }, { value = "no-pairs", pairs_flag = "--no-pairs" }]
 
+[[batch]]
+name = "map-distortion-passes"
+description = "The map stiffened against stretch and skew (--map-distortion-passes, an experiment on the branch claude/m4-distortion-stiffening) off and on: the twelve models at 2970, 3000 and 3030 quads, one job the remesh and its measure. The cells at 0 passes, beside a three-budgets run on main, say whether the option off leaves the meshes as they were."
+category = "quick-bench"
+needs = ["engine", "source"]
+checkout = "claude/m4-distortion-stiffening"
+command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} --map-distortion-passes {passes} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
+report = "python3 bench/before_after.py {records} --side passes --by budget --out {out}"
+parameters = { preset = "organic" }
+memory_limit_gb = 32
+timing_matters = false
+
+[batch.axes]
+model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock",
+         { value = "cage", preset = "hard-surface" }, { value = "part", preset = "hard-surface" }]
+budget = [2970, 3000, 3030]
+passes = [0, 2]
+
 # ---------------------------------------------------------------- sequences
 
 [[sequence]]
