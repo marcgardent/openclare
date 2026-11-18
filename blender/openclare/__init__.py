@@ -2534,6 +2534,11 @@ HANDLERS = (
 
 
 def register():
+    # Another openclare is enabled (the PRO edition, or this add-on from a
+    # second repository): registering over it would leave both half made.
+    there = getattr(bpy.types, "OPENCLARE_PT_panel", None)
+    if there is not None:
+        raise RuntimeError(f"openclare is already enabled ({there.__module__}): disable it first")
     for cls in CLASSES:
         bpy.utils.register_class(cls)
     preview.register()

@@ -17,6 +17,16 @@ import openclare  # noqa: E402
 openclare.register()
 print("ENGINE", openclare.engine.version())
 
+# A second openclare (the PRO edition, or a second repository) is refused
+# before anything is registered over the first.
+try:
+    openclare.register()
+except RuntimeError as refused:
+    assert "already enabled" in str(refused), refused
+else:
+    raise AssertionError("a second register() was not refused")
+assert bpy.types.OPENCLARE_PT_panel.__module__ == openclare.__name__
+
 bpy.ops.mesh.primitive_monkey_add()
 original = bpy.context.active_object
 original.location = (1.0, 2.0, 3.0)
