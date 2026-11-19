@@ -1121,6 +1121,200 @@ pub unsafe extern "C" fn openclare_baked_free(baked: *mut OpenclareBaked) {
     }
 }
 
+/// What a call to [`openclare_project_level`] gives back.
+pub struct OpenclareLevel {
+    positions: Vec<f32>,
+    status: Vec<u8>,
+    /// Empty when all went well.
+    error: CString,
+    /// What happened, as `key = value` lines.
+    report: CString,
+}
+
+/// Places a subdivision level on its source: each vertex onto the side of
+/// the source that faces its way, no farther than its reach, a vertex
+/// inside a creased line onto the source's hard edges, faces that fold
+/// taken back (the guarded projection of the Multires, PRO #6).
+///
+/// - `positions`: `3 * vertex_count` numbers, the level as the subdivision
+///   left it.
+/// - `quads`: `4 * quad_count` indices of its vertices.
+/// - `crease_edges`: `2 * crease_count` indices, the creased edges of the
+///   level, and `crease_weights` their `crease_count` weights; both may be
+///   null when `crease_count` is 0.
+/// - `source_positions`, `source_triangles`: the source.
+/// - `settings`: `key = value` lines (reach, tilt, crease_angle, samples,
+///   seed), or null for the defaults.
+///
+/// Returns a handle to free with [`openclare_level_free`], never null.
+///
+/// # Safety
+///
+/// Each pointer must be valid for the number of elements said of it, and
+/// `settings` null or a text ending in a nul, for the time of the call.
+#[unsafe(no_mangle)]
+#[allow(clippy::too_many_arguments)]
+pub unsafe extern "C" fn openclare_project_level(
+    positions: *const f32,
+    vertex_count: usize,
+    quads: *const u32,
+    quad_count: usize,
+    crease_edges: *const u32,
+    crease_weights: *const f32,
+    crease_count: usize,
+    source_positions: *const f32,
+    source_vertex_count: usize,
+    source_triangles: *const u32,
+    source_triangle_count: usize,
+    settings: *const c_char,
+) -> *mut OpenclareLevel {
+    let outcome = catch_unwind(AssertUnwindSafe(|| -> Result<OpenclareLevel, String> {
+        if positions.is_null() || quads.is_null() || source_positions.is_null() || source_triangles.is_null() {
+            return Err("the mesh arrays are missing".into());
+        }
+        if crease_count > 0 && (crease_edges.is_null() || crease_weights.is_null()) {
+            return Err("the crease arrays are missing".into());
+        }
+        let points = |at: *const f32, count: usize| -> Vec<Vec3> {
+            // SAFETY: not null, and as long as the caller says.
+            let numbers = unsafe { read(at, 3 * count) };
+            numbers.chunks_exact(3).map(|p| Vec3::new(p[0] as f64, p[1] as f64, p[2] as f64)).collect()
+        };
+        // SAFETY: not null, and as long as the caller says.
+        let corners = unsafe { read(quads, 4 * quad_count) };
+        let level = PolyMesh {
+            positions: points(positions, vertex_count),
+            faces: corners.chunks_exact(4).map(<[u32]>::to_vec).collect(),
+        };
+        // SAFETY: not null when there are any, and as long as the caller says.
+        let (ends, weights) = unsafe { (read(crease_edges, 2 * crease_count), read(crease_weights, crease_count)) };
+        let creases: Vec<([u32; 2], f64)> =
+            ends.chunks_exact(2).zip(weights).map(|(e, &w)| ([e[0], e[1]], w as f64)).collect();
+        // SAFETY: not null, and as long as the caller says.
+        let indices = unsafe { read(source_triangles, 3 * source_triangle_count) };
+        if let Some(beyond) = indices.iter().find(|&&v| v as usize >= source_vertex_count) {
+            return Err(format!("a triangle of the source names vertex {beyond}, of {source_vertex_count} vertices"));
+        }
+        let source = TriMesh {
+            positions: points(source_positions, source_vertex_count),
+            triangles: indices.chunks_exact(3).map(|t| [t[0], t[1], t[2]]).collect(),
+        };
+        let settings: openclare::level::Settings = if settings.is_null() {
+            Default::default()
+        } else {
+            // SAFETY: a text ending in a nul, by contract.
+            let text = unsafe { CStr::from_ptr(settings) }.to_str().map_err(|_| "the settings are not UTF-8")?;
+            text.parse().map_err(|e: openclare::Error| e.to_string())?
+        };
+        let placed = openclare::level::place(&level, &creases, &source, &settings).map_err(|e| e.to_string())?;
+        Ok(OpenclareLevel {
+            positions: placed.positions.iter().flat_map(|p| [p.x as f32, p.y as f32, p.z as f32]).collect(),
+            status: placed.status.iter().map(|&s| s as u8).collect(),
+            error: CString::default(),
+            report: text(placed.report()),
+        })
+    }));
+    let failed = |message: String| OpenclareLevel {
+        positions: Vec::new(),
+        status: Vec::new(),
+        error: text(message),
+        report: CString::default(),
+    };
+    let level = match outcome {
+        Ok(Ok(level)) => level,
+        Ok(Err(message)) => failed(message),
+        Err(_) => failed("openclare failed unexpectedly while placing the level".into()),
+    };
+    Box::into_raw(Box::new(level))
+}
+
+/// 1 if the level was placed, 0 if not or if `level` is null.
+///
+/// # Safety
+///
+/// `level` must be null or a handle from [`openclare_project_level`] not
+/// yet freed; the same goes for every function below.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_level_ok(level: *const OpenclareLevel) -> i32 {
+    // SAFETY: null or a live handle, by contract.
+    unsafe { level.as_ref() }.is_some_and(|level| level.error.as_bytes().is_empty()) as i32
+}
+
+/// Why the level was not placed; empty if it was. Valid until freed.
+///
+/// # Safety
+///
+/// See [`openclare_level_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_level_error(level: *const OpenclareLevel) -> *const c_char {
+    // SAFETY: null or a live handle, by contract.
+    match unsafe { level.as_ref() } {
+        Some(level) => level.error.as_ptr(),
+        None => c"no result".as_ptr(),
+    }
+}
+
+/// What happened, as `key = value` lines: the count of vertices in each
+/// status, the missing detail and stretched edges of the level once placed
+/// (unless `samples = 0`), seconds. Valid until freed.
+///
+/// # Safety
+///
+/// See [`openclare_level_ok`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_level_report(level: *const OpenclareLevel) -> *const c_char {
+    // SAFETY: null or a live handle, by contract.
+    match unsafe { level.as_ref() } {
+        Some(level) => level.report.as_ptr(),
+        None => c"".as_ptr(),
+    }
+}
+
+/// Copies where the vertices now are, 3 numbers each, in the order given.
+///
+/// # Safety
+///
+/// See [`openclare_level_ok`]; `positions` must have room for them.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_level_copy_positions(level: *const OpenclareLevel, positions: *mut f32) {
+    // SAFETY: null or a live handle, by contract.
+    let Some(level) = (unsafe { level.as_ref() }) else { return };
+    if !positions.is_null() {
+        // SAFETY: room for them, by contract.
+        unsafe { std::slice::from_raw_parts_mut(positions, level.positions.len()) }.copy_from_slice(&level.positions);
+    }
+}
+
+/// Copies what became of each vertex, one number each: 0 moved, 1 onto a
+/// hard edge, 2 stopped by the reach, 3 nothing found, 4 taken back, 5 held.
+///
+/// # Safety
+///
+/// See [`openclare_level_ok`]; `status` must have room for them.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_level_copy_status(level: *const OpenclareLevel, status: *mut u8) {
+    // SAFETY: null or a live handle, by contract.
+    let Some(level) = (unsafe { level.as_ref() }) else { return };
+    if !status.is_null() {
+        // SAFETY: room for them, by contract.
+        unsafe { std::slice::from_raw_parts_mut(status, level.status.len()) }.copy_from_slice(&level.status);
+    }
+}
+
+/// Frees a handle from [`openclare_project_level`].
+///
+/// # Safety
+///
+/// `level` must be null or a handle from [`openclare_project_level`] not
+/// yet freed.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_level_free(level: *mut OpenclareLevel) {
+    if !level.is_null() {
+        // SAFETY: made by `Box::into_raw` in `openclare_project_level`.
+        drop(unsafe { Box::from_raw(level) });
+    }
+}
+
 /// What a call to [`openclare_analyse`] gives back: a shape measured once,
 /// to be asked as often as wanted how many quads a largest and a smallest
 /// quad make of it.

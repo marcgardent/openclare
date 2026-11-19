@@ -179,7 +179,7 @@ as on most sculpts. The definitions are those of `SharpEdges` in the same file.
 | `export_object.py` | Blender script: writes one object of a `.blend` as an OBJ and the material of each triangle, for the command line |
 | `tmesh.py` | builds the T-mesh of each model and writes `results/TMESH.md` |
 | `creases.py` | Blender script: subdivides each result with and without its crease weights and measures both; writes `results/CREASES.md` |
-| `multires.py`, `multires_report.py` | Blender script: Multires levels of a cage, each placed on the source by a Shrinkwrap, measured by `openclare detail`; and the table of the lab batch `multires-baseline` beside PRO #6's |
+| `multires.py`, `multires_report.py`, `multires_projection_report.py` | Blender script: Multires levels of a cage, each placed on the source by a Shrinkwrap or by the engine (`--mode openclare`, `openclare level`), measured by `openclare detail`; the table of the lab batch `multires-baseline` beside PRO #6's; and the batch `multires-projection` judged against milestone 3 of the Multires specification |
 | `fetch_blenderkit.py` | downloads the BlenderKit models of the bench, which cannot be redistributed, and makes their scenes (`make blenderkit`) |
 | `../scripts/scores.py` | marks from 0 to 100 per model, remesher and criterion; writes `results/SCORES.md` (`make scores`) |
 | `acceptance.py` | checks the results against the acceptance thresholds, writes `results/ACCEPTANCE.md` |

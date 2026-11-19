@@ -243,18 +243,18 @@ impl Fitter for LeastSquares {
 }
 
 /// Passes of undoing the moves that fold a face.
-const FOLD_PASSES: usize = 8;
+pub(crate) const FOLD_PASSES: usize = 8;
 
 /// For each corner of a face, whether it turns the way the face does on the
 /// whole.
-fn turns(positions: &[Vec3], face: &[u32]) -> Vec<bool> {
+pub(crate) fn turns(positions: &[Vec3], face: &[u32]) -> Vec<bool> {
     let at = |k: usize| positions[face[k % face.len()] as usize];
     let whole = facing(positions, face);
     (0..face.len()).map(|k| (at(k + 1) - at(k)).cross(at(k + face.len() - 1) - at(k)).dot(whole) > 0.0).collect()
 }
 
 /// Which way a face faces: its area as a vector.
-fn facing(positions: &[Vec3], face: &[u32]) -> Vec3 {
+pub(crate) fn facing(positions: &[Vec3], face: &[u32]) -> Vec3 {
     let at = |k: usize| positions[face[k % face.len()] as usize];
     let centre: Vec3 = (0..face.len()).map(at).sum::<Vec3>() / face.len() as f64;
     (0..face.len()).map(|k| (at(k) - centre).cross(at(k + 1) - centre)).sum()
@@ -262,7 +262,7 @@ fn facing(positions: &[Vec3], face: &[u32]) -> Vec3 {
 
 /// Unit normals at the vertices of a polygon mesh, each face weighing in by
 /// its area.
-fn vertex_normals(mesh: &PolyMesh) -> Vec<Vec3> {
+pub(crate) fn vertex_normals(mesh: &PolyMesh) -> Vec<Vec3> {
     let mut normals = vec![Vec3::ZERO; mesh.positions.len()];
     for face in &mesh.faces {
         let centre: Vec3 = face.iter().map(|&v| mesh.positions[v as usize]).sum::<Vec3>() / face.len() as f64;

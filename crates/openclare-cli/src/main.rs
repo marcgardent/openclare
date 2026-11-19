@@ -21,6 +21,7 @@ USAGE:
     openclare presets
     openclare measure <source.obj> <quads.obj> [--target <N>] [--creases <FILE>] [--json]
     openclare detail <source.obj> <level.obj> [--samples <N>] [--seed <S>] [--json]
+    openclare level <source.obj> <level.obj> <output.obj> [--creases <FILE>] [--settings <TEXT>] [--status <FILE>] [--json]
     openclare repair <cage.obj> <output.obj> [options]
     openclare layout <quads.obj>
     openclare analyse <input.obj> [--preset <NAME>] [--largest <L>]
@@ -142,11 +143,25 @@ OPTIONS (measure):
     --json                 print the metrics as one JSON object
 
 OPTIONS (detail): what a subdivision level misses of its source, and its stretched edges (PRO #6):
-the distance from points spread on the source by area to the level, its 99th percentile and median in
-% of the diagonal of the source's bounding box; the edges longer than 4 times the median edge
+the distance from points spread on the source by area to the level, its 99th and 99.9th percentiles and
+median in % of the diagonal of the source's bounding box; the edges longer than 4 times the median edge
     --samples <N>          points spread on the source (default 60000)
     --seed <S>             seed of those points (default 1)
     --json                 print the measures as one JSON object
+
+OPTIONS (level): a subdivision level placed on its source, each vertex along its normal onto the side
+of the source that faces its way, no farther than its reach, faces that fold, tilt or stretch put back (the
+guarded projection of the Multires, PRO #6); the output keeps the vertices and faces of the level
+    --creases <FILE>       the creased edges of the level, one 'a b weight' line each, vertices from 1
+                           (as remesh --creases-out writes them); a vertex inside a creased line goes to
+                           the hard edges of the source
+    --settings <TEXT>      'key = value' lines or ';' between them: reach (shares of the shortest edge,
+                           default 1), far (the same, straight along the normal, 8), stretch (times
+                           an edge may grow, 4), tilt (degrees a face may turn, 180: any), crease_angle (degrees, 30),
+                           samples (points of the measure, 60000; 0 measures nothing), seed (1)
+    --status <FILE>        writes what became of each vertex, one number a line: 0 moved, 1 on a hard
+                           edge, 2 stopped by the reach, 3 nothing found, 4 taken back, 5 held
+    --json                 print the report as one JSON object
 
 OPTIONS (repair): the reflection repair of a cage, in place: vertices moved, creases proposed,
 every vertex, edge and face kept; each repair kept only if the reflection check scores better
@@ -189,6 +204,7 @@ fn run(args: &[String]) -> Result<(), String> {
         }
         Some("measure") => measure_command(&args[1..]),
         Some("detail") => detail_command(&args[1..]),
+        Some("level") => level_command(&args[1..]),
         Some("layout") => layout_command(&args[1..]),
         Some("repair") => repair_command(&args[1..]),
         Some("analyse") => analyse_command(&args[1..]),
@@ -842,14 +858,52 @@ fn detail_command(args: &[String]) -> Result<(), String> {
         return Ok(());
     }
     println!(
-        "missing      p99 {:.4} %, median {:.4} % of the diagonal, from {} points on the source",
-        detail.missing_p99, detail.missing_p50, detail.samples
+        "missing      p99 {:.4} %, p99.9 {:.4} %, median {:.4} % of the diagonal, from {} points on the source",
+        detail.missing_p99, detail.missing_p999, detail.missing_p50, detail.samples
     );
     println!(
         "stretched    {} edges over 4 times the median ({:.4} % of the diagonal), longest {:.1} times",
         detail.stretched, detail.median_edge, detail.longest_over_median
     );
     Ok(())
+}
+
+fn level_command(args: &[String]) -> Result<(), String> {
+    let (mut creases, mut settings, mut status, mut json, mut paths) = (None, String::new(), None, false, Vec::new());
+    let mut args = args.iter();
+    while let Some(arg) = args.next() {
+        let mut value = || args.next().ok_or(format!("{arg} expects a value"));
+        match arg.as_str() {
+            "--creases" => creases = Some(value()?.clone()),
+            "--settings" => settings = value()?.clone(),
+            "--status" => status = Some(value()?.clone()),
+            "--json" => json = true,
+            flag if flag.starts_with("--") => return Err(format!("unknown option '{flag}'")),
+            path => paths.push(path),
+        }
+    }
+    let [source, level, output] = paths[..] else {
+        return Err("level takes the source mesh, the level to place and the output".into());
+    };
+    let settings: openclare::level::Settings = settings.parse().map_err(|e: openclare::Error| e.to_string())?;
+    let source = obj::read_obj(source).map_err(|e| format!("{source}: {e}"))?;
+    let mut mesh = obj::read_obj_poly(level).map_err(|e| format!("{level}: {e}"))?;
+    let creases = match &creases {
+        Some(path) => read_creases(path, mesh.positions.len()).map_err(|e| format!("{path}: {e}"))?,
+        None => Vec::new(),
+    };
+    let placed = openclare::level::place(&mesh, &creases, &source, &settings).map_err(|e| e.to_string())?;
+    if let Some(path) = &status {
+        let lines: String = placed.status.iter().map(|&s| format!("{}\n", s as u8)).collect();
+        std::fs::write(path, lines).map_err(|e| format!("{path}: {e}"))?;
+    }
+    if json {
+        println!("{}", placed.to_json());
+    } else {
+        print!("{}", placed.report());
+    }
+    mesh.positions = placed.positions;
+    obj::write_obj_poly(output, &mesh).map_err(|e| e.to_string())
 }
 
 /// The reflection check of `measure`, kind by kind.

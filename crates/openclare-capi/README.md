@@ -62,10 +62,11 @@ openclare_result_free(result);
 Who frees what:
 
 - What you pass in stays yours: the library reads it during the call and keeps nothing.
-- `openclare_remesh`, `openclare_bake_height`, `openclare_analyse`, `openclare_hard_edges`,
-  `openclare_hard_edge_finder`, `openclare_hard_edge_finder_find`, `openclare_reflection_check`
-  and `openclare_reflection_repair` never return NULL. Each handle they return is freed once, by
-  `openclare_result_free`, `openclare_baked_free`, `openclare_analysis_free`,
+- `openclare_remesh`, `openclare_bake_height`, `openclare_project_level`, `openclare_analyse`,
+  `openclare_hard_edges`, `openclare_hard_edge_finder`, `openclare_hard_edge_finder_find`,
+  `openclare_reflection_check` and `openclare_reflection_repair` never return NULL. Each handle
+  they return is freed once, by `openclare_result_free`, `openclare_baked_free`,
+  `openclare_level_free`, `openclare_analysis_free`,
   `openclare_hard_edges_free`, `openclare_hard_edge_finder_free`, `openclare_reflection_free` or
   `openclare_repair_free`, whether it holds what was asked for or an error.
 - `openclare_reflection_repair` gives back new positions and proposed creases; it changes nothing
