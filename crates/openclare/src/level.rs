@@ -265,11 +265,13 @@ impl Placed {
 pub enum Advice {
     /// The level misses less than the target: no other level is needed.
     Done,
-    /// Above the target, and every cage face above it still gains: one more
-    /// level.
+    /// Above the target, and some cage faces above it still gain: one more
+    /// level. Those that no longer gain are counted beside it
+    /// (`denser_faces`): on the ogre of #6, at the first three levels, a
+    /// few faces stall while all the rest gains.
     More,
-    /// Some cage faces above the target no longer gain from a level, or
-    /// their vertices found little of the source: more quads round them in
+    /// Every cage face above the target no longer gains from a level, or
+    /// its vertices found little of the source: more quads round them in
     /// the cage, not another level.
     Denser,
 }
@@ -475,7 +477,7 @@ pub fn place_on_cage(
     };
     let advice = if detail.missing_p99 < settings.target {
         Advice::Done
-    } else if faces.as_ref().is_some_and(|faces| faces.count(Verdict::Denser) > 0) {
+    } else if faces.as_ref().is_some_and(|faces| faces.count(Verdict::Denser) > 0 && faces.count(Verdict::More) == 0) {
         Advice::Denser
     } else {
         Advice::More

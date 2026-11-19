@@ -1347,7 +1347,8 @@ fn a_level_measured_over_its_cage_faces_says_which_want_more_quads() {
             assert!(v == wanted || (m - p99).abs() < 1e-6, "{m} {v} {p99}");
         }
         assert!(verdict.contains(&2) && verdict.contains(&1), "{verdict:?}");
-        assert!(report.contains("advice = denser"), "{report}");
+        // Some faces still gain: one more level, the others counted.
+        assert!(report.contains("advice = more") && !report.contains("denser_faces = 0"), "{report}");
         openclare_level_free(again);
     }
 }

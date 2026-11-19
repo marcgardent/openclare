@@ -368,7 +368,8 @@ const char *openclare_level_error(const OpenclareLevel *level);
 
 /* What happened, as "key = value" lines: the count of vertices in each
  * status, the missing detail and stretched edges of the level once placed
- * and the advice (done, more, denser), unless samples = 0; with cage faces,
+ * and the advice (done; more, some cage faces above the target still
+ * gaining; denser, none of them), unless samples = 0; with cage faces,
  * the count of those that want more quads round them (denser_faces) and of
  * those above the target; seconds. Owned by the handle. */
 const char *openclare_level_report(const OpenclareLevel *level);
