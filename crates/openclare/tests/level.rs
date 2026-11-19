@@ -61,6 +61,34 @@ fn a_level_sunk_in_a_thin_part_goes_to_its_own_side() {
 }
 
 #[test]
+fn a_tip_left_short_comes_out_along_its_normal() {
+    // A post three high, and a level of it that the subdivision left short
+    // at the top, by two and a half of its shortest edges: a fingertip.
+    // Along the normal, the top vertices find the top of the post past the
+    // reach; they go there, and with one edge of reach they stay short.
+    let mut source = primitives::cube(8);
+    source.positions.iter_mut().for_each(|p| p.z *= 3.0);
+    let mut level = primitives::cube_quads(8);
+    level.positions.iter_mut().for_each(|p| *p = Vec3::new(0.95 * p.x, 0.95 * p.y, 2.4 * p.z));
+    let top: Vec<usize> = (0..level.positions.len())
+        .filter(|&v| {
+            let p = level.positions[v];
+            p.z > 2.39 && p.x.abs() < 0.9 && p.y.abs() < 0.9
+        })
+        .collect();
+    assert_eq!(top.len(), 7 * 7);
+    let settings = Settings { samples: 0, ..Settings::default() };
+    let placed = place(&level, &[], &source, &settings).unwrap();
+    for &v in &top {
+        assert_eq!(placed.status[v], Status::Moved, "{}", placed.report());
+        assert!((placed.positions[v].z - 3.0).abs() < 1e-9, "{:?}", placed.positions[v]);
+    }
+    let near = Settings { far: 1.0, ..settings };
+    let placed = place(&level, &[], &source, &near).unwrap();
+    assert!(top.iter().all(|&v| placed.positions[v].z < 2.9));
+}
+
+#[test]
 fn creased_lines_go_to_the_hard_edges_and_corners_hold() {
     // The cube's grid shrunk: its edge lines run inside the cube, a tenth
     // from its hard edges, and are creased.

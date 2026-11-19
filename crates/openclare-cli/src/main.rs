@@ -143,20 +143,21 @@ OPTIONS (measure):
     --json                 print the metrics as one JSON object
 
 OPTIONS (detail): what a subdivision level misses of its source, and its stretched edges (PRO #6):
-the distance from points spread on the source by area to the level, its 99th percentile and median in
-% of the diagonal of the source's bounding box; the edges longer than 4 times the median edge
+the distance from points spread on the source by area to the level, its 99th and 99.9th percentiles and
+median in % of the diagonal of the source's bounding box; the edges longer than 4 times the median edge
     --samples <N>          points spread on the source (default 60000)
     --seed <S>             seed of those points (default 1)
     --json                 print the measures as one JSON object
 
 OPTIONS (level): a subdivision level placed on its source, each vertex along its normal onto the side
-of the source that faces its way, no farther than its reach, faces that fold or tilt put back (the
+of the source that faces its way, no farther than its reach, faces that fold, tilt or stretch put back (the
 guarded projection of the Multires, PRO #6); the output keeps the vertices and faces of the level
     --creases <FILE>       the creased edges of the level, one 'a b weight' line each, vertices from 1
                            (as remesh --creases-out writes them); a vertex inside a creased line goes to
                            the hard edges of the source
     --settings <TEXT>      'key = value' lines or ';' between them: reach (shares of the shortest edge,
-                           default 1), tilt (degrees a face may turn, 180: any), crease_angle (degrees, 30),
+                           default 1), far (the same, straight along the normal, 8), stretch (times
+                           an edge may grow, 4), tilt (degrees a face may turn, 180: any), crease_angle (degrees, 30),
                            samples (points of the measure, 60000; 0 measures nothing), seed (1)
     --status <FILE>        writes what became of each vertex, one number a line: 0 moved, 1 on a hard
                            edge, 2 stopped by the reach, 3 nothing found, 4 taken back, 5 held
@@ -857,8 +858,8 @@ fn detail_command(args: &[String]) -> Result<(), String> {
         return Ok(());
     }
     println!(
-        "missing      p99 {:.4} %, median {:.4} % of the diagonal, from {} points on the source",
-        detail.missing_p99, detail.missing_p50, detail.samples
+        "missing      p99 {:.4} %, p99.9 {:.4} %, median {:.4} % of the diagonal, from {} points on the source",
+        detail.missing_p99, detail.missing_p999, detail.missing_p50, detail.samples
     );
     println!(
         "stretched    {} edges over 4 times the median ({:.4} % of the diagonal), longest {:.1} times",

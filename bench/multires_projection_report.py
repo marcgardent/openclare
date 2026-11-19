@@ -11,7 +11,11 @@ p99 in % of the diagonal; #6 is PRO issue #6's table, given to two decimals):
 - creature, rock: missing at most Project's in #6 plus 0.01 point;
 - part with the cage's crease weights: at most limited Project with creases
   in #6 (plus 0.005, half its last digit);
-- ogre: no stretched edge at any level, and missing below 0.18 at L4;
+- ogre, at L4: missing below 0.18, its 99.9th percentile below 0.2 (the
+  fingertips and the ears, which the 99th hides: 1.18 when the projection
+  could not bring them out, 0.07 for Project, 1.27 for limited Project), and
+  at most 32 stretched edges, a hundredth of Project's 3,260 (a fingertip or
+  an ear brought out stretches the edges along it);
 - the other rows are shown, not judged.
 
 Then what became of the vertices of each level. Writes report.md into
@@ -26,6 +30,8 @@ from pathlib import Path
 PROJECT = {"creature": [0.16, 0.09, 0.03, 0.01, 0.00], "rock": [0.41, 0.25, 0.10, 0.04, 0.02]}
 LIMITED_CREASES = [0.37, 0.11, 0.04, 0.01, 0.00]
 OGRE_L4 = 0.18
+OGRE_L4_P999 = 0.2
+OGRE_L4_STRETCHED = 32
 
 
 def criterion(row):
@@ -43,8 +49,14 @@ def criterion(row):
     if row == "ogre-openclare":
 
         def ogre(level, e):
-            fine = e["stretched"] == 0 and (level < 4 or e["missing_p99"] < OGRE_L4)
-            return ("0 stretched" + (f", < {OGRE_L4}" if level == 4 else ""), fine)
+            if level < 4:
+                return ("", True)
+            fine = (
+                e["missing_p99"] < OGRE_L4
+                and e["missing_p999"] < OGRE_L4_P999
+                and e["stretched"] <= OGRE_L4_STRETCHED
+            )
+            return (f"< {OGRE_L4}, p99.9 < {OGRE_L4_P999}, ≤ {OGRE_L4_STRETCHED} str.", fine)
 
         return ogre
     return None
@@ -60,7 +72,7 @@ def main():
     lines = [
         f"# {records['batch']}: the guarded projection against milestone 3",
         "",
-        "Missing detail, p99 in % of the diagonal, and stretched edges, per level; "
+        "Missing detail, p99 and p99.9 in % of the diagonal, and stretched edges, per level; "
         "the bound of the milestone beside each judged cell, `✗` where it is not met.",
         "",
         "| row | cage | L1 | L2 | L3 | L4 |",
@@ -82,12 +94,13 @@ def main():
         judge = criterion(row)
         texts = []
         for entry in detail["levels"]:
-            text = f"{entry['missing_p99']:.3f}, {entry['stretched']} str."
+            text = f"{entry['missing_p99']:.3f} / {entry.get('missing_p999', float('nan')):.2f}, {entry['stretched']} str."
             if judge and entry["level"] > 0:
                 bound, fine = judge(entry["level"], entry)
-                judged += 1
-                failed += not fine
-                text += f" ({bound}{'' if fine else ' ✗'})"
+                if bound:
+                    judged += 1
+                    failed += not fine
+                    text += f" ({bound}{'' if fine else ' ✗'})"
             texts.append(text)
             if "placed" in entry:
                 said = entry["placed"]

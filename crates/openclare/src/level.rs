@@ -15,16 +15,24 @@
 //!   that face the way the level faces there, so a vertex of a finger never
 //!   lands on the other side of the finger, or on the body;
 //! - **reach**: no vertex goes farther than [`Settings::reach`] times the
-//!   shortest edge it is on;
-//! - **no folded face**: a face that comes out folded has its vertices taken
-//!   back, half their move at a pass, pass after pass. Fitting also takes
-//!   back a face turned by more than 20°; here that is
+//!   shortest edge it is on, unless straight along its normal, which may go
+//!   [`Settings::far`] times: the subdivision leaves a fingertip or an ear
+//!   short of the source by more than an edge (by 1.9 % of the diagonal on
+//!   the ogre of #6, at the first level), and with one edge of reach a level
+//!   never caught it up; the tip stayed short, with a rim where the vertices
+//!   of its sides had reached the source;
+//! - **no folded face, no stretched edge**: a face that comes out folded, or
+//!   with an edge more than [`Settings::stretch`] times as long as it was,
+//!   has its vertices taken back, half their move at a pass, pass after
+//!   pass. A tip brought out stretches the edges along it about three times;
+//!   a vertex thrown far while its neighbour found nothing, seven to eleven.
+//!   Fitting also takes back a face turned by more than 20°; here that is
 //!   [`Settings::tilt`], off by default: on the ogre of #6 it took back a
 //!   quarter of the vertices of the first level, which then missed more of
 //!   the source than the cage.
 //!
 //! Per vertex: the first hit of the ray along the normal of the level, both
-//! ways, on a same-side triangle within the reach; failing that, the closest
+//! ways, on a same-side triangle, as far as `far`; failing that, the closest
 //! same-side point within the reach; failing that, the closest one farther
 //! out, the move along the normal cut to the reach (the closest points of
 //! two neighbours that far off may lie apart, which stretched their edge on
@@ -93,6 +101,14 @@ pub struct Settings {
     /// Farthest a vertex may go, as a share of the shortest edge it is on.
     /// One edge is what limited Project used in #6.
     pub reach: f64,
+    /// Farthest a vertex may go straight along its normal, as a share of the
+    /// same shortest edge: the subdivision leaves a fingertip short of the
+    /// source by more than an edge, and only a move along the normal brings
+    /// it out without throwing it sideways.
+    pub far: f64,
+    /// Longest an edge may come out, as a multiple of its length before:
+    /// longer, the moves of its ends are taken back as a fold's are.
+    pub stretch: f64,
     /// Most a face may turn, in degrees, before its vertices are taken
     /// back; 180, the default, never.
     pub tilt: f64,
@@ -108,7 +124,7 @@ pub struct Settings {
 
 impl Default for Settings {
     fn default() -> Self {
-        Self { reach: 1.0, tilt: 180.0, crease_angle: 30.0, samples: DETAIL_SAMPLES, seed: 1 }
+        Self { reach: 1.0, far: 8.0, stretch: 4.0, tilt: 180.0, crease_angle: 30.0, samples: DETAIL_SAMPLES, seed: 1 }
     }
 }
 
@@ -136,6 +152,8 @@ impl FromStr for Settings {
             };
             match key {
                 "reach" => settings.reach = number()?,
+                "far" => settings.far = number()?,
+                "stretch" => settings.stretch = number()?,
                 "tilt" => settings.tilt = number()?.min(180.0),
                 "crease_angle" => settings.crease_angle = number()?.min(180.0),
                 "samples" => settings.samples = number()? as usize,
@@ -177,6 +195,7 @@ impl Placed {
         if let Some(detail) = &self.detail {
             let _ = writeln!(text, "missing_p99 = {}", detail.missing_p99);
             let _ = writeln!(text, "missing_p50 = {}", detail.missing_p50);
+            let _ = writeln!(text, "missing_p999 = {}", detail.missing_p999);
             let _ = writeln!(text, "stretched = {}", detail.stretched);
             let _ = writeln!(text, "longest_over_median = {}", detail.longest_over_median);
         }
@@ -246,18 +265,18 @@ pub fn place(level: &PolyMesh, creases: &[Crease], source: &TriMesh, settings: &
     let lines = if creased.contains(&2) { hard_lines(source, settings.crease_angle)? } else { None };
 
     let normals = vertex_normals(level);
-    let leash: Vec<f64> = (0..vertices)
+    let shortest: Vec<f64> = (0..vertices)
         .map(|v| {
             let shortest =
                 neighbours[v].iter().map(|&n| start[v].distance(start[n as usize])).fold(f64::INFINITY, f64::min);
-            if shortest.is_finite() { settings.reach * shortest } else { 0.0 }
+            if shortest.is_finite() { shortest } else { 0.0 }
         })
         .collect();
 
     let (mut positions, mut status): (Vec<Vec3>, Vec<Status>) = (0..vertices)
         .into_par_iter()
         .map(|v| {
-            let (p, reach) = (start[v], leash[v]);
+            let (p, reach) = (start[v], settings.reach * shortest[v]);
             if held[v] {
                 return (p, Status::Held);
             }
@@ -272,8 +291,9 @@ pub fn place(level: &PolyMesh, creases: &[Crease], source: &TriMesh, settings: &
                 return (p, Status::NotFound);
             }
             let same_side = |t: u32| surface.area_vector(t).dot(normal) > 0.0;
-            let out = surface.first_hit(p, normal, reach, |t, _| same_side(t));
-            let back = surface.first_hit(p, -normal, reach, |t, _| same_side(t));
+            let far = settings.far.max(settings.reach) * shortest[v];
+            let out = surface.first_hit(p, normal, far, |t, _| same_side(t));
+            let back = surface.first_hit(p, -normal, far, |t, _| same_side(t));
             match (out, back) {
                 (Some((o, _)), Some((b, _))) if b < o => return (p - normal * b, Status::Moved),
                 (Some((o, _)), _) => return (p + normal * o, Status::Moved),
@@ -293,7 +313,7 @@ pub fn place(level: &PolyMesh, creases: &[Crease], source: &TriMesh, settings: &
         })
         .unzip();
 
-    put_back_folds(level, start, &mut positions, &mut status, settings.tilt.to_radians());
+    put_back_folds(level, start, &mut positions, &mut status, settings.tilt.to_radians(), settings.stretch);
     let seconds = clock.elapsed().as_secs_f64();
 
     let detail = (settings.samples > 0).then(|| {
@@ -322,7 +342,20 @@ fn hard_lines(source: &TriMesh, angle: f64) -> Result<Option<Bvh>> {
 /// more than `tilt` radians, pass after pass while that upsets another face:
 /// half their move at each pass, all of it at the last, so that a face that
 /// only needed its vertices drawn back a little keeps the rest of the move.
-fn put_back_folds(level: &PolyMesh, start: &[Vec3], positions: &mut [Vec3], status: &mut [Status], tilt: f64) {
+fn put_back_folds(
+    level: &PolyMesh,
+    start: &[Vec3],
+    positions: &mut [Vec3],
+    status: &mut [Status],
+    tilt: f64,
+    stretch: f64,
+) {
+    let stretched = |positions: &[Vec3], face: &[u32]| {
+        (0..face.len()).any(|i| {
+            let (a, b) = (face[i] as usize, face[(i + 1) % face.len()] as usize);
+            positions[a].distance(positions[b]) > stretch * start[a].distance(start[b])
+        })
+    };
     for pass in 0..BACK_PASSES {
         let back: Vec<u32> = level
             .faces
@@ -330,7 +363,9 @@ fn put_back_folds(level: &PolyMesh, start: &[Vec3], positions: &mut [Vec3], stat
             .filter(|face| {
                 let (was, now) = (facing(start, face), facing(positions, face));
                 let tilted = was.dot(now) < tilt.cos() * was.length() * now.length();
-                tilted || turns(start, face).iter().zip(turns(positions, face)).any(|(&was, now)| was && !now)
+                tilted
+                    || stretched(positions, face)
+                    || turns(start, face).iter().zip(turns(positions, face)).any(|(&was, now)| was && !now)
             })
             .flat_map_iter(|face| face.iter().copied())
             .filter(|&v| positions[v as usize] != start[v as usize])
@@ -356,8 +391,12 @@ mod tests {
 
     #[test]
     fn settings_read_what_they_are_told_and_keep_the_rest() {
-        let settings: Settings = "reach = 0.5\n# a comment\ntilt = 30 ; seed = 4".parse().unwrap();
-        assert_eq!(settings, Settings { reach: 0.5, tilt: 30.0, seed: 4, ..Settings::default() });
+        let settings: Settings =
+            "reach = 0.5\n# a comment\ntilt = 30 ; seed = 4; far = 2; stretch = 3".parse().unwrap();
+        assert_eq!(
+            settings,
+            Settings { reach: 0.5, far: 2.0, stretch: 3.0, tilt: 30.0, seed: 4, ..Settings::default() }
+        );
         assert_eq!("".parse::<Settings>().unwrap(), Settings::default());
         assert!("reach = -1".parse::<Settings>().is_err());
         assert!("speed = 3".parse::<Settings>().is_err());

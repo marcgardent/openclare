@@ -1678,6 +1678,10 @@ pub struct LevelDetail {
     pub missing_p99: f64,
     /// Their median, in the same unit.
     pub missing_p50: f64,
+    /// The 99.9th percentile, in the same unit: what a level misses in one
+    /// place only, a fingertip or an ear, that the 99th spreads over the
+    /// whole body.
+    pub missing_p999: f64,
     /// Edges longer than [`STRETCH_FACTOR`] times the median edge.
     pub stretched: usize,
     /// The longest edge over the median edge.
@@ -1690,12 +1694,14 @@ pub struct LevelDetail {
 /// `samples` points spread on the source by area from `seed`.
 pub fn level_detail(source: &TriMesh, mesh: &PolyMesh, samples: usize, seed: u64) -> LevelDetail {
     let diagonal = bounding_diagonal(source);
-    let (missing_p99, missing_p50) = missing_detail(source, mesh, samples, seed);
+    let distances = missing_distances(source, mesh, samples, seed);
+    let at = |share| if distances.is_empty() { f64::NAN } else { percentile(&distances, share) };
     let stretch = stretched_edges(mesh);
     LevelDetail {
         samples,
-        missing_p99,
-        missing_p50,
+        missing_p99: at(0.99),
+        missing_p50: at(0.5),
+        missing_p999: at(0.999),
         stretched: stretch.count,
         longest_over_median: stretch.longest_over_median,
         median_edge: 100.0 * stretch.median / diagonal,
@@ -1715,16 +1721,24 @@ fn bounding_diagonal(source: &TriMesh) -> f64 {
 /// diagonal of the source's bounding box. Percentiles are interpolated
 /// between ranks, as numpy's default. The same seed gives the same points.
 pub fn missing_detail(source: &TriMesh, mesh: &PolyMesh, samples: usize, seed: u64) -> (f64, f64) {
-    let points = spread_by_area(source, samples, seed);
-    let surface = Bvh::build(&mesh.triangulated());
-    let mut distances: Vec<f64> =
-        points.par_iter().filter_map(|&p| surface.closest_point(p).map(|hit| hit.distance_squared.sqrt())).collect();
+    let distances = missing_distances(source, mesh, samples, seed);
     if distances.is_empty() {
         return (f64::NAN, f64::NAN);
     }
-    distances.sort_unstable_by(f64::total_cmp);
+    (percentile(&distances, 0.99), percentile(&distances, 0.5))
+}
+
+/// Those distances, sorted, in percent of the diagonal.
+fn missing_distances(source: &TriMesh, mesh: &PolyMesh, samples: usize, seed: u64) -> Vec<f64> {
+    let points = spread_by_area(source, samples, seed);
+    let surface = Bvh::build(&mesh.triangulated());
     let scale = 100.0 / bounding_diagonal(source);
-    (scale * percentile(&distances, 0.99), scale * percentile(&distances, 0.5))
+    let mut distances: Vec<f64> = points
+        .par_iter()
+        .filter_map(|&p| surface.closest_point(p).map(|hit| scale * hit.distance_squared.sqrt()))
+        .collect();
+    distances.sort_unstable_by(f64::total_cmp);
+    distances
 }
 
 /// The value at `share` of sorted `values`, interpolated between the two
@@ -1798,11 +1812,12 @@ pub fn stretched_edges(mesh: &PolyMesh) -> Stretch {
 impl LevelDetail {
     pub fn to_json(&self) -> String {
         format!(
-            "{{\"samples\": {}, \"missing_p99\": {}, \"missing_p50\": {}, \"stretched\": {}, \
-             \"longest_over_median\": {}, \"median_edge\": {}}}",
+            "{{\"samples\": {}, \"missing_p99\": {}, \"missing_p50\": {}, \"missing_p999\": {}, \
+             \"stretched\": {}, \"longest_over_median\": {}, \"median_edge\": {}}}",
             self.samples,
             json_number(self.missing_p99),
             json_number(self.missing_p50),
+            json_number(self.missing_p999),
             self.stretched,
             json_number(self.longest_over_median),
             json_number(self.median_edge),

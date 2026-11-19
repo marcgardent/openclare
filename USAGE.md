@@ -297,8 +297,8 @@ sharp, and the creases `remesh --creases-out` wrote are given back with `--creas
 ```
 
 `detail` measures what a subdivision level misses of its source (the Multires baseline, PRO #6):
-the distance from 60,000 points spread on the source by area to the level, its 99th percentile and
-median in % of the diagonal of the source's bounding box, and the edges longer than 4 times the
+the distance from 60,000 points spread on the source by area to the level, its 99th percentile, its
+99.9th (what the level misses in one place only, a fingertip or an ear) and median in % of the diagonal of the source's bounding box, and the edges longer than 4 times the
 median edge, a vertex thrown onto another part:
 
 ```bash
@@ -307,10 +307,11 @@ median edge, a vertex thrown onto another part:
 
 `level` places a subdivision level on its source, the guarded projection of the Multires (PRO #6):
 each vertex goes along its normal, both ways, onto the side of the source that faces its way, no
-farther than `reach` times its shortest edge (1), else to the closest such point, else along its
-normal as far as the reach allows; a vertex inside a creased line of the level goes to the source's
-hard edges (sharper than `crease_angle`, 30 degrees); a face that comes out folded has its vertices
-taken back. The output keeps the vertices and faces of the level; the report counts what became of
+farther than `far` times its shortest edge (8: the subdivision leaves fingertips and ears short by
+more than an edge), else to the closest such point within `reach` times that edge (1), else along
+its normal as far as the reach allows; a vertex inside a creased line of the level goes to the
+source's hard edges (sharper than `crease_angle`, 30 degrees); a face that comes out folded, or with
+an edge more than `stretch` times as long as it was (4), has its vertices taken back. The output keeps the vertices and faces of the level; the report counts what became of
 the vertices and measures the level as `detail` does (`samples = 0` skips that):
 
 ```bash
