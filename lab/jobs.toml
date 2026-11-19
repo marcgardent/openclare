@@ -911,7 +911,7 @@ row = [{ value = "creature-advice", model = "creature" },
 
 [[batch]]
 name = "multires-refine"
-description = "Milestone 6 of the Multires feature: Refine the Cage of the PRO edition. The ogre's source (the one of multires-cage) remeshed at the row's quad count, taken to L4 as Add Level does with its advice (bench/multires.py --mode addon --advice, in {out}/plain); the density Refine the Cage paints from that L4 and the quad count raised to match (bench/multires_refine.py); the source remeshed with them and taken to L4 the same way ({out}/refined). Three counts near 1,000, three draws of the remesh. The report compares L4 plain and refined: the cage faces told to want more quads must cover less of the cage's area, the missing p99 not worse. A few minutes a job."
+description = "Milestone 6 of the Multires feature: Refine the Cage of the PRO edition. The ogre's source (the one of multires-cage) remeshed at the row's quad count, taken to L4 as Add Level does with its advice (bench/multires.py --mode addon --advice, in {out}/plain); the density Refine the Cage paints from that L4 and the quad count raised to match (bench/multires_refine.py); the source remeshed with them and taken to L4 the same way ({out}/refined). Three counts near 1,000, three draws of the remesh. The report compares L4 plain and refined: the missing detail's 99.9th percentile (the local misses) must be lower, its p99 not worse; the cage faces told to want more quads are shown. A few minutes a job."
 category = "bench"
 needs = ["multires-cage"]
 prepare = "cargo build --release -p openclare-cli && make addon"
