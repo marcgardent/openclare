@@ -1232,6 +1232,9 @@ fn a_level_goes_in_as_arrays_and_comes_back_on_its_source() {
             null(),
             null(),
             0,
+            null(),
+            0,
+            null(),
             source.as_ptr(),
             source.len() / 3,
             source_triangles.as_ptr(),
@@ -1262,6 +1265,9 @@ fn a_level_goes_in_as_arrays_and_comes_back_on_its_source() {
             null(),
             null(),
             0,
+            null(),
+            0,
+            null(),
             source.as_ptr(),
             source.len() / 3,
             source_triangles.as_ptr(),
@@ -1271,5 +1277,77 @@ fn a_level_goes_in_as_arrays_and_comes_back_on_its_source() {
         assert_eq!(openclare_level_ok(refused), 0);
         assert!(text(openclare_level_error(refused)).contains("speed"));
         openclare_level_free(refused);
+    }
+}
+
+#[test]
+fn a_level_measured_over_its_cage_faces_says_which_want_more_quads() {
+    // The cube grid shrunk inside a ball, each face its own cage face; the
+    // target 0, so that every face is above it.
+    let (source, source_triangles) = ball();
+    let level = primitives::cube_quads(4);
+    let positions: Vec<f32> =
+        level.positions.iter().flat_map(|p| (0.5 * p.normalize()).to_array()).map(|c| c as f32).collect();
+    let quads: Vec<u32> = level.faces.iter().flatten().copied().collect();
+    let faces = quads.len() / 4;
+    let cage_face: Vec<u32> = (0..faces as u32).collect();
+    let settings = CString::new("reach = 4\ntarget = 0\nsamples = 20000\n").unwrap();
+    let place = |previous: *const f32| unsafe {
+        openclare_project_level(
+            positions.as_ptr(),
+            positions.len() / 3,
+            quads.as_ptr(),
+            faces,
+            null(),
+            null(),
+            0,
+            cage_face.as_ptr(),
+            faces,
+            previous,
+            source.as_ptr(),
+            source.len() / 3,
+            source_triangles.as_ptr(),
+            source_triangles.len() / 3,
+            settings.as_ptr(),
+        )
+    };
+    unsafe {
+        // The first level: nothing below to compare with, every face gains.
+        let first = place(null());
+        assert_eq!(openclare_level_ok(first), 1, "{}", text(openclare_level_error(first)));
+        let mut missing = vec![-1f32; faces];
+        let mut verdict = vec![9u8; faces];
+        openclare_level_copy_missing(first, missing.as_mut_ptr());
+        openclare_level_copy_verdict(first, verdict.as_mut_ptr());
+        assert!(missing.iter().all(|&m| m >= 0.0) && missing.iter().any(|&m| m > 0.0), "{missing:?}");
+        assert!(verdict.iter().all(|&v| v == 1), "{verdict:?}");
+        let report = text(openclare_level_report(first));
+        assert!(report.contains("advice = more") && report.contains("denser_faces = 0"), "{report}");
+        openclare_level_free(first);
+
+        // The same level again, as if a level had gained nothing over the
+        // one below: the faces that miss more than the level as a whole
+        // want more quads, the others another level.
+        let again = place(missing.as_ptr());
+        let report = text(openclare_level_report(again));
+        let p99: f32 = report
+            .lines()
+            .find_map(|line| line.strip_prefix("missing_p99 = "))
+            .and_then(|value| value.parse().ok())
+            .unwrap();
+        openclare_level_copy_verdict(again, verdict.as_mut_ptr());
+        for (&m, &v) in missing.iter().zip(&verdict) {
+            let wanted = if m == 0.0 {
+                0
+            } else if m > p99 {
+                2
+            } else {
+                1
+            };
+            assert!(v == wanted || (m - p99).abs() < 1e-6, "{m} {v} {p99}");
+        }
+        assert!(verdict.contains(&2) && verdict.contains(&1), "{verdict:?}");
+        assert!(report.contains("advice = denser"), "{report}");
+        openclare_level_free(again);
     }
 }

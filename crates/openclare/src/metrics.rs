@@ -1693,9 +1693,13 @@ pub struct LevelDetail {
 /// The missing detail and the stretched edges of `mesh` against `source`,
 /// `samples` points spread on the source by area from `seed`.
 pub fn level_detail(source: &TriMesh, mesh: &PolyMesh, samples: usize, seed: u64) -> LevelDetail {
+    detail_of(source, mesh, samples, &missing_distances(source, mesh, samples, seed))
+}
+
+/// The measure of `mesh` from the `distances` of the points, sorted.
+fn detail_of(source: &TriMesh, mesh: &PolyMesh, samples: usize, distances: &[f64]) -> LevelDetail {
     let diagonal = bounding_diagonal(source);
-    let distances = missing_distances(source, mesh, samples, seed);
-    let at = |share| if distances.is_empty() { f64::NAN } else { percentile(&distances, share) };
+    let at = |share| if distances.is_empty() { f64::NAN } else { percentile(distances, share) };
     let stretch = stretched_edges(mesh);
     LevelDetail {
         samples,
@@ -1730,15 +1734,61 @@ pub fn missing_detail(source: &TriMesh, mesh: &PolyMesh, samples: usize, seed: u
 
 /// Those distances, sorted, in percent of the diagonal.
 fn missing_distances(source: &TriMesh, mesh: &PolyMesh, samples: usize, seed: u64) -> Vec<f64> {
-    let points = spread_by_area(source, samples, seed);
-    let surface = Bvh::build(&mesh.triangulated());
-    let scale = 100.0 / bounding_diagonal(source);
-    let mut distances: Vec<f64> = points
-        .par_iter()
-        .filter_map(|&p| surface.closest_point(p).map(|hit| scale * hit.distance_squared.sqrt()))
-        .collect();
+    let mut distances: Vec<f64> = missing_by_face(source, mesh, samples, seed).into_iter().map(|(d, _)| d).collect();
     distances.sort_unstable_by(f64::total_cmp);
     distances
+}
+
+/// Each of those distances, in percent of the diagonal, with the face of
+/// `mesh` its closest point is on, in the order the points are drawn.
+fn missing_by_face(source: &TriMesh, mesh: &PolyMesh, samples: usize, seed: u64) -> Vec<(f64, u32)> {
+    let points = spread_by_area(source, samples, seed);
+    let surface = Bvh::build(&mesh.triangulated());
+    // The face of each triangle, as `triangulated` cuts them in fans.
+    let face_of: Vec<u32> = (0..mesh.faces.len() as u32)
+        .flat_map(|f| std::iter::repeat_n(f, mesh.faces[f as usize].len().saturating_sub(2)))
+        .collect();
+    let scale = 100.0 / bounding_diagonal(source);
+    points
+        .par_iter()
+        .filter_map(|&p| {
+            surface.closest_point(p).map(|hit| (scale * hit.distance_squared.sqrt(), face_of[hit.triangle as usize]))
+        })
+        .collect()
+}
+
+/// What `mesh`, a subdivision level, misses of `source` over each face of
+/// the cage it was subdivided from: `cage_face` names, for each face of the
+/// level, the cage face it comes from, of `cage_faces`. Returns the measure
+/// of [`level_detail`], from the same points, and for each cage face the
+/// 99th percentile of the distances of the points closest to its part of
+/// the level (0 where no point is), in percent of the diagonal.
+pub fn level_detail_by_face(
+    source: &TriMesh,
+    mesh: &PolyMesh,
+    samples: usize,
+    seed: u64,
+    cage_face: &[u32],
+    cage_faces: usize,
+) -> (LevelDetail, Vec<f64>) {
+    let measured = missing_by_face(source, mesh, samples, seed);
+    let mut by_face = vec![Vec::new(); cage_faces];
+    for &(distance, face) in &measured {
+        by_face[cage_face[face as usize] as usize].push(distance);
+    }
+    let missing = by_face
+        .into_iter()
+        .map(|mut distances| {
+            if distances.is_empty() {
+                return 0.0;
+            }
+            distances.sort_unstable_by(f64::total_cmp);
+            percentile(&distances, 0.99)
+        })
+        .collect();
+    let mut distances: Vec<f64> = measured.into_iter().map(|(d, _)| d).collect();
+    distances.sort_unstable_by(f64::total_cmp);
+    (detail_of(source, mesh, samples, &distances), missing)
 }
 
 /// The value at `share` of sorted `values`, interpolated between the two

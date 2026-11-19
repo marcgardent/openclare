@@ -124,7 +124,8 @@ def library():
     lib.openclare_baked_copy.argtypes = [pointer, pointer]
     lib.openclare_project_level.restype = pointer
     lib.openclare_project_level.argtypes = [
-        pointer, size, pointer, size, pointer, pointer, size, pointer, size, pointer, size, ctypes.c_char_p,
+        pointer, size, pointer, size, pointer, pointer, size, pointer, size, pointer, pointer, size, pointer, size,
+        ctypes.c_char_p,
     ]
     lib.openclare_level_ok.restype = ctypes.c_int32
     lib.openclare_level_error.restype = lib.openclare_level_report.restype = text
@@ -133,6 +134,8 @@ def library():
     lib.openclare_level_copy_positions.restype = lib.openclare_level_copy_status.restype = None
     lib.openclare_level_free.restype = None
     lib.openclare_level_copy_positions.argtypes = lib.openclare_level_copy_status.argtypes = [pointer, pointer]
+    lib.openclare_level_copy_missing.restype = lib.openclare_level_copy_verdict.restype = None
+    lib.openclare_level_copy_missing.argtypes = lib.openclare_level_copy_verdict.argtypes = [pointer, pointer]
     lib.openclare_analyse.restype = pointer
     lib.openclare_analyse.argtypes = [pointer, size, pointer, size, ctypes.c_char_p, ctypes.c_char_p, pointer]
     lib.openclare_analysis_ok.restype = ctypes.c_int32
@@ -523,7 +526,7 @@ def bake_height(positions, normals, triangles, uvs, source_positions, source_tri
 
 
 def project_level(positions, quads, source_positions, source_triangles, crease_edges=None, crease_weights=None,
-                  settings=""):
+                  settings="", cage_face=None, cage_faces=0, previous_missing=None):
     """Places a subdivision level on its source, as the Multires of the PRO
     edition does after each subdivision: each vertex onto the side of the
     source that faces its way, no farther than its reach, a vertex inside a
@@ -533,13 +536,24 @@ def project_level(positions, quads, source_positions, source_triangles, crease_e
     and `quads` (four unsigned 32-bit vertices per face), with its creased
     edges if any, `crease_edges` (two vertices each) and `crease_weights`
     (a 32-bit float each). The source is `source_positions` and
-    `source_triangles`. `settings` is `key = value` lines (reach, tilt,
-    crease_angle, samples, seed); `samples = 0` skips the measure.
+    `source_triangles`. `settings` is `key = value` lines (reach, far,
+    stretch, tilt, crease_angle, samples, seed, target, stall, stuck);
+    `samples = 0` skips the measure.
+
+    `cage_face`, for each face of the level the face of the cage it was
+    subdivided from, of `cage_faces`, has the missing detail measured over
+    each cage face too; `previous_missing` is what that gave for the level
+    below, None for the first level.
 
     Returns the placed positions (vertices × 3, 32-bit floats), what became
     of each vertex (a byte each: 0 moved, 1 onto a hard edge, 2 stopped by
     the reach, 3 nothing found, 4 taken back, 5 held), and what the engine
-    says, as a dictionary.
+    says, as a dictionary of texts (`advice`: done, more or denser). With
+    `cage_face` and the level measured, the dictionary also holds
+    `cage_missing`, what the level misses over each cage face (32-bit
+    floats, % of the diagonal), and `cage_verdict`, what each calls for (a
+    byte each: 0 below the target, 1 another level helps, 2 more quads round
+    it in the cage).
     """
     import numpy
 
@@ -556,10 +570,18 @@ def project_level(positions, quads, source_positions, source_triangles, crease_e
     if len(weights) != len(edges) // 2:
         raise EngineError(f"{len(edges) // 2} creased edges and {len(weights)} weights")
     vertices = len(level) // 3
+    owners = None if cage_face is None else flat(cage_face, numpy.uint32, 1)
+    if owners is not None and len(owners) != len(faces) // 4:
+        raise EngineError(f"{len(owners)} cage faces named for {len(faces) // 4} faces")
+    below = None if previous_missing is None else flat(previous_missing, numpy.float32, 1)
+    if below is not None and (owners is None or len(below) != cage_faces):
+        raise EngineError(f"the level below is measured over {len(below)} cage faces, not {cage_faces}")
     lib = library()
     placed = lib.openclare_project_level(
         level.ctypes.data, vertices, faces.ctypes.data, len(faces) // 4,
         edges.ctypes.data if len(edges) else None, weights.ctypes.data if len(weights) else None, len(weights),
+        None if owners is None else owners.ctypes.data, cage_faces if owners is not None else 0,
+        None if below is None else below.ctypes.data,
         source.ctypes.data, len(source) // 3, triangles.ctypes.data, len(triangles) // 3, settings.encode(),
     )
     try:
@@ -570,6 +592,11 @@ def project_level(positions, quads, source_positions, source_triangles, crease_e
         status = numpy.empty(vertices, dtype=numpy.uint8)
         lib.openclare_level_copy_positions(placed, out.ctypes.data)
         lib.openclare_level_copy_status(placed, status.ctypes.data)
+        if owners is not None and "advice" in report:
+            report["cage_missing"] = numpy.zeros(cage_faces, dtype=numpy.float32)
+            report["cage_verdict"] = numpy.zeros(cage_faces, dtype=numpy.uint8)
+            lib.openclare_level_copy_missing(placed, report["cage_missing"].ctypes.data)
+            lib.openclare_level_copy_verdict(placed, report["cage_verdict"].ctypes.data)
     finally:
         lib.openclare_level_free(placed)
     return out.reshape(-1, 3), status, report

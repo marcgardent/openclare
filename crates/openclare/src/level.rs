@@ -53,7 +53,7 @@ use crate::error::{Error, Result};
 use crate::fitting::{facing, turns, vertex_normals};
 use crate::math::Vec3;
 use crate::mesh::{PolyMesh, TriMesh};
-use crate::metrics::{DETAIL_SAMPLES, LevelDetail, level_detail};
+use crate::metrics::{DETAIL_SAMPLES, LevelDetail, level_detail, level_detail_by_face};
 use crate::preprocess::{self, Request};
 use crate::spatial::Bvh;
 
@@ -120,11 +120,34 @@ pub struct Settings {
     pub samples: usize,
     /// Where those points are drawn from.
     pub seed: u64,
+    /// Missing detail, 99th percentile in percent of the diagonal, below
+    /// which a level is done (decision 2 of the specification: 0.05).
+    pub target: f64,
+    /// A cage face above the target and above the level's own missing
+    /// detail, whose missing detail fell by less than this share since the
+    /// level below, no longer gains from another level: it wants more quads
+    /// round it.
+    pub stall: f64,
+    /// A cage face above the target and above the level's own missing
+    /// detail, with more than this share of its corners in the level not
+    /// found or taken back, wants more quads too.
+    pub stuck: f64,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Self { reach: 1.0, far: 8.0, stretch: 4.0, tilt: 180.0, crease_angle: 30.0, samples: DETAIL_SAMPLES, seed: 1 }
+        Self {
+            reach: 1.0,
+            far: 8.0,
+            stretch: 4.0,
+            tilt: 180.0,
+            crease_angle: 30.0,
+            samples: DETAIL_SAMPLES,
+            seed: 1,
+            target: 0.05,
+            stall: 0.25,
+            stuck: 0.25,
+        }
     }
 }
 
@@ -158,6 +181,9 @@ impl FromStr for Settings {
                 "crease_angle" => settings.crease_angle = number()?.min(180.0),
                 "samples" => settings.samples = number()? as usize,
                 "seed" => settings.seed = number()? as u64,
+                "target" => settings.target = number()?,
+                "stall" => settings.stall = number()?.min(1.0),
+                "stuck" => settings.stuck = number()?.min(1.0),
                 _ => return Err(Error::InvalidParams(format!("unknown setting '{key}'"))),
             }
         }
@@ -174,6 +200,11 @@ pub struct Placed {
     pub status: Vec<Status>,
     /// What the level now misses of the source, if it was measured.
     pub detail: Option<LevelDetail>,
+    /// What to do next, if the level was measured.
+    pub advice: Option<Advice>,
+    /// Cage face by cage face, if the level was measured and its faces'
+    /// cage faces were given.
+    pub faces: Option<CageDetail>,
     /// Seconds the placing took, the measure left out.
     pub seconds: f64,
 }
@@ -199,6 +230,14 @@ impl Placed {
             let _ = writeln!(text, "stretched = {}", detail.stretched);
             let _ = writeln!(text, "longest_over_median = {}", detail.longest_over_median);
         }
+        if let Some(advice) = self.advice {
+            let _ = writeln!(text, "advice = {}", advice.name());
+        }
+        if let Some(faces) = &self.faces {
+            let _ = writeln!(text, "denser_faces = {}", faces.count(Verdict::Denser));
+            let _ =
+                writeln!(text, "above_target_faces = {}", faces.count(Verdict::More) + faces.count(Verdict::Denser));
+        }
         let _ = writeln!(text, "seconds = {:.3}", self.seconds);
         text
     }
@@ -210,8 +249,79 @@ impl Placed {
         if let Some(detail) = &self.detail {
             fields.push(format!("\"detail\": {}", detail.to_json()));
         }
+        if let Some(advice) = self.advice {
+            fields.push(format!("\"advice\": \"{}\"", advice.name()));
+        }
+        if let Some(faces) = &self.faces {
+            fields.push(format!("\"denser_faces\": {}", faces.count(Verdict::Denser)));
+        }
         fields.push(format!("\"seconds\": {:.3}", self.seconds));
         format!("{{{}}}", fields.join(", "))
+    }
+}
+
+/// What a level placed calls for next (Section 3.3 of the specification).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Advice {
+    /// The level misses less than the target: no other level is needed.
+    Done,
+    /// Above the target, and every cage face above it still gains: one more
+    /// level.
+    More,
+    /// Some cage faces above the target no longer gain from a level, or
+    /// their vertices found little of the source: more quads round them in
+    /// the cage, not another level.
+    Denser,
+}
+
+impl Advice {
+    pub fn name(self) -> &'static str {
+        match self {
+            Advice::Done => "done",
+            Advice::More => "more",
+            Advice::Denser => "denser",
+        }
+    }
+}
+
+/// What a cage face of a level calls for.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(u8)]
+pub enum Verdict {
+    /// Its part of the level misses less than the target.
+    Fine = 0,
+    /// Above the target, and still gaining: another level helps.
+    More = 1,
+    /// Above the target and no longer gaining, or stuck: more quads round it.
+    Denser = 2,
+}
+
+/// The cage a level was subdivided from, as [`place_on_cage`] takes it.
+#[derive(Clone, Copy, Debug)]
+pub struct Cage<'a> {
+    /// For each face of the level, the cage face it comes from.
+    pub face_of: &'a [u32],
+    /// How many faces the cage has.
+    pub faces: usize,
+    /// What the level below missed over each cage face, as
+    /// [`CageDetail::missing`] gave it; `None` for the first level.
+    pub previous: Option<&'a [f64]>,
+}
+
+/// A level placed, cage face by cage face.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CageDetail {
+    /// What the level misses of the source over each cage face: the 99th
+    /// percentile of the distances of the points closest to it, in percent
+    /// of the diagonal, 0 where no point is.
+    pub missing: Vec<f64>,
+    /// What each cage face calls for.
+    pub verdict: Vec<Verdict>,
+}
+
+impl CageDetail {
+    pub fn count(&self, verdict: Verdict) -> usize {
+        self.verdict.iter().filter(|&&v| v == verdict).count()
     }
 }
 
@@ -226,6 +336,19 @@ const LOOK_BEYOND: f64 = 4.0;
 /// Places `level`, a subdivision level, on `source`. `creases` are the
 /// creased edges of the level, as the subdivision carried them from the cage.
 pub fn place(level: &PolyMesh, creases: &[Crease], source: &TriMesh, settings: &Settings) -> Result<Placed> {
+    place_on_cage(level, creases, source, settings, None)
+}
+
+/// [`place`], with the cage the level was subdivided from: the missing
+/// detail is then also measured over each cage face, and each told what it
+/// calls for.
+pub fn place_on_cage(
+    level: &PolyMesh,
+    creases: &[Crease],
+    source: &TriMesh,
+    settings: &Settings,
+    cage: Option<&Cage>,
+) -> Result<Placed> {
     let vertices = level.positions.len();
     if let Some(beyond) = level.faces.iter().flatten().find(|&&v| v as usize >= vertices) {
         return Err(Error::InvalidMesh(format!("a face of the level names vertex {beyond}, of {vertices}")));
@@ -235,6 +358,27 @@ pub fn place(level: &PolyMesh, creases: &[Crease], source: &TriMesh, settings: &
     }
     if source.triangles.is_empty() {
         return Err(Error::InvalidMesh("the source has no triangle".into()));
+    }
+    if let Some(cage) = cage {
+        if cage.face_of.len() != level.faces.len() {
+            return Err(Error::InvalidMesh(format!(
+                "{} cage faces named for the {} faces of the level",
+                cage.face_of.len(),
+                level.faces.len()
+            )));
+        }
+        if let Some(beyond) = cage.face_of.iter().find(|&&f| f as usize >= cage.faces) {
+            return Err(Error::InvalidMesh(format!("a face of the level names cage face {beyond}, of {}", cage.faces)));
+        }
+        if let Some(previous) = cage.previous
+            && previous.len() != cage.faces
+        {
+            return Err(Error::InvalidMesh(format!(
+                "the level below is measured over {} cage faces, not {}",
+                previous.len(),
+                cage.faces
+            )));
+        }
     }
     let clock = Instant::now();
     let surface = Bvh::build(source);
@@ -316,11 +460,65 @@ pub fn place(level: &PolyMesh, creases: &[Crease], source: &TriMesh, settings: &
     put_back_folds(level, start, &mut positions, &mut status, settings.tilt.to_radians(), settings.stretch);
     let seconds = clock.elapsed().as_secs_f64();
 
-    let detail = (settings.samples > 0).then(|| {
-        let placed = PolyMesh { positions: positions.clone(), faces: level.faces.clone() };
-        level_detail(source, &placed, settings.samples, settings.seed)
-    });
-    Ok(Placed { positions, status, detail, seconds })
+    if settings.samples == 0 {
+        return Ok(Placed { positions, status, detail: None, advice: None, faces: None, seconds });
+    }
+    let placed = PolyMesh { positions, faces: level.faces.clone() };
+    let (detail, faces) = match cage {
+        None => (level_detail(source, &placed, settings.samples, settings.seed), None),
+        Some(cage) => {
+            let (detail, missing) =
+                level_detail_by_face(source, &placed, settings.samples, settings.seed, cage.face_of, cage.faces);
+            let verdict = verdicts(level, &status, cage, &missing, detail.missing_p99, settings);
+            (detail, Some(CageDetail { missing, verdict }))
+        }
+    };
+    let advice = if detail.missing_p99 < settings.target {
+        Advice::Done
+    } else if faces.as_ref().is_some_and(|faces| faces.count(Verdict::Denser) > 0) {
+        Advice::Denser
+    } else {
+        Advice::More
+    };
+    Ok(Placed { positions: placed.positions, status, detail: Some(detail), advice: Some(advice), faces, seconds })
+}
+
+/// What each cage face calls for: fine below the target; above it, more
+/// quads round it when it misses more than the level as a whole (`p99`, the
+/// level's missing detail) and either its missing detail fell by less than
+/// [`Settings::stall`] since the level below, or more than
+/// [`Settings::stuck`] of its corners in the level found nothing or were
+/// taken back; another level otherwise. Without the first condition, a part
+/// that gains slowly but misses less than the rest of the level was told to
+/// want more quads: on the ogre of #6, at the second level, 71 cage faces,
+/// a tenth of its area, against 19 with it.
+fn verdicts(
+    level: &PolyMesh,
+    status: &[Status],
+    cage: &Cage,
+    missing: &[f64],
+    p99: f64,
+    settings: &Settings,
+) -> Vec<Verdict> {
+    let (mut stuck, mut corners) = (vec![0usize; cage.faces], vec![0usize; cage.faces]);
+    for (face, &of) in level.faces.iter().zip(cage.face_of) {
+        for &v in face {
+            corners[of as usize] += 1;
+            if matches!(status[v as usize], Status::NotFound | Status::PutBack) {
+                stuck[of as usize] += 1;
+            }
+        }
+    }
+    (0..cage.faces)
+        .map(|f| {
+            if missing[f] <= settings.target {
+                return Verdict::Fine;
+            }
+            let stalled = cage.previous.is_some_and(|previous| missing[f] > (1.0 - settings.stall) * previous[f]);
+            let stuck = stuck[f] as f64 > settings.stuck * corners[f] as f64;
+            if missing[f] > p99 && (stalled || stuck) { Verdict::Denser } else { Verdict::More }
+        })
+        .collect()
 }
 
 /// The hard edges of `source` sharper than `angle` degrees, as a hierarchy
@@ -396,6 +594,10 @@ mod tests {
         assert_eq!(
             settings,
             Settings { reach: 0.5, far: 2.0, stretch: 3.0, tilt: 30.0, seed: 4, ..Settings::default() }
+        );
+        assert_eq!(
+            "target = 0.1; stall = 0.5; stuck = 2".parse::<Settings>().unwrap(),
+            Settings { target: 0.1, stall: 0.5, stuck: 1.0, ..Settings::default() }
         );
         assert_eq!("".parse::<Settings>().unwrap(), Settings::default());
         assert!("reach = -1".parse::<Settings>().is_err());
