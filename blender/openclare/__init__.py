@@ -1530,7 +1530,8 @@ class Remeshing:
                 source, BASE_PRESET, engine_settings, density, settings.export_materials, copy,
                 sharp=settings.use_marked_sharp, stretch=stretch_of(original), curves=self.curves, curve_marks=marks,
                 # Faces of many sides are rounded off without their creases.
-                sharp_edges=settings.export_sharp_edges, creases=settings.export_creases or of_ngons(settings),
+                sharp_edges=settings.export_sharp_edges,
+                creases=settings.export_creases or of_ngons(settings) or "creases" in extend.needed(original),
                 asked=extend.asked(original),
                 poles=poles.placed(original.data, stretch_of(original)) if experimental.shown() else [],
             )
@@ -1905,6 +1906,28 @@ class OPENCLARE_OT_remesh_again(Background, Remeshing, bpy.types.Operator):
     bl_idname = "object.openclare_remesh_again"
     bl_label = "Remesh Again"
     bl_options = {"REGISTER", "UNDO"}
+
+    # Set once the user has confirmed what the extensions warned of: the run
+    # then goes on in its thread from `execute`, where Blender's dialog
+    # hands it.
+    confirmed: bpy.props.BoolProperty(options={"HIDDEN", "SKIP_SAVE"})
+
+    def invoke(self, context, event):
+        said = extend.warnings(object_to_remesh(context))
+        if said and not bpy.app.background:
+            self.confirmed = True
+            return context.window_manager.invoke_confirm(
+                self, event, title="Remesh Again", message=" ".join(said), confirm_text="Remesh Again", icon="WARNING"
+            )
+        return Background.invoke(self, context, event)
+
+    def execute(self, context):
+        if self.confirmed:
+            self.confirmed = False
+            return Background.invoke(self, context, None)
+        for said in extend.warnings(object_to_remesh(context)):
+            self.report({"WARNING"}, f"openclare: {said}")
+        return super().execute(context)
 
     @classmethod
     def poll(cls, context):

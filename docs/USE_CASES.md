@@ -41,7 +41,7 @@ A French version is in [USE_CASES.fr.md](USE_CASES.fr.md).
 | Use | Who | What it asks | What serves it | Edition | State |
 |---|---|---|---|---|---|
 | A game-ready asset in one go | game artists | quads, UVs, baked maps, levels of detail, export | the pipeline built on the remesh | PRO | planned |
-| A sculpt carried over to Multires | sculptors | the remesh as the base of a Multires stack rebuilt from the source | Multires from the source; its baseline, Blender's Shrinkwrap level by level, measured by `openclare detail` (lab batch `multires-baseline`); the engine's guarded projection of a level, `openclare level` and `engine.project_level` (lab batch `multires-projection`) | PRO | planned; baseline in main, projection in review |
+| A sculpt carried over to Multires | sculptors | the remesh as the base of a Multires stack rebuilt from the source | Multires from the source; its baseline, Blender's Shrinkwrap level by level, measured by `openclare detail` (lab batch `multires-baseline`); the engine's guarded projection of a level, `openclare level` and `engine.project_level` (lab batch `multires-projection`); Add Level and Remove Level in the PRO add-on, on the Community's extension points (crease weights needed, a warning before Remesh Again), a click timed by the lab batch `multires-click` | PRO | under way; baseline and projection in main, Add/Remove Level in review |
 | Many objects at once | studios | a collection remeshed in one run | batch remesh | PRO | planned |
 
 ## Outside Blender

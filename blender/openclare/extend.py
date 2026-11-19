@@ -14,6 +14,14 @@ Remesh to Quads or Remesh Again goes through an `Extension`, added with
   the result is made and in place: what it does with the result, given what
   the engine `made` (its UV layers, its seams). It may add to `report`, the
   dictionary of what the run said, kept on the result.
+- `needs(original)`, on Blender's thread before the run: which of the
+  outputs this add-on gives itself the extension cannot do without, among
+  `NEEDABLE`, switched on for the run whatever the panel says (the PRO
+  Multires needs the cage's crease weights).
+- `replacing(result)`, before Remesh Again replaces the mesh of `result`
+  with a new one: what that would lose, as a sentence, or nothing. Clicked
+  in Blender, Remesh Again asks for a confirmation with those sentences;
+  from a script it says them as warnings and goes on.
 
 An extension that fails does not take the result away: the run says so, and
 the result stays as this add-on made it.
@@ -21,6 +29,9 @@ the result stays as this add-on made it.
 
 # The keyword arguments of `engine.remesh` this add-on gives itself.
 OWN = {"density", "on_stage", "hard_edges", "creases", "curves", "groups", "edges"}
+
+# Those an extension may need switched on: crease weights on the result.
+NEEDABLE = {"creases"}
 
 EXTENSIONS = []
 
@@ -33,6 +44,12 @@ class Extension:
 
     def made(self, context, original, result, made, report):
         pass
+
+    def needs(self, original):
+        return set()
+
+    def replacing(self, result):
+        return None
 
 
 def add(extension):
@@ -56,3 +73,21 @@ def asked(original):
             raise ValueError(f"{type(extension).__name__} asks for {', '.join(sorted(taken))}, given by openclare")
         found.update(asks)
     return found
+
+
+def needed(original):
+    """What the extensions need switched on for a run on `original`."""
+    found = set()
+    for extension in EXTENSIONS:
+        needs = set(extension.needs(original))
+        other = needs - NEEDABLE
+        if other:
+            raise ValueError(f"{type(extension).__name__} needs {', '.join(sorted(other))}, which cannot be needed")
+        found |= needs
+    return found
+
+
+def warnings(result):
+    """What the extensions say Remesh Again would lose of `result`, one
+    sentence each."""
+    return [said for said in (extension.replacing(result) for extension in EXTENSIONS) if said]

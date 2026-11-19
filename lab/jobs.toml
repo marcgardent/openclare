@@ -877,6 +877,21 @@ row = [{ value = "creature-openclare", model = "creature" },
        { value = "ogre-openclare-tilt20", model = "ogre", settings = "tilt = 20" },
        { value = "ogre-openclare-near", model = "ogre", settings = "far = 1; stretch = 1000" }]
 
+[[batch]]
+name = "multires-click"
+description = "Milestone 4 of the Multires feature: the seconds of one click of Add Level of the PRO edition, cage to L4 (260k quads at L4), on the ogre's 1,000-quad cage of multires-baseline. bench/multires.py --mode addon does what Add Level does: Multires subdivides, the level and the source are read from Blender's meshes, the engine places the level through the add-on's binding (the library of `make addon`), reshape writes it; each step is timed, the measure left out. To be run on a calm machine: the time is what the batch is for. Under a minute."
+category = "bench"
+needs = ["multires-cage"]
+prepare = "cargo build --release -p openclare-cli && make addon"
+command = "C=$(dirname {multires-cage}); blender -b --factory-startup --python-exit-code 1 --python bench/multires.py -- --source $C/source.obj --cage $C/cage.obj --mode addon --levels 4 --out {out} --openclare target/release/openclare"
+report = "python3 bench/multires_click_report.py {records} --out {out}"
+parameters = { model = "ogre", preset = "organic" }
+memory_limit_gb = 32
+timing_matters = true
+
+[batch.axes]
+row = [{ value = "ogre-click", model = "ogre" }]
+
 # ---------------------------------------------------------------- sequences
 
 [[sequence]]

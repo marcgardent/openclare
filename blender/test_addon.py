@@ -1476,10 +1476,53 @@ try:
 except RuntimeError as error:
     assert "curves" in str(error), error
 openclare.extend.EXTENSIONS.clear()
+
+
+# One needs the crease weights, which the panel leaves off, and warns of
+# what Remesh Again would lose.
+class Levels(openclare.extend.Extension):
+    warned = []
+
+    def needs(self, original):
+        return {"creases"}
+
+    def replacing(self, result):
+        self.warned.append(result.name)
+        return f"The levels of {result.name} will be lost."
+
+
+openclare.extend.add(Levels())
+bpy.ops.mesh.primitive_cube_add(location=(72.0, 0.0, 0.0))
+cube = bpy.context.active_object
+cube.modifiers.new("subdivide", "SUBSURF").subdivision_type = "SIMPLE"
+cube.modifiers["subdivide"].levels = 4
+alone(cube)
+settings.export_creases, settings.use_hard_edges, settings.quads = False, True, 300
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+result = bpy.context.active_object
+assert "crease_edge" in result.data.attributes, list(result.data.attributes.keys())
+assert bpy.ops.object.openclare_remesh_again() == {"FINISHED"}
+assert Levels.warned == [result.name], Levels.warned
+openclare.extend.EXTENSIONS.clear()
+
+
+class Needy(openclare.extend.Extension):
+    def needs(self, original):
+        return {"density"}
+
+
+openclare.extend.add(Needy())
+alone(ball)
+try:
+    bpy.ops.object.openclare_remesh()
+    raise AssertionError("an extension needed what cannot be needed")
+except RuntimeError as error:
+    assert "density" in str(error), error
+openclare.extend.EXTENSIONS.clear()
 alone(ball)
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 assert len(bpy.context.active_object.data.uv_layers) == 0
-print("EXTENSIONS the grid UV asked and laid, kept on Remesh Again; a failing one passed by; none, no UV")
+print("EXTENSIONS the grid UV asked and laid, kept on Remesh Again; a failing one passed by; creases needed, a warning before Remesh Again; none, no UV")
 
 # Triangles (DT-179): the same object remeshed into triangles close to
 # equilateral, about as many as asked, none through another, said as such;
