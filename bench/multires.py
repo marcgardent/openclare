@@ -2,7 +2,7 @@
 one level after the other, each level placed on the source by a Shrinkwrap.
 
     blender -b --factory-startup --python-exit-code 1 --python bench/multires.py --
-        --source <source.obj> --cage <cage.obj> --mode <project|project-limited|nearest|openclare>
+        --source <source.obj> --cage <cage.obj> --mode <project|project-limited|nearest|openclare|addon>
         --levels <N> --out <dir> --openclare <engine> [--creases <FILE>] [--write <apply|reshape>]
         [--settings TEXT] [--samples N] [--seed S]
 
@@ -37,6 +37,14 @@ And the engine's own (milestone 3 of the Multires specification):
   `--write` says; what the engine reports of each level goes in its entry
   under `placed`.
 
+- `addon`: the same placing, with the engine called as the add-on calls it
+  (`engine.project_level`, the library of `make addon` in blender/openclare/lib),
+  the level's arrays read from Blender's mesh, the source triangulated from
+  Blender's: what Add Level of the PRO edition does. Each level's entry gets
+  `click`, the seconds of each step of that click (subdivide, read the
+  level, read the source, engine, write by reshape) and their total; the
+  measure is not in it.
+
 `--creases` gives the cage's crease weights, as `openclare remesh
 --creases-out` writes them; Multires subdivides with them.
 
@@ -51,6 +59,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import bpy
@@ -134,6 +143,61 @@ def placed_by_engine(options, subdivided, out, level):
     return placed, said
 
 
+def level_arrays(mesh):
+    """Positions, quads and creased edges of a level, as the PRO add-on reads them."""
+    points = numpy.empty(3 * len(mesh.vertices), numpy.float32)
+    mesh.vertices.foreach_get("co", points)
+    quads = numpy.empty(len(mesh.loops), numpy.uint32)
+    mesh.loops.foreach_get("vertex_index", quads)
+    attribute = mesh.attributes.get("crease_edge")
+    if attribute is None:
+        return points.reshape(-1, 3), quads, None, None
+    weights = numpy.empty(len(mesh.edges), numpy.float32)
+    attribute.data.foreach_get("value", weights)
+    ends = numpy.empty(2 * len(mesh.edges), numpy.uint32)
+    mesh.edges.foreach_get("vertices", ends)
+    creased = weights > 0
+    return points.reshape(-1, 3), quads, ends.reshape(-1, 2)[creased], weights[creased]
+
+
+def source_arrays(source):
+    """The source as seen, in triangles, as the PRO add-on reads it (the
+    cage and the source both at the origin here)."""
+    seen = source.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    mesh = seen.to_mesh()
+    mesh.calc_loop_triangles()
+    points = numpy.empty(3 * len(mesh.vertices), numpy.float32)
+    mesh.vertices.foreach_get("co", points)
+    triangles = numpy.empty(3 * len(mesh.loop_triangles), numpy.uint32)
+    mesh.loop_triangles.foreach_get("vertices", triangles)
+    seen.to_mesh_clear()
+    return points.reshape(-1, 3), triangles
+
+
+def placed_by_addon(options, subdivided, source, clock):
+    """A copy of `subdivided` placed by the engine as the add-on calls it,
+    what it said, the steps timed into `clock`."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "blender"))
+    from openclare import engine
+
+    started = time.perf_counter()
+    arrays = level_arrays(subdivided)
+    clock["read"] = time.perf_counter() - started
+    started = time.perf_counter()
+    source_positions, source_triangles = source_arrays(source)
+    clock["source"] = time.perf_counter() - started
+    started = time.perf_counter()
+    points, _, said = engine.project_level(
+        arrays[0], arrays[1], source_positions, source_triangles, arrays[2], arrays[3],
+        f"{options.settings}; samples = 0",
+    )
+    clock["engine"] = time.perf_counter() - started
+    placed = subdivided.copy()
+    placed.vertices.foreach_set("co", points.reshape(-1))
+    placed.update()
+    return placed, {key: (int(value) if value.isdigit() else float(value)) for key, value in said.items()}
+
+
 def evaluated(obj):
     """A new mesh of `obj` with its modifiers applied."""
     return bpy.data.meshes.new_from_object(obj.evaluated_get(bpy.context.evaluated_depsgraph_get()))
@@ -155,7 +219,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--source", required=True)
     parser.add_argument("--cage", required=True)
-    parser.add_argument("--mode", required=True, choices=["project", "project-limited", "nearest", "openclare"])
+    parser.add_argument("--mode", required=True, choices=["project", "project-limited", "nearest", "openclare", "addon"])
     parser.add_argument("--levels", type=int, required=True)
     parser.add_argument("--out", required=True)
     parser.add_argument("--openclare", required=True, help="the engine's command line, for the measure")
@@ -188,11 +252,17 @@ def main():
     for level in range(options.levels + 1):
         gap = 0.0
         if level > 0:
+            clock = {}
+            started = time.perf_counter()
             bpy.ops.object.multires_subdivide(modifier="Multires", mode="CATMULL_CLARK")
             subdivided = evaluated(cage)
+            clock["subdivide"] = time.perf_counter() - started
             said = None
             if options.mode == "openclare":
                 placed, said = placed_by_engine(options, subdivided, out, level)
+                bpy.data.meshes.remove(subdivided)
+            elif options.mode == "addon":
+                placed, said = placed_by_addon(options, subdivided, source, clock)
                 bpy.data.meshes.remove(subdivided)
             else:
                 wrap = cage.modifiers.new("Shrinkwrap", "SHRINKWRAP")
@@ -208,10 +278,11 @@ def main():
                         wrap.project_limit = median_edge(subdivided)
                 bpy.data.meshes.remove(subdivided)
                 placed = evaluated(cage)
-            if options.write == "apply" and options.mode != "openclare":
+            started = time.perf_counter()
+            if options.write == "apply" and options.mode not in ("openclare", "addon"):
                 bpy.ops.object.modifier_apply(modifier=wrap.name)
             else:
-                if options.mode != "openclare":
+                if options.mode not in ("openclare", "addon"):
                     cage.modifiers.remove(wrap)
                 temporary = bpy.data.objects.new("placed", placed)
                 bpy.context.collection.objects.link(temporary)
@@ -221,6 +292,7 @@ def main():
                 temporary.select_set(True)
                 bpy.ops.object.multires_reshape(modifier="Multires")
                 bpy.data.objects.remove(temporary)
+            clock["write"] = time.perf_counter() - started
             now = evaluated(cage)
             if len(now.vertices) != len(placed.vertices):
                 raise SystemExit(f"level {level}: {len(now.vertices)} vertices read back, {len(placed.vertices)} placed")
@@ -233,6 +305,8 @@ def main():
         entry = {"level": level, "faces": len(now.polygons), "vertices": len(now.vertices), "gap": 100.0 * gap}
         if level > 0 and said is not None:
             entry["placed"] = said
+        if level > 0 and options.mode == "addon":
+            entry["click"] = {**{k: round(v, 3) for k, v in clock.items()}, "total": round(sum(clock.values()), 3)}
         entry.update(measured(options, path))
         report["levels"].append(entry)
         print(
