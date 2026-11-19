@@ -43,7 +43,14 @@ And the engine's own (milestone 3 of the Multires specification):
   Blender's: what Add Level of the PRO edition does. Each level's entry gets
   `click`, the seconds of each step of that click (subdivide, read the
   level, read the source, engine, write by reshape) and their total; the
-  measure is not in it.
+  measure is not in it. With `--advice`, the engine also measures the level
+  (`--samples`, `--seed`) over each face of the cage, each level face named
+  by the cage face it comes from (Multires keeps the 4^L faces of a cage
+  face together, in the order of the cage), the level below's measure
+  given, as Add Level does: the entry gets `advice` (done, more, denser)
+  and `denser_faces`, and advice-<N>.json beside it each cage face's
+  missing detail and verdict (0 below the target, 1 another level helps,
+  2 more quads round it).
 
 `--creases` gives the cage's crease weights, as `openclare remesh
 --creases-out` writes them; Multires subdivides with them.
@@ -174,9 +181,10 @@ def source_arrays(source):
     return points.reshape(-1, 3), triangles
 
 
-def placed_by_addon(options, subdivided, source, clock):
+def placed_by_addon(options, subdivided, source, clock, cage_faces=0, previous=None):
     """A copy of `subdivided` placed by the engine as the add-on calls it,
-    what it said, the steps timed into `clock`."""
+    what it said, the steps timed into `clock`. With `cage_faces`, measured
+    over the cage's faces, `previous` the level below's measure."""
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "blender"))
     from openclare import engine
 
@@ -187,15 +195,25 @@ def placed_by_addon(options, subdivided, source, clock):
     source_positions, source_triangles = source_arrays(source)
     clock["source"] = time.perf_counter() - started
     started = time.perf_counter()
-    points, _, said = engine.project_level(
-        arrays[0], arrays[1], source_positions, source_triangles, arrays[2], arrays[3],
-        f"{options.settings}; samples = 0",
-    )
+    if cage_faces:
+        faces = len(arrays[1]) // 4
+        cage_face = numpy.arange(faces, dtype=numpy.uint32) // (faces // cage_faces)
+        points, _, said = engine.project_level(
+            arrays[0], arrays[1], source_positions, source_triangles, arrays[2], arrays[3],
+            f"{options.settings}; samples = {options.samples}; seed = {options.seed}",
+            cage_face=cage_face, cage_faces=cage_faces, previous_missing=previous,
+        )
+    else:
+        points, _, said = engine.project_level(
+            arrays[0], arrays[1], source_positions, source_triangles, arrays[2], arrays[3],
+            f"{options.settings}; samples = 0",
+        )
     clock["engine"] = time.perf_counter() - started
     placed = subdivided.copy()
     placed.vertices.foreach_set("co", points.reshape(-1))
     placed.update()
-    return placed, {key: (int(value) if value.isdigit() else float(value)) for key, value in said.items()}
+    return placed, {key: (value if not isinstance(value, str) else int(value) if value.isdigit() else
+                          value if value.isalpha() else float(value)) for key, value in said.items()}
 
 
 def evaluated(obj):
@@ -228,7 +246,10 @@ def main():
     parser.add_argument("--settings", default="", help="settings of openclare level, for the mode openclare")
     parser.add_argument("--samples", type=int, default=60000)
     parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--advice", action="store_true", help="mode addon: the engine's advice, cage face by face")
     options = parser.parse_args(arguments)
+    if options.advice and options.mode != "addon":
+        raise SystemExit("--advice is for the mode addon")
     out = Path(options.out)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -249,6 +270,9 @@ def main():
         "creases": creased and {"edges_creased": creased[0], "given": creased[1]}, "settings": options.settings,
         "samples": options.samples, "seed": options.seed, "blender": bpy.app.version_string, "levels": [],
     }
+    cage_faces, previous = len(cage.data.polygons), None
+    if options.advice and any(len(face.vertices) != 4 for face in cage.data.polygons):
+        raise SystemExit("--advice: the cage has faces other than quads")
     for level in range(options.levels + 1):
         gap = 0.0
         if level > 0:
@@ -262,8 +286,16 @@ def main():
                 placed, said = placed_by_engine(options, subdivided, out, level)
                 bpy.data.meshes.remove(subdivided)
             elif options.mode == "addon":
-                placed, said = placed_by_addon(options, subdivided, source, clock)
+                placed, said = placed_by_addon(
+                    options, subdivided, source, clock, cage_faces if options.advice else 0, previous,
+                )
                 bpy.data.meshes.remove(subdivided)
+                if options.advice:
+                    previous = said.pop("cage_missing")
+                    verdict = said.pop("cage_verdict")
+                    (out / f"advice-{level}.json").write_text(json.dumps(
+                        {"missing": [round(float(m), 5) for m in previous], "verdict": verdict.tolist()},
+                    ) + "\n")
             else:
                 wrap = cage.modifiers.new("Shrinkwrap", "SHRINKWRAP")
                 wrap.target = source
@@ -305,6 +337,8 @@ def main():
         entry = {"level": level, "faces": len(now.polygons), "vertices": len(now.vertices), "gap": 100.0 * gap}
         if level > 0 and said is not None:
             entry["placed"] = said
+        if level > 0 and options.advice:
+            entry["advice"], entry["denser_faces"] = said["advice"], said["denser_faces"]
         if level > 0 and options.mode == "addon":
             entry["click"] = {**{k: round(v, 3) for k, v in clock.items()}, "total": round(sum(clock.values()), 3)}
         entry.update(measured(options, path))

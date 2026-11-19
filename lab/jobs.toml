@@ -892,6 +892,23 @@ timing_matters = true
 [batch.axes]
 row = [{ value = "ogre-click", model = "ogre" }]
 
+[[batch]]
+name = "multires-advice"
+description = "Milestone 5 of the Multires feature: what the engine advises after each level, asked as Add Level of the PRO edition asks it (bench/multires.py --mode addon --advice: each level measured over each face of the cage, the level below's measure given), cage to L4, on the 1,000-quad cages of multires-baseline. Each level's entry gets the advice (done, more, denser) and its cage faces' verdicts in advice-<N>.json. The report judges the milestone: creature done at L2 and not before, rock at L3, the ogre's faces told to want more quads at most 5 % of the cage's area at every level. Under a minute a job."
+category = "bench"
+needs = ["multires-cage"]
+prepare = "cargo build --release -p openclare-cli && make addon"
+command = "C=$(dirname {multires-cage}); blender -b --factory-startup --python-exit-code 1 --python bench/multires.py -- --source $C/source.obj --cage $C/cage.obj --mode addon --advice --levels 4 --out {out} --openclare target/release/openclare"
+report = "python3 bench/multires_advice_report.py {records} --out {out}"
+parameters = { model = "creature", preset = "organic" }
+memory_limit_gb = 32
+timing_matters = false
+
+[batch.axes]
+row = [{ value = "creature-advice", model = "creature" },
+       { value = "rock-advice", model = "rock" },
+       { value = "ogre-advice", model = "ogre" }]
+
 # ---------------------------------------------------------------- sequences
 
 [[sequence]]

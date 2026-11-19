@@ -324,10 +324,19 @@ typedef struct OpenclareLevel OpenclareLevel;
  * - crease_edges: 2 * crease_count indices, the creased edges of the level;
  *   crease_weights: their crease_count weights. Both may be NULL when
  *   crease_count is 0.
+ * - cage_face: quad_count indices, for each face of the level the face of
+ *   the cage it was subdivided from, of cage_face_count; or NULL. Given,
+ *   the missing detail is also measured over each cage face, and each told
+ *   what it calls for (openclare_level_copy_missing,
+ *   openclare_level_copy_verdict).
+ * - previous_missing: cage_face_count floats, what
+ *   openclare_level_copy_missing gave for the level below; or NULL, for the
+ *   first level.
  * - source_positions (3 * source_vertex_count floats), source_triangles
  *   (3 * source_triangle_count indices): the source.
- * - settings: "key = value" lines (reach, tilt, crease_angle, samples,
- *   seed), or NULL for the defaults.
+ * - settings: "key = value" lines (reach, far, stretch, tilt,
+ *   crease_angle, samples, seed, target, stall, stuck), or NULL for the
+ *   defaults.
  *
  * The arrays are read during the call only. Never returns NULL; free the
  * handle with openclare_level_free.
@@ -339,6 +348,9 @@ OpenclareLevel *openclare_project_level(const float *positions,
                                         const uint32_t *crease_edges,
                                         const float *crease_weights,
                                         size_t crease_count,
+                                        const uint32_t *cage_face,
+                                        size_t cage_face_count,
+                                        const float *previous_missing,
                                         const float *source_positions,
                                         size_t source_vertex_count,
                                         const uint32_t *source_triangles,
@@ -356,7 +368,10 @@ const char *openclare_level_error(const OpenclareLevel *level);
 
 /* What happened, as "key = value" lines: the count of vertices in each
  * status, the missing detail and stretched edges of the level once placed
- * (unless samples = 0), seconds. Owned by the handle. */
+ * and the advice (done; more, some cage faces above the target still
+ * gaining; denser, none of them), unless samples = 0; with cage faces,
+ * the count of those that want more quads round them (denser_faces) and of
+ * those above the target; seconds. Owned by the handle. */
 const char *openclare_level_report(const OpenclareLevel *level);
 
 /* Copies where the vertices now are, 3 floats each, into positions. */
@@ -366,6 +381,20 @@ void openclare_level_copy_positions(const OpenclareLevel *level, float *position
  * 1 onto a hard edge, 2 stopped by the reach, 3 nothing found, 4 taken
  * back, 5 held. */
 void openclare_level_copy_status(const OpenclareLevel *level, uint8_t *status);
+
+/* Copies what the level misses of the source over each cage face,
+ * cage_face_count floats, in percent of the diagonal of the source's
+ * bounding box: the 99th percentile of the distances from the points spread
+ * on the source closest to that face's part of the level, 0 where no point
+ * is. Copies nothing without cage faces, or with samples = 0. */
+void openclare_level_copy_missing(const OpenclareLevel *level, float *missing);
+
+/* Copies what each cage face calls for, cage_face_count bytes: 0 below the
+ * target; 1 above it and still gaining, another level helps; 2 above it and
+ * no longer gaining, or its vertices found little of the source: more quads
+ * round it in the cage. Copies nothing when openclare_level_copy_missing
+ * does not. */
+void openclare_level_copy_verdict(const OpenclareLevel *level, uint8_t *verdict);
 
 /* Frees a handle of a level, and its texts. NULL is fine; twice is not. */
 void openclare_level_free(OpenclareLevel *level);

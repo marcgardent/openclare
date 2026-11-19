@@ -1125,6 +1125,9 @@ pub unsafe extern "C" fn openclare_baked_free(baked: *mut OpenclareBaked) {
 pub struct OpenclareLevel {
     positions: Vec<f32>,
     status: Vec<u8>,
+    /// Per cage face, when the cage faces were given and the level measured.
+    missing: Vec<f32>,
+    verdict: Vec<u8>,
     /// Empty when all went well.
     error: CString,
     /// What happened, as `key = value` lines.
@@ -1142,9 +1145,18 @@ pub struct OpenclareLevel {
 /// - `crease_edges`: `2 * crease_count` indices, the creased edges of the
 ///   level, and `crease_weights` their `crease_count` weights; both may be
 ///   null when `crease_count` is 0.
+/// - `cage_face`: `quad_count` indices, for each face of the level the face
+///   of the cage it was subdivided from, of `cage_face_count`; or null.
+///   Given, the missing detail is also measured over each cage face, and
+///   each told what it calls for ([`openclare_level_copy_missing`],
+///   [`openclare_level_copy_verdict`]).
+/// - `previous_missing`: `cage_face_count` numbers, what
+///   [`openclare_level_copy_missing`] gave for the level below; or null, for
+///   the first level.
 /// - `source_positions`, `source_triangles`: the source.
-/// - `settings`: `key = value` lines (reach, tilt, crease_angle, samples,
-///   seed), or null for the defaults.
+/// - `settings`: `key = value` lines (reach, far, stretch, tilt,
+///   crease_angle, samples, seed, target, stall, stuck), or null for the
+///   defaults.
 ///
 /// Returns a handle to free with [`openclare_level_free`], never null.
 ///
@@ -1162,6 +1174,9 @@ pub unsafe extern "C" fn openclare_project_level(
     crease_edges: *const u32,
     crease_weights: *const f32,
     crease_count: usize,
+    cage_face: *const u32,
+    cage_face_count: usize,
+    previous_missing: *const f32,
     source_positions: *const f32,
     source_vertex_count: usize,
     source_triangles: *const u32,
@@ -1206,10 +1221,27 @@ pub unsafe extern "C" fn openclare_project_level(
             let text = unsafe { CStr::from_ptr(settings) }.to_str().map_err(|_| "the settings are not UTF-8")?;
             text.parse().map_err(|e: openclare::Error| e.to_string())?
         };
-        let placed = openclare::level::place(&level, &creases, &source, &settings).map_err(|e| e.to_string())?;
+        // SAFETY: null, or as long as the caller says.
+        let face_of = if cage_face.is_null() { None } else { Some(unsafe { read(cage_face, quad_count) }) };
+        let previous: Option<Vec<f64>> = (!previous_missing.is_null())
+            // SAFETY: not null, and as long as the caller says.
+            .then(|| unsafe { read(previous_missing, cage_face_count) }.iter().map(|&m| m as f64).collect());
+        if previous.is_some() && face_of.is_none() {
+            return Err("the level below is measured over cage faces, but none are named".into());
+        }
+        let cage = face_of.as_ref().map(|face_of| openclare::level::Cage {
+            face_of,
+            faces: cage_face_count,
+            previous: previous.as_deref(),
+        });
+        let placed = openclare::level::place_on_cage(&level, &creases, &source, &settings, cage.as_ref())
+            .map_err(|e| e.to_string())?;
+        let faces = placed.faces.as_ref();
         Ok(OpenclareLevel {
             positions: placed.positions.iter().flat_map(|p| [p.x as f32, p.y as f32, p.z as f32]).collect(),
             status: placed.status.iter().map(|&s| s as u8).collect(),
+            missing: faces.map_or_else(Vec::new, |f| f.missing.iter().map(|&m| m as f32).collect()),
+            verdict: faces.map_or_else(Vec::new, |f| f.verdict.iter().map(|&v| v as u8).collect()),
             error: CString::default(),
             report: text(placed.report()),
         })
@@ -1217,6 +1249,8 @@ pub unsafe extern "C" fn openclare_project_level(
     let failed = |message: String| OpenclareLevel {
         positions: Vec::new(),
         status: Vec::new(),
+        missing: Vec::new(),
+        verdict: Vec::new(),
         error: text(message),
         report: CString::default(),
     };
@@ -1298,6 +1332,47 @@ pub unsafe extern "C" fn openclare_level_copy_status(level: *const OpenclareLeve
     if !status.is_null() {
         // SAFETY: room for them, by contract.
         unsafe { std::slice::from_raw_parts_mut(status, level.status.len()) }.copy_from_slice(&level.status);
+    }
+}
+
+/// Copies what the level misses of the source over each cage face, one
+/// number each, in percent of the diagonal of the source's bounding box:
+/// the 99th percentile of the distances from the points spread on the
+/// source closest to that face's part of the level, 0 where no point is.
+/// Copies nothing when no cage faces were given or nothing was measured
+/// (`samples = 0`).
+///
+/// # Safety
+///
+/// See [`openclare_level_ok`]; `missing` must have room for
+/// `cage_face_count` numbers.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_level_copy_missing(level: *const OpenclareLevel, missing: *mut f32) {
+    // SAFETY: null or a live handle, by contract.
+    let Some(level) = (unsafe { level.as_ref() }) else { return };
+    if !missing.is_null() && !level.missing.is_empty() {
+        // SAFETY: room for them, by contract.
+        unsafe { std::slice::from_raw_parts_mut(missing, level.missing.len()) }.copy_from_slice(&level.missing);
+    }
+}
+
+/// Copies what each cage face calls for, a byte each: 0 its part of the
+/// level misses less than the target; 1 above it and still gaining, another
+/// level helps; 2 above it and no longer gaining, or its vertices found
+/// little of the source: more quads round it in the cage. Copies nothing
+/// when [`openclare_level_copy_missing`] does not.
+///
+/// # Safety
+///
+/// See [`openclare_level_ok`]; `verdict` must have room for
+/// `cage_face_count` bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_level_copy_verdict(level: *const OpenclareLevel, verdict: *mut u8) {
+    // SAFETY: null or a live handle, by contract.
+    let Some(level) = (unsafe { level.as_ref() }) else { return };
+    if !verdict.is_null() && !level.verdict.is_empty() {
+        // SAFETY: room for them, by contract.
+        unsafe { std::slice::from_raw_parts_mut(verdict, level.verdict.len()) }.copy_from_slice(&level.verdict);
     }
 }
 
