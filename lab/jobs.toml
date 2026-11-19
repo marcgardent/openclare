@@ -909,6 +909,23 @@ row = [{ value = "creature-advice", model = "creature" },
        { value = "rock-advice", model = "rock" },
        { value = "ogre-advice", model = "ogre" }]
 
+[[batch]]
+name = "multires-refine"
+description = "Milestone 6 of the Multires feature: Refine the Cage of the PRO edition. The ogre's source (the one of multires-cage) remeshed at the row's quad count, taken to L4 as Add Level does with its advice (bench/multires.py --mode addon --advice, in {out}/plain); the density Refine the Cage paints from that L4 and the quad count raised to match (bench/multires_refine.py); the source remeshed with them and taken to L4 the same way ({out}/refined). Three counts near 1,000, three draws of the remesh. The report compares L4 plain and refined: the cage faces told to want more quads must cover less of the cage's area, the missing p99 not worse. A few minutes a job."
+category = "bench"
+needs = ["multires-cage"]
+prepare = "cargo build --release -p openclare-cli && make addon"
+command = "C=$(dirname {multires-cage}); S=$C/source.obj; O=target/release/openclare; L='blender -b --factory-startup --python-exit-code 1 --python'; mkdir -p {out}/plain {out}/refined && $O remesh $S {out}/plain/cage.obj --preset {preset} --quads {quads} && $L bench/multires.py -- --source $S --cage {out}/plain/cage.obj --mode addon --advice --levels 4 --out {out}/plain --openclare $O && $L bench/multires_refine.py -- --run {out}/plain --source $S --quads {quads} --out {out}/refined && $O remesh $S {out}/refined/cage.obj --preset {preset} --quads $(cat {out}/refined/quads.txt) --density {out}/refined/weights.txt --density-contrast 4 && $L bench/multires.py -- --source $S --cage {out}/refined/cage.obj --mode addon --advice --levels 4 --out {out}/refined --openclare $O"
+report = "python3 bench/multires_refine_report.py {records} --out {out}"
+parameters = { model = "ogre", preset = "organic", quads = "1000" }
+memory_limit_gb = 32
+timing_matters = false
+
+[batch.axes]
+row = [{ value = "ogre-990", quads = "990" },
+       { value = "ogre-1000", quads = "1000" },
+       { value = "ogre-1010", quads = "1010" }]
+
 # ---------------------------------------------------------------- sequences
 
 [[sequence]]
