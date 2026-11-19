@@ -857,6 +857,25 @@ row = [{ value = "creature-project", model = "creature", mode = "project" },
        { value = "ogre-limited", model = "ogre", mode = "project-limited" }]
 level = [0, 1, 2, 3, 4]
 
+[[batch]]
+name = "multires-projection"
+description = "Milestone 3 of the Multires feature: the engine's guarded projection (`openclare level`) in place of the Shrinkwrap, on the 1,000-quad cages of multires-baseline (bench/multires.py --mode openclare, the level written back by reshape, every level from the cage to L4 measured with `openclare detail`), one job per row. Rows: the four models of #6, part with and without the cage's crease weights, and the ogre with fitting's 20-degree tilt guard on (left off by default: it took back a quarter of the ogre's vertices at L1). The report judges each level against the milestone: creature and rock at most #6's Project plus 0.01, part with creases at most #6's limited Project with creases, ogre with no stretched edge and below 0.18 at L4. Seconds to a minute a job."
+category = "bench"
+needs = ["engine", "multires-cage"]
+command = "C=$(dirname {multires-cage}); blender -b --factory-startup --python-exit-code 1 --python bench/multires.py -- --source $C/source.obj --cage $C/cage.obj --mode openclare {creases} --settings '{settings}' --levels 4 --out {out} --openclare {engine}"
+report = "python3 bench/multires_projection_report.py {records} --out {out}"
+parameters = { model = "creature", preset = "organic", creases = "", settings = "" }
+memory_limit_gb = 32
+timing_matters = false
+
+[batch.axes]
+row = [{ value = "creature-openclare", model = "creature" },
+       { value = "rock-openclare", model = "rock" },
+       { value = "part-openclare", model = "part", preset = "hard-surface" },
+       { value = "part-openclare-creases", model = "part", preset = "hard-surface", creases = "--creases $C/creases.txt" },
+       { value = "ogre-openclare", model = "ogre" },
+       { value = "ogre-openclare-tilt20", model = "ogre", settings = "tilt = 20" }]
+
 # ---------------------------------------------------------------- sequences
 
 [[sequence]]

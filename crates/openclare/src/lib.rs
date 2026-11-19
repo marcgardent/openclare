@@ -27,6 +27,7 @@ pub mod field;
 pub mod fitting;
 pub mod geometry;
 pub mod hierarchy;
+pub mod level;
 pub mod linalg;
 pub mod math;
 pub mod mesh;

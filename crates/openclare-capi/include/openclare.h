@@ -16,10 +16,11 @@
  * - The calls that do work (openclare_remesh, openclare_bake_height,
  *   openclare_analyse, openclare_hard_edges, openclare_hard_edge_finder,
  *   openclare_hard_edge_finder_find, openclare_reflection_check,
- *   openclare_reflection_repair) never return NULL: they return a handle,
- *   which holds either what was made or the reason it was not. Each handle
- *   is freed by its own function, once: openclare_result_free,
- *   openclare_baked_free, openclare_analysis_free,
+ *   openclare_reflection_repair, openclare_project_level) never return
+ *   NULL: they return a handle, which holds either what was made or the
+ *   reason it was not. Each handle is freed by its own function, once:
+ *   openclare_result_free, openclare_baked_free, openclare_level_free,
+ *   openclare_analysis_free,
  *   openclare_hard_edges_free, openclare_hard_edge_finder_free,
  *   openclare_reflection_free, openclare_repair_free.
  *   Freeing NULL is allowed.
@@ -303,6 +304,71 @@ void openclare_baked_copy(const OpenclareBaked *baked, float *heights);
 
 /* Frees a handle of a bake, and its texts. NULL is fine; twice is not. */
 void openclare_baked_free(OpenclareBaked *baked);
+
+/* ------------------------------------------------------------------------ */
+/* Subdivision levels                                                       */
+/* ------------------------------------------------------------------------ */
+
+/* What openclare_project_level gives back. Opaque; free with
+ * openclare_level_free. */
+typedef struct OpenclareLevel OpenclareLevel;
+
+/*
+ * Places a subdivision level on its source: each vertex onto the side of
+ * the source that faces its way, no farther than its reach, a vertex inside
+ * a creased line onto the source's hard edges, faces that fold taken back
+ * (the guarded projection of the Multires, PRO #6).
+ *
+ * - positions: 3 * vertex_count floats, the level as the subdivision left it.
+ * - quads: 4 * quad_count indices of its vertices.
+ * - crease_edges: 2 * crease_count indices, the creased edges of the level;
+ *   crease_weights: their crease_count weights. Both may be NULL when
+ *   crease_count is 0.
+ * - source_positions (3 * source_vertex_count floats), source_triangles
+ *   (3 * source_triangle_count indices): the source.
+ * - settings: "key = value" lines (reach, tilt, crease_angle, samples,
+ *   seed), or NULL for the defaults.
+ *
+ * The arrays are read during the call only. Never returns NULL; free the
+ * handle with openclare_level_free.
+ */
+OpenclareLevel *openclare_project_level(const float *positions,
+                                        size_t vertex_count,
+                                        const uint32_t *quads,
+                                        size_t quad_count,
+                                        const uint32_t *crease_edges,
+                                        const float *crease_weights,
+                                        size_t crease_count,
+                                        const float *source_positions,
+                                        size_t source_vertex_count,
+                                        const uint32_t *source_triangles,
+                                        size_t source_triangle_count,
+                                        const char *settings);
+
+/* The functions below take a handle from openclare_project_level not yet
+ * freed, or NULL. */
+
+/* 1 if the level was placed, 0 if not or if level is NULL. */
+int32_t openclare_level_ok(const OpenclareLevel *level);
+
+/* Why the level was not placed; "" if it was. Owned by the handle. */
+const char *openclare_level_error(const OpenclareLevel *level);
+
+/* What happened, as "key = value" lines: the count of vertices in each
+ * status, the missing detail and stretched edges of the level once placed
+ * (unless samples = 0), seconds. Owned by the handle. */
+const char *openclare_level_report(const OpenclareLevel *level);
+
+/* Copies where the vertices now are, 3 floats each, into positions. */
+void openclare_level_copy_positions(const OpenclareLevel *level, float *positions);
+
+/* Copies what became of each vertex, one byte each, into status: 0 moved,
+ * 1 onto a hard edge, 2 stopped by the reach, 3 nothing found, 4 taken
+ * back, 5 held. */
+void openclare_level_copy_status(const OpenclareLevel *level, uint8_t *status);
+
+/* Frees a handle of a level, and its texts. NULL is fine; twice is not. */
+void openclare_level_free(OpenclareLevel *level);
 
 /* ------------------------------------------------------------------------ */
 /* Analysis                                                                 */

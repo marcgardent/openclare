@@ -1212,3 +1212,64 @@ fn the_edges_of_a_cube_are_proposed_as_creases() {
         openclare_repair_free(repair);
     }
 }
+
+#[test]
+fn a_level_goes_in_as_arrays_and_comes_back_on_its_source() {
+    // The cube grid shrunk inside a ball, as quads: every vertex goes out
+    // to the ball and is moved.
+    let (source, source_triangles) = ball();
+    let level = primitives::cube_quads(4);
+    let positions: Vec<f32> =
+        level.positions.iter().flat_map(|p| (0.5 * p.normalize()).to_array()).map(|c| c as f32).collect();
+    let quads: Vec<u32> = level.faces.iter().flatten().copied().collect();
+    let settings = CString::new("reach = 4\nsamples = 0\n").unwrap();
+    unsafe {
+        let placed = openclare_project_level(
+            positions.as_ptr(),
+            positions.len() / 3,
+            quads.as_ptr(),
+            quads.len() / 4,
+            null(),
+            null(),
+            0,
+            source.as_ptr(),
+            source.len() / 3,
+            source_triangles.as_ptr(),
+            source_triangles.len() / 3,
+            settings.as_ptr(),
+        );
+        assert_eq!(openclare_level_ok(placed), 1, "{}", text(openclare_level_error(placed)));
+        let report = text(openclare_level_report(placed));
+        assert!(report.contains(&format!("moved = {}", positions.len() / 3)), "{report}");
+        let mut out = vec![0f32; positions.len()];
+        let mut status = vec![9u8; positions.len() / 3];
+        openclare_level_copy_positions(placed, out.as_mut_ptr());
+        openclare_level_copy_status(placed, status.as_mut_ptr());
+        assert!(status.iter().all(|&s| s == 0));
+        for p in out.chunks_exact(3) {
+            let r = Vec3::new(p[0] as f64, p[1] as f64, p[2] as f64).length();
+            assert!((r - 1.0).abs() < 0.02, "{r}");
+        }
+        openclare_level_free(placed);
+
+        // What is wrong comes back as an error.
+        let bad = CString::new("speed = 3").unwrap();
+        let refused = openclare_project_level(
+            positions.as_ptr(),
+            positions.len() / 3,
+            quads.as_ptr(),
+            quads.len() / 4,
+            null(),
+            null(),
+            0,
+            source.as_ptr(),
+            source.len() / 3,
+            source_triangles.as_ptr(),
+            source_triangles.len() / 3,
+            bad.as_ptr(),
+        );
+        assert_eq!(openclare_level_ok(refused), 0);
+        assert!(text(openclare_level_error(refused)).contains("speed"));
+        openclare_level_free(refused);
+    }
+}

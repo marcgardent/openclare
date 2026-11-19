@@ -2,9 +2,9 @@
 one level after the other, each level placed on the source by a Shrinkwrap.
 
     blender -b --factory-startup --python-exit-code 1 --python bench/multires.py --
-        --source <source.obj> --cage <cage.obj> --mode <project|project-limited|nearest>
+        --source <source.obj> --cage <cage.obj> --mode <project|project-limited|nearest|openclare>
         --levels <N> --out <dir> --openclare <engine> [--creases <FILE>] [--write <apply|reshape>]
-        [--samples N] [--seed S]
+        [--settings TEXT] [--samples N] [--seed S]
 
 Blender script. The cage gets a Multires modifier (Catmull-Clark, creases on);
 level after level, Multires subdivides once, a Shrinkwrap on the source after
@@ -27,6 +27,15 @@ The modes, #6's three, with what #6 did not record chosen here:
 - `project-limited`: the same, no farther than one edge, the median edge of
   the level being placed;
 - `nearest`: the nearest point of the source.
+
+And the engine's own (milestone 3 of the Multires specification):
+
+- `openclare`: no Shrinkwrap; the level Multires subdivided, with the crease
+  weights Multires carried onto its edges, written out and placed by
+  `openclare level` (the guarded projection), `--settings` passed to it.
+  The placed positions are written into the level by reshape whatever
+  `--write` says; what the engine reports of each level goes in its entry
+  under `placed`.
 
 `--creases` gives the cage's crease weights, as `openclare remesh
 --creases-out` writes them; Multires subdivides with them.
@@ -85,6 +94,46 @@ def median_edge(mesh):
     return float(lengths[len(lengths) // 2])
 
 
+def level_creases(mesh, path):
+    """Writes the creased edges of `mesh` as `openclare level --creases`
+    reads them, and returns how many."""
+    attribute = mesh.attributes.get("crease_edge")
+    if attribute is None:
+        Path(path).write_text("")
+        return 0
+    weights = numpy.empty(len(mesh.edges), numpy.float32)
+    attribute.data.foreach_get("value", weights)
+    ends = numpy.empty(2 * len(mesh.edges), numpy.int64)
+    mesh.edges.foreach_get("vertices", ends)
+    ends = ends.reshape(-1, 2)
+    creased = numpy.nonzero(weights > 0)[0]
+    Path(path).write_text("".join(f"{ends[e, 0] + 1} {ends[e, 1] + 1} {weights[e]:.6g}\n" for e in creased))
+    return len(creased)
+
+
+def placed_by_engine(options, subdivided, out, level):
+    """A copy of `subdivided` with its vertices where `openclare level` puts
+    them, and what the engine said."""
+    given, placed_path, creases = out / f"subdivided-{level}.obj", out / f"placed-{level}.obj", out / "creases-level.txt"
+    write_obj(given, subdivided)
+    level_creases(subdivided, creases)
+    done = subprocess.run(
+        [options.openclare, "level", options.source, str(given), str(placed_path), "--creases", str(creases),
+         "--settings", f"{options.settings}; samples = 0", "--json"],
+        capture_output=True, text=True,
+    )
+    if done.returncode != 0:
+        raise SystemExit(f"openclare level {given}: {done.stderr.strip()}")
+    said = json.loads(done.stdout)
+    points = [line.split()[1:4] for line in placed_path.read_text().splitlines() if line.startswith("v ")]
+    placed = subdivided.copy()
+    placed.vertices.foreach_set("co", numpy.array(points, numpy.float32).reshape(-1))
+    placed.update()
+    for path in (given, placed_path, creases):
+        path.unlink()
+    return placed, said
+
+
 def evaluated(obj):
     """A new mesh of `obj` with its modifiers applied."""
     return bpy.data.meshes.new_from_object(obj.evaluated_get(bpy.context.evaluated_depsgraph_get()))
@@ -106,12 +155,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--source", required=True)
     parser.add_argument("--cage", required=True)
-    parser.add_argument("--mode", required=True, choices=["project", "project-limited", "nearest"])
+    parser.add_argument("--mode", required=True, choices=["project", "project-limited", "nearest", "openclare"])
     parser.add_argument("--levels", type=int, required=True)
     parser.add_argument("--out", required=True)
     parser.add_argument("--openclare", required=True, help="the engine's command line, for the measure")
     parser.add_argument("--creases", help="the cage's crease weights, as remesh --creases-out writes them")
     parser.add_argument("--write", default="apply", choices=["apply", "reshape"])
+    parser.add_argument("--settings", default="", help="settings of openclare level, for the mode openclare")
     parser.add_argument("--samples", type=int, default=60000)
     parser.add_argument("--seed", type=int, default=1)
     options = parser.parse_args(arguments)
@@ -132,7 +182,7 @@ def main():
     activate(cage)
     report = {
         "source": options.source, "cage": options.cage, "mode": options.mode, "write": options.write,
-        "creases": creased and {"edges_creased": creased[0], "given": creased[1]},
+        "creases": creased and {"edges_creased": creased[0], "given": creased[1]}, "settings": options.settings,
         "samples": options.samples, "seed": options.seed, "blender": bpy.app.version_string, "levels": [],
     }
     for level in range(options.levels + 1):
@@ -140,23 +190,29 @@ def main():
         if level > 0:
             bpy.ops.object.multires_subdivide(modifier="Multires", mode="CATMULL_CLARK")
             subdivided = evaluated(cage)
-            wrap = cage.modifiers.new("Shrinkwrap", "SHRINKWRAP")
-            wrap.target = source
-            if options.mode == "nearest":
-                wrap.wrap_method = "NEAREST_SURFACEPOINT"
+            said = None
+            if options.mode == "openclare":
+                placed, said = placed_by_engine(options, subdivided, out, level)
+                bpy.data.meshes.remove(subdivided)
             else:
-                wrap.wrap_method = "PROJECT"
-                wrap.use_negative_direction = True
-                wrap.use_positive_direction = True
-                wrap.cull_face = "OFF"
-                if options.mode == "project-limited":
-                    wrap.project_limit = median_edge(subdivided)
-            bpy.data.meshes.remove(subdivided)
-            placed = evaluated(cage)
-            if options.write == "apply":
+                wrap = cage.modifiers.new("Shrinkwrap", "SHRINKWRAP")
+                wrap.target = source
+                if options.mode == "nearest":
+                    wrap.wrap_method = "NEAREST_SURFACEPOINT"
+                else:
+                    wrap.wrap_method = "PROJECT"
+                    wrap.use_negative_direction = True
+                    wrap.use_positive_direction = True
+                    wrap.cull_face = "OFF"
+                    if options.mode == "project-limited":
+                        wrap.project_limit = median_edge(subdivided)
+                bpy.data.meshes.remove(subdivided)
+                placed = evaluated(cage)
+            if options.write == "apply" and options.mode != "openclare":
                 bpy.ops.object.modifier_apply(modifier=wrap.name)
             else:
-                cage.modifiers.remove(wrap)
+                if options.mode != "openclare":
+                    cage.modifiers.remove(wrap)
                 temporary = bpy.data.objects.new("placed", placed)
                 bpy.context.collection.objects.link(temporary)
                 bpy.ops.object.select_all(action="DESELECT")
@@ -175,6 +231,8 @@ def main():
         path = out / f"level-{level}.obj"
         write_obj(path, now)
         entry = {"level": level, "faces": len(now.polygons), "vertices": len(now.vertices), "gap": 100.0 * gap}
+        if level > 0 and said is not None:
+            entry["placed"] = said
         entry.update(measured(options, path))
         report["levels"].append(entry)
         print(

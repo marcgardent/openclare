@@ -305,6 +305,19 @@ median edge, a vertex thrown onto another part:
 ./target/release/openclare detail source.obj level-2.obj --json
 ```
 
+`level` places a subdivision level on its source, the guarded projection of the Multires (PRO #6):
+each vertex goes along its normal, both ways, onto the side of the source that faces its way, no
+farther than `reach` times its shortest edge (1), else to the closest such point, else along its
+normal as far as the reach allows; a vertex inside a creased line of the level goes to the source's
+hard edges (sharper than `crease_angle`, 30 degrees); a face that comes out folded has its vertices
+taken back. The output keeps the vertices and faces of the level; the report counts what became of
+the vertices and measures the level as `detail` does (`samples = 0` skips that):
+
+```bash
+./target/release/openclare level source.obj level-2.obj placed-2.obj --creases level-2.creases \
+    --settings "reach = 1; samples = 0" --status placed-2.status
+```
+
 `repair` cleans a cage up for its reflections in place, every vertex, edge and face kept: it
 flattens the n-gons off their plane, makes the faces whose corner quads fold or are thin
 star-shaped again, and proposes creases on edges already folding by `--crease-fold` degrees or more

@@ -122,6 +122,17 @@ def library():
     lib.openclare_baked_report.argtypes = lib.openclare_baked_free.argtypes = [pointer]
     lib.openclare_baked_copy.restype = lib.openclare_baked_free.restype = None
     lib.openclare_baked_copy.argtypes = [pointer, pointer]
+    lib.openclare_project_level.restype = pointer
+    lib.openclare_project_level.argtypes = [
+        pointer, size, pointer, size, pointer, pointer, size, pointer, size, pointer, size, ctypes.c_char_p,
+    ]
+    lib.openclare_level_ok.restype = ctypes.c_int32
+    lib.openclare_level_error.restype = lib.openclare_level_report.restype = text
+    lib.openclare_level_ok.argtypes = lib.openclare_level_error.argtypes = [pointer]
+    lib.openclare_level_report.argtypes = lib.openclare_level_free.argtypes = [pointer]
+    lib.openclare_level_copy_positions.restype = lib.openclare_level_copy_status.restype = None
+    lib.openclare_level_free.restype = None
+    lib.openclare_level_copy_positions.argtypes = lib.openclare_level_copy_status.argtypes = [pointer, pointer]
     lib.openclare_analyse.restype = pointer
     lib.openclare_analyse.argtypes = [pointer, size, pointer, size, ctypes.c_char_p, ctypes.c_char_p, pointer]
     lib.openclare_analysis_ok.restype = ctypes.c_int32
@@ -509,6 +520,59 @@ def bake_height(positions, normals, triangles, uvs, source_positions, source_tri
     finally:
         lib.openclare_baked_free(baked)
     return heights.reshape(int(height), int(width)), report
+
+
+def project_level(positions, quads, source_positions, source_triangles, crease_edges=None, crease_weights=None,
+                  settings=""):
+    """Places a subdivision level on its source, as the Multires of the PRO
+    edition does after each subdivision: each vertex onto the side of the
+    source that faces its way, no farther than its reach, a vertex inside a
+    creased line onto the source's hard edges, faces that fold taken back.
+
+    The level is numpy arrays: `positions` (three 32-bit floats per vertex)
+    and `quads` (four unsigned 32-bit vertices per face), with its creased
+    edges if any, `crease_edges` (two vertices each) and `crease_weights`
+    (a 32-bit float each). The source is `source_positions` and
+    `source_triangles`. `settings` is `key = value` lines (reach, tilt,
+    crease_angle, samples, seed); `samples = 0` skips the measure.
+
+    Returns the placed positions (vertices × 3, 32-bit floats), what became
+    of each vertex (a byte each: 0 moved, 1 onto a hard edge, 2 stopped by
+    the reach, 3 nothing found, 4 taken back, 5 held), and what the engine
+    says, as a dictionary.
+    """
+    import numpy
+
+    def flat(array, kind, per):
+        array = numpy.ascontiguousarray(array, dtype=kind).reshape(-1)
+        if len(array) % per:
+            raise EngineError(f"{len(array)} numbers, not a multiple of {per}")
+        return array
+
+    level, faces = flat(positions, numpy.float32, 3), flat(quads, numpy.uint32, 4)
+    source, triangles = flat(source_positions, numpy.float32, 3), flat(source_triangles, numpy.uint32, 3)
+    edges = flat(numpy.zeros(0) if crease_edges is None else crease_edges, numpy.uint32, 2)
+    weights = flat(numpy.zeros(0) if crease_weights is None else crease_weights, numpy.float32, 1)
+    if len(weights) != len(edges) // 2:
+        raise EngineError(f"{len(edges) // 2} creased edges and {len(weights)} weights")
+    vertices = len(level) // 3
+    lib = library()
+    placed = lib.openclare_project_level(
+        level.ctypes.data, vertices, faces.ctypes.data, len(faces) // 4,
+        edges.ctypes.data if len(edges) else None, weights.ctypes.data if len(weights) else None, len(weights),
+        source.ctypes.data, len(source) // 3, triangles.ctypes.data, len(triangles) // 3, settings.encode(),
+    )
+    try:
+        if not lib.openclare_level_ok(placed):
+            raise EngineError(lib.openclare_level_error(placed).decode())
+        report = dict(line.split(" = ", 1) for line in lib.openclare_level_report(placed).decode().splitlines())
+        out = numpy.empty(3 * vertices, dtype=numpy.float32)
+        status = numpy.empty(vertices, dtype=numpy.uint8)
+        lib.openclare_level_copy_positions(placed, out.ctypes.data)
+        lib.openclare_level_copy_status(placed, status.ctypes.data)
+    finally:
+        lib.openclare_level_free(placed)
+    return out.reshape(-1, 3), status, report
 
 
 class Analysis:

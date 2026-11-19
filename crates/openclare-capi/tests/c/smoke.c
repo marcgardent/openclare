@@ -227,6 +227,8 @@ int main(int argc, char **argv) {
     check(openclare_result_ok(NULL) == 0 && openclare_result_vertex_count(NULL) == 0, "a NULL result is empty");
     openclare_result_free(NULL);
     openclare_baked_free(NULL);
+    check(openclare_level_ok(NULL) == 0, "a NULL level is not placed");
+    openclare_level_free(NULL);
     openclare_analysis_free(NULL);
     check(openclare_hard_edges_ok(NULL) == 0 && openclare_hard_edges_kept_count(NULL) == 0, "NULL hard edges are empty");
     openclare_hard_edges_free(NULL);
