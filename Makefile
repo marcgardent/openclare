@@ -1,6 +1,6 @@
 # Shortcuts for the common tasks. `make help` lists them.
 
-.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test test-trace capi-test version release paper paper-version paper-arxiv paper-clean proofs lean-check site site-serve lab-install lab-uninstall
+.PHONY: help build test scenes blenderkit essentials remeasure autoremesher scores quick pages dashboard view addon install addon-windows test-windows addon-test test-trace extensions-test capi-test version release paper paper-version paper-arxiv paper-clean proofs lean-check site site-serve lab-install lab-uninstall
 
 help:
 	@echo "make build       build the openclare binary (release)"
@@ -19,6 +19,8 @@ help:
 	@echo "                 run the tests of the engine built for Windows, under Wine"
 	@echo "make addon-test  run the add-on in a Blender without interface (needs blender)"
 	@echo "make test-trace  the drawing tools' logic, without Blender"
+	@echo "make extensions-test the extension repository's listing (with blender on the PATH,"
+	@echo "                 also against server-generate, and installed and updated in Blender)"
 	@echo "make capi-test   build the C test of the C interface against its header and the library,"
 	@echo "                 and run it (needs cc, or CC=clang)"
 	@echo "make autoremesher download and install the AutoRemesher challenger into ~/.local/bin"
@@ -285,6 +287,10 @@ test-trace:
 	python3 blender/test_trace.py
 	python3 blender/test_fit.py
 	python3 blender/test_cut.py
+
+# The extension repository that the site serves (scripts/extensions.py, #344).
+extensions-test:
+	python3 scripts/test_extensions.py
 
 addon-test: addon test-trace
 	ulimit -v $(BLENDER_MEMORY_CAP); blender -b --factory-startup --python-exit-code 1 --python blender/test_addon.py

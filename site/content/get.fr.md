@@ -8,8 +8,10 @@ C'est l'édition Community de l'extension.
 
 Une seule archive contient tout : l'extension et son moteur, compilé. Il n'y a rien d'autre à installer, ni paquet Python, ni programme à côté, et rien n'est téléchargé pendant qu'elle tourne.
 
-1. Prenez l'archive de votre système dans les [versions publiées](https://github.com/marcgardent/openclare/releases) : `openclare-<version>-<plateforme>.zip`, la plateforme étant `linux-x64`, `windows-x64`, `macos-arm64` ou `macos-x64`. Ou construisez-la vous-même (plus bas).
-2. Dans Blender 4.2 ou plus récent : *Edit › Preferences › Get Extensions*, la flèche en haut à droite, *Install from Disk*, et choisissez l'archive.
+- **Depuis Blender, avec ses mises à jour.** Dans Blender 4.2 ou plus récent, l'accès en ligne autorisé : *Edit › Preferences › Get Extensions*, *Repositories*, *+*, *Add Remote Repository*, et collez `https://marcgardent.github.io/openclare/extensions/index.json`. Installez ensuite *openclare* depuis *Get Extensions* : Blender prend l'archive de son système, et propose chaque nouvelle version. La [page du dépôt](https://marcgardent.github.io/openclare/extensions/) dit quelle version il contient.
+- **Ou depuis une archive.** Prenez l'archive de votre système dans les [versions publiées](https://github.com/marcgardent/openclare/releases) : `openclare-<version>-<plateforme>.zip`, la plateforme étant `linux-x64`, `windows-x64`, `macos-arm64` ou `macos-x64`, ou construisez-la vous-même (plus bas). Puis *Edit › Preferences › Get Extensions*, la flèche en haut à droite, *Install from Disk*, et choisissez l'archive. Blender ne met pas à jour une extension installée ainsi. Pour passer au dépôt, supprimez-la d'abord, sinon Blender garde les deux copies.
+
+Ces pages décrivent l'extension {{addon}}, celle de la branche principale : la dernière version publiée peut être plus ancienne.
 
 Un panneau nommé *openclare* apparaît dans l'éditeur Properties, sur l'onglet du maillage (Object Data). Sélectionnez un maillage, réglez ce qui suit, appuyez sur *Remesh to Quads*. Le résultat est un nouvel objet à côté de l'original, qui reste tel quel. Le moteur tourne en arrière-plan : Blender reste libre, et le panneau montre une barre de progression avec un bouton pour l'arrêter.
 

@@ -1106,8 +1106,9 @@ class Site:
 
     def tokens(self, text, language):
         """{{mark:3000:organic:openclare}}, {{count:organic}}, {{count:all}},
-        {{theorems}} and {{shot:human_male:openclare}} (the caption of a
-        picture of a model page) in a source."""
+        {{theorems}}, {{addon}} (the version of the add-on the pages describe,
+        that of its manifest) and {{shot:human_male:openclare}} (the caption
+        of a picture of a model page) in a source."""
 
         def value(match):
             parts = match.group(1).split(":")
@@ -1119,11 +1120,14 @@ class Site:
                 return str(len(self.data["over"][(3000, parts[1])]))
             if parts[0] == "theorems":
                 return str(self.theorems())
+            if parts[0] == "addon":
+                manifest = read(ROOT / "blender/openclare/blender_manifest.toml")
+                return re.search(r'(?m)^version = "([^"]+)"', manifest).group(1)
             if parts[0] == "shot":
                 return self.shot_caption(parts[1], parts[2], language)
             return match.group(0)
 
-        return re.sub(r"\{\{((?:mark|count|shot):[\w:-]+|theorems)\}\}", value, text)
+        return re.sub(r"\{\{((?:mark|count|shot):[\w:-]+|theorems|addon)\}\}", value, text)
 
     def theorems(self):
         """The `theorem` declarations of the Lean proofs, outside comments,

@@ -1,0 +1,22 @@
+name: extensions
+
+# When a release is published, the site is built again from main
+# (pages.yml), so that its extension repository, extensions/index.json, lists
+# the new release and Blender offers it (#344). pages.yml is run on main
+# rather than on this event, whose commit is the release's: the rest of the
+# site follows main.
+on:
+  release:
+    types: [published]
+
+permissions:
+  actions: write
+
+jobs:
+  site:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Build the site again from main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main
