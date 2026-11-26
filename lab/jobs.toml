@@ -767,6 +767,22 @@ budget = [2970, 3000, 3030]
 ref = ["main"]
 
 [[batch]]
+name = "analyse-sizes"
+description = "Ticket #253 before and after (PR #348): on each model, the sizes Analyse proposes (main from its constant of 1,500 quads, the PR for {budget} quads), a remesh at those sizes and its measure, one job each, the engine on the thread setting; untimed. {out}/analyse.json holds the sizes and the quads proposed, {out}/measure.json the measure (thin_quads_around and thin_quads_around_low on the PR only: main has no such measure). Accepted on #253: human_male, human_female, ogre at least 5 quads round on 95 % of the thin parts and 6 at the median; on the PR the quads made within 5 % of {budget}; creature and part within 2 % of main's proposal; thin_distance no worse than main. The engine of each side and the sources are dependencies."
+category = "quick-bench"
+needs = ["engine", "source"]
+command = "{engine} analyse {source} --preset {preset} {ask} > {out}/analyse.txt && P=$(sed -n 's/^proposal quads from \\([0-9.]*\\) to \\([0-9.]*\\): \\([0-9]*\\) quads.*/\\1 \\2 \\3/p' {out}/analyse.txt) && set -- $P && test $# -eq 3 && {engine} remesh {source} {out}/mesh.obj --preset {preset} --largest $2 --smallest $1 && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json && printf '{\"smallest\": %s, \"largest\": %s, \"proposed\": %s}\\n' $1 $2 $3 > {out}/analyse.json"
+report = "python3 bench/before_after.py {records} --side ref --by model --file analyse.json --keys smallest,largest,proposed --out {out}/analyse && python3 bench/before_after.py {records} --side ref --by model --keys faces,valid,thin_distance,thin_quads_around,thin_quads_around_low,hausdorff --out {out}/measure"
+parameters = { preset = "organic", budget = "3000", ask = "" }
+memory_limit_gb = 32
+timeout = "1h"
+timing_matters = false
+
+[batch.axes]
+model = ["human_male", "human_female", "ogre", "creature", "part"]
+ref = ["main", { value = "pull/348", ask = "--quads 3000" }]
+
+[[batch]]
 name = "pole-pairs-115-male-body"
 description = "Ticket #115, the male body: the export on the engine of each side, then conflicts.py on it (one job a side: conflicts reads the export), on main and on 5e73f2f (the head of claude/pole-pairs-115-on-main: 12a6675 rebased on main, with the scene, which 12a6675 has not, and the layout chosen without the other draws). Its source is the dependency source of bench/scenes/human_male.blend (the file of research/NIGHT.md, MD5 f1fe33002b731d1d41846daed6c59f5e). The whole thread setting for each, one side after the other."
 category = "quick-bench"
