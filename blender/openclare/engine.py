@@ -142,8 +142,12 @@ def library():
     lib.openclare_analysis_error.restype = text
     lib.openclare_analysis_ok.argtypes = lib.openclare_analysis_error.argtypes = [pointer]
     double = ctypes.POINTER(ctypes.c_double)
-    lib.openclare_analysis_proposal.restype = ctypes.c_int32
-    lib.openclare_analysis_proposal.argtypes = [pointer, double, double]
+    lib.openclare_analysis_smallest.restype = ctypes.c_int32
+    lib.openclare_analysis_smallest.argtypes = [pointer, ctypes.c_double, double]
+    lib.openclare_analysis_proposal_for.restype = ctypes.c_int32
+    lib.openclare_analysis_proposal_for.argtypes = [pointer, ctypes.c_double, double, double]
+    lib.openclare_analysis_thin.restype = ctypes.c_int32
+    lib.openclare_analysis_thin.argtypes = [pointer, ctypes.c_double, ctypes.c_double, double, double]
     lib.openclare_analysis_count.restype = ctypes.c_int32
     lib.openclare_analysis_count.argtypes = [pointer, ctypes.c_double, ctypes.c_double, double, double]
     lib.openclare_analysis_vertices.restype = ctypes.c_int32
@@ -636,12 +640,32 @@ class Analysis:
             self._lib.openclare_analysis_free(self._handle)
             self._handle = None
 
-    def proposal(self):
-        """A largest and a smallest quad to start from."""
+    def smallest_for(self, largest):
+        """The smallest quad to go with the largest the user asked for."""
+        smallest = ctypes.c_double()
+        if not self._lib.openclare_analysis_smallest(self._handle, float(largest), ctypes.byref(smallest)):
+            raise EngineError(f"no smallest quad for a largest of {largest}")
+        return smallest.value
+
+    def proposal_for(self, quads):
+        """A largest and a smallest quad that make about `quads` quads."""
         largest, smallest = ctypes.c_double(), ctypes.c_double()
-        if not self._lib.openclare_analysis_proposal(self._handle, ctypes.byref(largest), ctypes.byref(smallest)):
-            raise EngineError("no proposal")
+        if not self._lib.openclare_analysis_proposal_for(
+            self._handle, float(quads), ctypes.byref(largest), ctypes.byref(smallest)
+        ):
+            raise EngineError(f"no sizes for {quads} quads")
         return largest.value, smallest.value
+
+    def thin(self, largest, smallest):
+        """The share of the surface (0 to 1) on parts that ask for quads
+        smaller than the largest to go round them, and the share of those
+        that get the quads round them asked for."""
+        share, served = ctypes.c_double(), ctypes.c_double()
+        if not self._lib.openclare_analysis_thin(
+            self._handle, float(largest), float(smallest), ctypes.byref(share), ctypes.byref(served)
+        ):
+            raise EngineError(f"quads from {smallest} to {largest}: thin parts cannot be told")
+        return share.value, served.value
 
     def count(self, largest, smallest):
         """How many quads, and the share of the surface (0 to 1) that calls

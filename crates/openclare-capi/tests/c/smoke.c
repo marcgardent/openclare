@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
     check(analysis != NULL, "an analysis is never NULL");
     check(openclare_analysis_ok(analysis) == 1, openclare_analysis_error(analysis));
     double largest = 0.0, smallest = 0.0, quads = 0.0, below = 0.0;
-    check(openclare_analysis_proposal(analysis, &largest, &smallest) == 1, "the analysis proposes sizes");
+    check(openclare_analysis_proposal_for(analysis, 500.0, &largest, &smallest) == 1, "the analysis proposes sizes");
     check(openclare_analysis_count(analysis, largest, smallest, &quads, &below) == 1, "the analysis counts quads");
     printf("analysis: quads from %g to %g, %.0f quads\n", smallest, largest, quads);
     openclare_analysis_free(analysis);

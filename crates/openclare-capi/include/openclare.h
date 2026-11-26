@@ -438,9 +438,29 @@ int32_t openclare_analysis_ok(const OpenclareAnalysis *analysis);
 /* Why the shape could not be analysed; "" if it was. Owned by the handle. */
 const char *openclare_analysis_error(const OpenclareAnalysis *analysis);
 
-/* A largest and a smallest quad edge to start from, written to *largest and
- * *smallest. Returns 1, or 0 when there is no analysis. */
-int32_t openclare_analysis_proposal(const OpenclareAnalysis *analysis, double *largest, double *smallest);
+/* The smallest quad edge to go with largest, the largest the user asked for,
+ * written to *smallest. Returns 1, or 0 when there is no analysis or largest
+ * is not a size. */
+int32_t openclare_analysis_smallest(const OpenclareAnalysis *analysis, double largest, double *smallest);
+
+/* A largest and a smallest quad edge that make about quads quads, written to
+ * *largest and *smallest. Returns 1, or 0 when there is no analysis or quads
+ * is not a number of quads. */
+int32_t openclare_analysis_proposal_for(const OpenclareAnalysis *analysis,
+                                        double quads,
+                                        double *largest,
+                                        double *smallest);
+
+/* The share of the surface on thin parts at the scale of largest (parts that
+ * ask for quads smaller than it to go round them), to *share, and the share
+ * of those that get the quads round them asked for with smallest for the
+ * smallest quad, to *served, both from 0 to 1. Returns 1, or 0 when there is
+ * no analysis or the sizes are not 0 < smallest <= largest. */
+int32_t openclare_analysis_thin(const OpenclareAnalysis *analysis,
+                                double largest,
+                                double smallest,
+                                double *share,
+                                double *served);
 
 /* How many quads quads between smallest and largest make, written to *quads,
  * and the share of the surface that calls for smaller ones, from 0 to 1, to

@@ -62,11 +62,14 @@ have called for quads smaller than the smallest.
 every quad is made larger, and the run says so.
 
 `analyse` looks at the shape once and prints, for a range of smallest quads, how many quads each
-would make, with a pair of sizes to start from: what a pair of sizes costs is known before
-anything is meshed. Counting a pair takes a few milliseconds once the shape is analysed.
+would make: what a pair of sizes costs is known before anything is meshed. Counting a pair takes
+a few milliseconds once the shape is analysed. It proposes a smallest quad for the largest given
+with `--largest`, or both sizes for a number of quads with `--quads` (2000 if neither is given),
+and says how much of the surface is on thin parts at that scale (parts that ask for quads smaller
+than the largest to go round them) and how much of that gets the quads round it asked for.
 
 ```bash
-./target/release/openclare analyse input.obj
+./target/release/openclare analyse input.obj --quads 3000
 ```
 
 ## How the size follows the shape
@@ -284,6 +287,11 @@ A `.rrd` is read by the viewer of the version that wrote it, here 0.36.
 ./target/release/openclare measure source.obj quads.obj --target 3000
 ```
 
+Its `volume` lines tell how the thin parts of the source (thinner than the edge of `--target`
+quads of one size) are kept: their mean distance to the mesh, and how many quads go round those
+that are not sheets (a finger, a wire, not an ear), the girth of the part over the edge of the
+nearest face, by area: the median, and the fewest round all but a twentieth of them.
+
 Its last lines are the reflection check: what of the mesh, taken as a cage for Catmull-Clark,
 will make a reflection pinch or wobble once subdivided. Triangles and n-gons on a curved zone
 (pinch), n-gons off their plane, poles on a curved zone, each ranked by an angle in degrees;
@@ -354,7 +362,8 @@ let (quads, report) = config.remesh(&triangles)?;
 ```
 
 Sizes instead of a number: `Target::SizeRange { largest, smallest }`. `openclare::Analysis::of`
-measures a shape once, then `quads`, `below` and `proposal` answer at once for any pair of sizes;
+measures a shape once, then `quads`, `below` and `thin` answer at once for any pair of sizes,
+`smallest_for` proposes a smallest quad for a largest and `proposal_for` both sizes for a number;
 `at_vertices` gives the size at each vertex for a pair of sizes, `at_vertices_for` for a number of
 quads.
 

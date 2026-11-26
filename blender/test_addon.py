@@ -659,15 +659,20 @@ assert 250 <= int(openclare.last_report["quads_for_thin_pieces"]) <= 330, opencl
 on_the_wire = sum(1 for polygon in bpy.context.active_object.data.polygons if polygon.center.x > 2.0)
 assert on_the_wire > 250, on_the_wire
 
-# Sizes asked for instead of a number: set from the object when none is,
-# given to the engine as lengths of the mesh, and the number of quads is
-# what the shape calls for.
+# Sizes asked for instead of a number. None set: none is made up, the
+# number of quads stands for them.
 alone(body)
 assert settings.target == "COUNT" and settings.largest_quad == 0.0
 settings.target = "SIZE"
-largest, smallest = openclare.sizes_from(body)
-assert abs(settings.largest_quad - largest) < 1e-6 and abs(settings.smallest_quad - smallest) < 1e-6
-assert abs(largest / smallest - 8.0) < 1e-6 and 0.05 < largest < 0.2, (largest, smallest)
+assert settings.largest_quad == 0.0 and settings.smallest_quad == 0.0
+assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+report = dict(openclare.last_report)
+assert report.get("quads_asked") == "600" and "largest_asked" not in report, report
+# Sizes set: given to the engine as lengths of the mesh, and the number of
+# quads is what the shape calls for.
+alone(body)
+largest, smallest = 0.13, 0.13 / 8.0
+settings.largest_quad, settings.smallest_quad = largest, smallest
 assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 sized = bpy.context.active_object
 report = dict(openclare.last_report)
@@ -692,8 +697,12 @@ assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
 assert len(bpy.context.active_object.data.polygons) < 0.5 * made
 settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
 
-# Analysed: sizes proposed, the number of quads they make told at once, and
-# the sizes shown in colour on a copy while the object is hidden.
+# Analysed with no Largest: the sizes that make the number of quads, told
+# at once, and the sizes shown in colour on the object. The wire alone asks
+# for some 3,500 quads for its six round: with fewer in all, the largest
+# would grow to pay for it until the smallest reaches a sixteenth of it, and
+# the wire would not get them.
+settings.quads = 6000
 alone(body)
 assert openclare.analysis_of(bpy.context, settings, body) is None
 assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
@@ -704,7 +713,22 @@ held = openclare.analysis_of(bpy.context, settings, body)
 assert held is not None
 analysis, scale = held
 quads, below = openclare.counted(analysis, scale, settings.largest_quad, settings.smallest_quad)
-assert quads > 300 and 0.0 <= below <= 1.0, (quads, below)
+assert abs(quads / settings.quads - 1.0) < 0.05 and 0.0 <= below <= 1.0, (quads, settings.quads, below)
+# The wire is a thin part at that scale, and gets its quads round it.
+share, served = openclare.thin_told(analysis, scale, settings.largest_quad, settings.smallest_quad)
+assert 0.0 < share < 0.1 and served >= 0.94, (share, served)
+# Analysed again with a Largest set: it is kept, the smallest goes with it.
+proposed = settings.largest_quad
+settings.largest_quad = 2.0 * proposed
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+assert settings.largest_quad == 2.0 * proposed, settings.largest_quad
+analysis, scale = openclare.analysis_of(bpy.context, settings, body)
+least = analysis.smallest_for(settings.largest_quad / scale) * scale
+assert abs(settings.smallest_quad - least) < 1e-6 * proposed, (settings.smallest_quad, least)
+settings.largest_quad = 0.0
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+assert abs(settings.largest_quad - proposed) < 1e-6 * proposed, (settings.largest_quad, proposed)
+analysis, scale = openclare.analysis_of(bpy.context, settings, body)
 # Smaller quads, more of them, told without meshing anything. Not four
 # times as many: where the surface bends, the size follows the bounds only
 # by the part the adaptivity leaves them (twice as many, measured).
@@ -884,7 +908,9 @@ assert numpy.abs(again - weights).max() < 0.01 and len(ellipsoid.vertex_groups) 
 # With Sizes, the largest asked for is the weight 0. With a Factor of 2, the
 # tips ask for smaller quads than it gives: their weight stays at 1.
 settings.target, settings.density_factor = "SIZE", 2.0
-settings.largest_quad, settings.smallest_quad = openclare.sizes_from(ellipsoid)
+corners = [ellipsoid.matrix_world @ mathutils.Vector(corner) for corner in ellipsoid.bound_box]
+diagonal = max((a - b).length for a in corners for b in corners)
+settings.largest_quad, settings.smallest_quad = diagonal / 40.0, diagonal / 320.0
 alone(ellipsoid)
 assert bpy.ops.object.openclare_density_from_shape() == {"FINISHED"}
 sized = numpy.array([ellipsoid.vertex_groups["openclare density"].weight(v) for v in range(len(weights))])

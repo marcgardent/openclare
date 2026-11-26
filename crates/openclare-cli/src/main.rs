@@ -24,7 +24,7 @@ USAGE:
     openclare level <source.obj> <level.obj> <output.obj> [--creases <FILE>] [--settings <TEXT>] [--status <FILE>] [--json]
     openclare repair <cage.obj> <output.obj> [options]
     openclare layout <quads.obj>
-    openclare analyse <input.obj> [--preset <NAME>] [--largest <L>]
+    openclare analyse <input.obj> [--preset <NAME>] [--quads <N> | --largest <L>]
     openclare preprocess <input.obj> <output.obj> [options]
     openclare field <input.obj> [options]
     openclare parametrize <input.obj> --quads <N> [options]
@@ -223,16 +223,19 @@ fn run(args: &[String]) -> Result<(), String> {
 }
 
 /// What a shape calls for, and how many quads that makes for a range of
-/// smallest quads: what the add-on is to show while its sliders move.
+/// smallest quads: what the add-on is to show while its sliders move. The
+/// sizes proposed are for the largest quad asked for, or for a number of
+/// quads (2000 when neither is given, as `remesh`).
 fn analyse_command(args: &[String]) -> Result<(), String> {
     let input = args.first().ok_or("analyse takes a mesh")?;
-    let (mut preset, mut asked) = ("organic".to_string(), None);
+    let (mut preset, mut largest, mut quads) = ("organic".to_string(), None, None);
     let mut rest = args[1..].iter();
     while let Some(arg) = rest.next() {
         let mut value = || rest.next().ok_or(format!("{arg} takes a value"));
         match arg.as_str() {
             "--preset" => preset = value()?.clone(),
-            "--largest" => asked = Some(value()?.parse::<f64>().map_err(|_| "--largest takes a length".to_string())?),
+            "--largest" => largest = Some(value()?.parse::<f64>().map_err(|_| "--largest takes a length".to_string())?),
+            "--quads" => quads = Some(value()?.parse::<f64>().map_err(|_| "--quads takes a number".to_string())?),
             other => return Err(format!("unknown option '{other}'")),
         }
     }
@@ -241,14 +244,33 @@ fn analyse_command(args: &[String]) -> Result<(), String> {
     let started = std::time::Instant::now();
     let analysis = openclare::Analysis::of(&mesh, &Default::default(), &config).map_err(|e| e.to_string())?;
     println!("analysis {:.2} s, once", started.elapsed().as_secs_f64());
-    let (proposed, smallest) = analysis.proposal();
+    let (largest, smallest) = match (largest, quads) {
+        (Some(_), Some(_)) => return Err("analyse takes --largest or --quads, not both".into()),
+        (Some(largest), None) => {
+            if !(largest.is_finite() && largest > 0.0) {
+                return Err(format!("--largest {largest} is not a length"));
+            }
+            (largest, analysis.smallest_for(largest))
+        }
+        (None, quads) => {
+            let quads = quads.unwrap_or(2000.0);
+            analysis.proposal_for(quads).ok_or(format!("--quads {quads} is not a number of quads"))?
+        }
+    };
     println!(
-        "proposal quads from {smallest:.4} to {proposed:.4}: {:.0} quads, {:.1} % of the surface would call for smaller",
-        analysis.quads(proposed, smallest),
-        100.0 * analysis.below(proposed, smallest)
+        "proposal quads from {smallest:.6} to {largest:.6}: {:.0} quads, {:.1} % of the surface would call for smaller",
+        analysis.quads(largest, smallest),
+        100.0 * analysis.below(largest, smallest)
     );
-    let largest = asked.unwrap_or(proposed);
-    println!("largest  {largest:.4}; for a smallest of:");
+    let (thin, served) = analysis.thin(largest, smallest);
+    println!(
+        "thin     {:.1} % of the surface asks for quads smaller than the largest to go round it; {:.1} % of that gets \
+         {} round",
+        100.0 * thin,
+        100.0 * served,
+        config.quads_around
+    );
+    println!("largest  {largest:.6}; for a smallest of:");
     let started = std::time::Instant::now();
     let steps = [1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0, 16.0, 24.0, 32.0];
     for over in steps {
@@ -822,6 +844,11 @@ fn measure_command(args: &[String]) -> Result<(), String> {
         optional(m.volume_ratio.map(|ratio| format!("{:.1} %", 100.0 * ratio))),
         100.0 * m.thin_share,
         optional(m.thin_distance.map(|distance| format!("{distance:.3} quad edges away on average"))),
+    );
+    println!(
+        "             {} quads round those that are not sheets (median), {} round all but a twentieth",
+        optional(m.thin_quads_around.map(|n| format!("{n:.1}"))),
+        optional(m.thin_quads_around_low.map(|n| format!("{n:.1}"))),
     );
     println!(
         "sharp edges  {:.1} quad edges in {} chains; {}",
