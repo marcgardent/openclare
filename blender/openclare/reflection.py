@@ -42,6 +42,21 @@ moves, the last one built is drawn as it is, and once the view has been
 still for `SETTLE_SECONDS`, it is built again for that view, out of X-ray
 with each point tested for being seen (see `Visibility`).
 
+What keeps Blender safe from the check. A timer and a draw run between the
+steps of whatever Blender is doing, so they are held to this:
+
+- no look while a modal operator runs in any window (a move or a slide
+  under way, a view being turned): the edit mesh is in the hands of that
+  operator, and the look waits for it to end (see `busy`);
+- the draw asks Blender for nothing but the view: no ray cast into the
+  scene, no dependency graph, no mesh. What hides a point is found on the
+  cage as it was read, by a tree of this module's own (`Report.tree`);
+- a cage read is tested before the engine is given it (`cage_arrays`):
+  every corner a vertex that exists, every position finite;
+- an error in a handler, a timer or the draw is said once in the console
+  and stops that look or that drawing, until the cage changes: Blender is
+  not told of it again at each redraw.
+
 With Blender's Developer Extras on, the panel says in one line what the
 check has cost (see `Stats`).
 
@@ -110,6 +125,8 @@ _missed = False      # a change may have gone by while the check was off
 _reports = {}        # pointer of the mesh -> Report
 _drawn = {}          # pointer of the region -> Drawn
 _handles = []
+_said = set()        # errors already said in the console
+_draw_failed = None  # the generation whose drawing failed, not tried again
 
 
 class Stats:
@@ -153,6 +170,8 @@ class Report:
         self.positions, self.corners = positions.reshape(-1, 3), corners
         self.starts = numpy.concatenate(([0], numpy.cumsum(sizes, dtype=numpy.int64)))
         self._rows = {}
+        self.hidden = None   # one flag per face, or None when none is hidden
+        self._tree = None
 
     def face(self, index):
         """The vertices of face `index`, in order."""
@@ -168,6 +187,41 @@ class Report:
             return a.shape == b.shape and numpy.array_equal(a, b)
 
         return all(same(a, b) for a, b in zip(self.arrays, arrays))
+
+    def hide(self, hidden):
+        """Takes which faces are hidden in Edit Mode (`hidden_faces`).
+        Returns whether that changed what hides a point."""
+        import numpy
+
+        same = (hidden is None and self.hidden is None) or (
+            hidden is not None and self.hidden is not None and numpy.array_equal(hidden, self.hidden)
+        )
+        if not same:
+            self.hidden, self._tree = hidden, None
+        return not same
+
+    def tree(self):
+        """What a ray is cast against to tell whether a point of the cage is
+        seen: the faces of the cage as it was read, those hidden in Edit Mode
+        left out, in the space of the object. Made once per cage read, from
+        the arrays, without a word to Blender. None when no face can hide."""
+        if self._tree is None:
+            from mathutils.bvhtree import BVHTree
+
+            faces = [
+                self.corners[self.starts[f]:self.starts[f + 1]].tolist()
+                for f in range(len(self.starts) - 1)
+                if self.starts[f + 1] - self.starts[f] >= 3 and not (self.hidden is not None and self.hidden[f])
+            ]
+            self._tree = BVHTree.FromPolygons(self.positions.tolist(), faces, epsilon=0.0) if faces else False
+        return self._tree or None
+
+    def size(self):
+        """The diagonal of the box round the cage, in the space of the
+        object; 0 for no cage."""
+        if not len(self.positions):
+            return 0.0
+        return float(((self.positions.max(axis=0) - self.positions.min(axis=0)) ** 2).sum() ** 0.5)
 
     def rows(self, worst):
         """What the panel lists, made once per number shown: for each of
@@ -222,10 +276,14 @@ def cage_arrays(owner, creases=True):
     Read element by element from the edit mesh, which costs about a
     microsecond a face, and writes nothing: a copy to a mesh would be
     quicker, but a write to Blender's data is signalled as an update, and
-    nothing this module does must be."""
+    nothing this module does must be.
+
+    What is read is tested before it is given: ValueError when the edit mesh
+    is not to be read now, when a corner is not a vertex of it, or when a
+    vertex is not at a finite place. The engine is never given such a cage."""
     import numpy
 
-    bm = bmesh.from_edit_mesh(owner.data)
+    bm = edit_mesh(owner)
     # The indices of the edit mesh, written into it and nowhere else: what
     # Blender itself does before reading it.
     bm.verts.index_update()
@@ -239,7 +297,60 @@ def cage_arrays(owner, creases=True):
         if found:
             pairs = numpy.array([(a, b) for a, b, _ in found], numpy.uint32).ravel()
             weights = numpy.array([w for _, _, w in found], numpy.float32)
+    count = len(positions) // 3
+    if len(corners) and int(corners.max()) >= count:
+        raise ValueError("the edit mesh is being changed: a corner of a face is not one of its vertices")
+    if pairs is not None and int(pairs.max()) >= count:
+        raise ValueError("the edit mesh is being changed: an end of a creased edge is not one of its vertices")
+    if not numpy.isfinite(positions).all():
+        raise ValueError("a vertex of the cage is not at a finite place")
+    if weights is not None and not numpy.isfinite(weights).all():
+        raise ValueError("a crease of the cage has no finite weight")
     return positions, sizes, corners, pairs, weights
+
+
+def edit_mesh(owner):
+    """The edit mesh of `owner`, to read or to write; ValueError when there
+    is none to be had now (the object left Edit Mode, its mesh was freed)."""
+    mesh = getattr(owner, "data", None)
+    if mesh is None or not getattr(mesh, "is_editmode", False):
+        raise ValueError("the object is not in Edit Mode")
+    bm = bmesh.from_edit_mesh(mesh)
+    if not bm.is_valid:
+        raise ValueError("the edit mesh is not valid")
+    return bm
+
+
+def hidden_faces(owner):
+    """One flag per face of the cage of `owner`, set on those hidden in Edit
+    Mode, or None when none is: a hidden face hides nothing."""
+    import numpy
+
+    bm = edit_mesh(owner)
+    hidden = numpy.fromiter((f.hide for f in bm.faces), numpy.bool_, len(bm.faces))
+    return hidden if hidden.any() else None
+
+
+def busy(context=None):
+    """The name of a modal operator running in a window, or None. While one
+    runs (a move, a slide, a loop cut under way, the view being turned), the
+    edit mesh is its own to change: nothing here reads it."""
+    wm = getattr(context or bpy.context, "window_manager", None)
+    for window in wm.windows if wm is not None else ():
+        for operator in getattr(window, "modal_operators", ()):
+            return operator.bl_idname
+    return None
+
+
+def say_once(what, error):
+    """An error of a handler, a timer or the draw, in the console, once for
+    each different one: never at each redraw."""
+    text = f"openclare: reflection check: {what}: {type(error).__name__}: {error}"
+    if text not in _said:
+        if len(_said) > 100:
+            _said.clear()
+        _said.add(text)
+        print(text)
 
 
 def check(owner, settings, previous=None):
@@ -249,12 +360,16 @@ def check(owner, settings, previous=None):
     start = time.perf_counter()
     tolerances = tolerances_of(owner, settings)
     arrays = cage_arrays(owner, tolerances[2])
+    hidden = hidden_faces(owner)
     read = time.perf_counter()
     STATS.looks += 1
     STATS.read_seconds = read - start
     if previous is not None and previous.tolerances == tolerances and previous.same_cage(arrays):
         STATS.unchanged += 1
         previous.generation = _generation
+        if previous.hide(hidden):
+            # What hides a point changed: the overlays are built again.
+            _drawn.clear()
         return previous
     faults = engine.reflection_check(
         *arrays, flat_tolerance=settings.flat_tolerance / 100.0, angle_tolerance=settings.angle_tolerance * 180.0 / pi,
@@ -262,6 +377,11 @@ def check(owner, settings, previous=None):
     STATS.checks += 1
     STATS.engine_seconds = time.perf_counter() - read
     report = Report(faults, arrays, tolerances, time.perf_counter() - start)
+    report.hide(hidden)
+    if len(_reports) > 64:
+        # Meshes long gone: only pointers are kept, never the meshes.
+        _reports.clear()
+        _drawn.clear()
     _reports[owner.data.as_pointer()] = report
     return report
 
@@ -280,7 +400,7 @@ def affordable(owner, report):
     or, never checked, that is small enough to be."""
     if report is not None:
         return report.seconds < AUTO_SECONDS
-    return len(bmesh.from_edit_mesh(owner.data).faces) * SECONDS_PER_FACE < AUTO_SECONDS
+    return len(edit_mesh(owner).faces) * SECONDS_PER_FACE < AUTO_SECONDS
 
 
 def fault_name(report, i):
@@ -384,12 +504,17 @@ def repair(owner, settings, bound, set_creases, crease_fold):
 
     arrays = cage_arrays(owner, uses_creases(owner))
     positions = arrays[0].reshape(-1, 3)
-    bm = bmesh.from_edit_mesh(owner.data)
+    bm = edit_mesh(owner)
     chosen = [i for i, face in enumerate(bm.faces) if face.select]
     result = engine.reflection_repair(
         *arrays, within=chosen or None, flat_tolerance=settings.flat_tolerance / 100.0,
         angle_tolerance=settings.angle_tolerance * 180.0 / pi, bound=bound, crease_fold=crease_fold * 180.0 / pi,
     )
+    # Nothing is written unless what came back is the cage that was sent.
+    if result.positions.shape != positions.shape or not numpy.isfinite(result.positions).all():
+        raise ValueError("the repair gave back another cage than it was given: nothing was changed")
+    if len(result.crease_edges) and int(numpy.asarray(result.crease_edges).max()) >= len(positions):
+        raise ValueError("the repair proposed a crease on a vertex that is not of the cage: nothing was changed")
     moved = numpy.nonzero((result.positions != positions).any(axis=1))[0]
     bm.verts.ensure_lookup_table()
     for v in moved:
@@ -441,14 +566,18 @@ def look(context=None, force=False):
 def _wait():
     """The timer: looks once the cage has been still for SETTLE_SECONDS."""
     global _timer_set
-    left = SETTLE_SECONDS - (time.monotonic() - _last_change)
-    if left > 1e-3:
-        return left
-    _timer_set = False
     try:
+        left = SETTLE_SECONDS - (time.monotonic() - _last_change)
+        if left > 1e-3:
+            return left
+        if busy() is not None:
+            # A move, a slide, the view being turned: once it has ended.
+            return SETTLE_SECONDS
+        _timer_set = False
         look()
-    except (ReferenceError, RuntimeError, ValueError, engine.EngineError) as error:
-        print(f"openclare: reflection check: {error}")
+    except Exception as error:  # noqa: BLE001 - a timer must not raise into Blender
+        _timer_set = False
+        say_once("look", error)
     return None
 
 
@@ -511,11 +640,16 @@ def _changed(_scene=None, depsgraph=None):
     global _missed
     if _looking or depsgraph is None:
         return
-    if not active(bpy.context.scene):
+    try:
+        if not active(bpy.context.scene):
+            _missed = True
+            return
+        if _missed or edits_a_cage(depsgraph, checked_object(bpy.context)):
+            _catch_up()
+    except Exception as error:  # noqa: BLE001 - a handler must not raise into Blender
+        # Not known whether a cage changed: taken as changed.
         _missed = True
-        return
-    if _missed or edits_a_cage(depsgraph, checked_object(bpy.context)):
-        _catch_up()
+        say_once("update", error)
 
 
 @persistent
@@ -523,10 +657,14 @@ def _undone(*_args):
     global _missed
     # What the last repair did no longer describes the cage.
     _repairs.clear()
-    if not active(bpy.context.scene):
+    try:
+        if not active(bpy.context.scene):
+            _missed = True
+            return
+        _catch_up()
+    except Exception as error:  # noqa: BLE001 - a handler must not raise into Blender
         _missed = True
-        return
-    _catch_up()
+        say_once("undo", error)
 
 
 @persistent
@@ -649,7 +787,20 @@ def frame_selected(context):
     return False
 
 
-class OPENCLARE_OT_reflection_check(bpy.types.Operator):
+class Guarded:
+    """An operator whose `run` is its work: an error of the engine, or a
+    cage that cannot be read or was changed meanwhile, is reported in
+    Blender's own way and cancels it, nothing written."""
+
+    def execute(self, context):
+        try:
+            return self.run(context)
+        except (ValueError, ReferenceError, RuntimeError, OverflowError, engine.EngineError) as error:
+            self.report({"ERROR"}, f"openclare: {error}")
+            return {"CANCELLED"}
+
+
+class OPENCLARE_OT_reflection_check(Guarded, bpy.types.Operator):
     """Check the cage again: what of it will make a reflection pinch or wobble once subdivided"""
 
     bl_idname = "mesh.openclare_reflection_check"
@@ -660,7 +811,7 @@ class OPENCLARE_OT_reflection_check(bpy.types.Operator):
     def poll(cls, context):
         return checked_object(context) is not None
 
-    def execute(self, context):
+    def run(self, context):
         owner = checked_object(context)
         settings = settings_of(context.scene)
         report = check(owner, settings, report_of(owner, settings)[0])
@@ -669,7 +820,7 @@ class OPENCLARE_OT_reflection_check(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class OPENCLARE_OT_reflection_select(bpy.types.Operator):
+class OPENCLARE_OT_reflection_select(Guarded, bpy.types.Operator):
     """Select this face or vertex, and frame the view on it"""
 
     bl_idname = "mesh.openclare_reflection_select"
@@ -682,7 +833,7 @@ class OPENCLARE_OT_reflection_select(bpy.types.Operator):
     def poll(cls, context):
         return checked_object(context) is not None
 
-    def execute(self, context):
+    def run(self, context):
         owner = checked_object(context)
         settings = settings_of(context.scene)
         report, current = report_of(owner, settings)
@@ -696,9 +847,12 @@ class OPENCLARE_OT_reflection_select(bpy.types.Operator):
         index = int(report.faults.indices[self.index])
         context.tool_settings.mesh_select_mode = (True, False, False) if on_vertex else (False, False, True)
         bpy.ops.mesh.select_all(action="DESELECT")
-        bm = bmesh.from_edit_mesh(owner.data)
+        bm = edit_mesh(owner)
         elements = bm.verts if on_vertex else bm.faces
         elements.ensure_lookup_table()
+        if not 0 <= index < len(elements):
+            self.report({"WARNING"}, "No such fault: the cage was changed")
+            return {"CANCELLED"}
         element = elements[index]
         element.select_set(True)
         bm.select_history.clear()
@@ -712,7 +866,7 @@ class OPENCLARE_OT_reflection_select(bpy.types.Operator):
         return {"FINISHED"}
 
 
-class OPENCLARE_OT_reflection_repair(bpy.types.Operator):
+class OPENCLARE_OT_reflection_repair(Guarded, bpy.types.Operator):
     """Experimental. Move vertices of the cage, every vertex, edge and face kept, to flatten its n-gons and make the faces whose corner quads fold or are thin star-shaped again; propose creases on edges already sharp. Each repair is kept only if the reflection check scores better. The selected faces if any, else the whole cage"""
 
     bl_idname = "mesh.openclare_reflection_repair"
@@ -746,7 +900,7 @@ class OPENCLARE_OT_reflection_repair(bpy.types.Operator):
     def poll(cls, context):
         return checked_object(context) is not None
 
-    def execute(self, context):
+    def run(self, context):
         owner = checked_object(context)
         summary = repair(owner, settings_of(context.scene), self.bound / 100.0, self.apply_creases, self.crease_fold)
         tag_redraw(context)
@@ -900,20 +1054,23 @@ class SeeAll:
 class Visibility:
     """Says whether a point of the cage is seen from the eye, out of X-ray.
 
-    A ray goes from the eye to the point: it is hidden if the ray hits
-    something before. In Edit Mode, scene.ray_cast hits the cage of the
-    object edited, not its subdivided surface: the cage hides itself
-    exactly, and other objects hide it by their surface. One ray per point,
-    at most MAX_RAYS for one build of the overlay. The depsgraph is the one
-    the view drew with, taken as it is: asking for it evaluated could make
-    Blender evaluate it, from inside a draw."""
+    A ray goes from the eye to the point: it is hidden if the ray hits a
+    face of the cage before. The faces are those of the cage as the report
+    read it (`Report.tree`), those hidden in Edit Mode left out; the ray is
+    cast in the space of the object, by this module: Blender is asked for
+    the view and for nothing else, so a draw cannot make it build or
+    evaluate anything. What it leaves out: another object, or what a
+    modifier adds (the other half of a Mirror), hides nothing. One ray per
+    point, at most MAX_RAYS for one build of the overlay."""
 
-    def __init__(self, context):
+    def __init__(self, context, report):
         self.region, self.view = context.region, context.region_data
-        self.scene = context.scene
-        self.depsgraph = context.view_layer.depsgraph
+        self.tree = report.tree()
+        # How far from a point its ray starts, to leave the faces it is on.
+        self.eps = 1e-3 * report.size()
         self.rays = 0
         self.known = {}
+        self.eye = self.towards = None
 
     def sees(self, owner, co):
         """`co` in the space of the object."""
@@ -923,7 +1080,7 @@ class Visibility:
         return self.known[key]
 
     def _sees(self, owner, co):
-        from bpy_extras.view3d_utils import location_3d_to_region_2d, region_2d_to_origin_3d, region_2d_to_vector_3d
+        from bpy_extras.view3d_utils import location_3d_to_region_2d
 
         p = owner.matrix_world @ co
         p2 = location_3d_to_region_2d(self.region, self.view, p)
@@ -931,15 +1088,32 @@ class Visibility:
             return False   # behind the eye
         if not (0 <= p2.x <= self.region.width and 0 <= p2.y <= self.region.height):
             return True    # off screen: the GPU clips it, no ray needed
+        if self.tree is None:
+            return True    # no face to hide it
         if self.rays >= MAX_RAYS:
             return False   # out of rays: what is not tested is not drawn
         self.rays += 1
-        origin = region_2d_to_origin_3d(self.region, self.view, p2)
-        direction = region_2d_to_vector_3d(self.region, self.view, p2)
-        reach = (p - origin).dot(direction)
-        eps = max(1e-3 * reach, 1e-5)
-        hit, *_ = self.scene.ray_cast(self.depsgraph, origin, direction, distance=max(0.0, reach - eps))
-        return not hit
+        if self.eye is None and self.towards is None:
+            # In the space of the object, where the tree is: a straight line
+            # there is one in the world, whatever the scale of the object.
+            inverse = owner.matrix_world.inverted_safe()
+            camera = self.view.view_matrix.inverted_safe()
+            if self.view.is_perspective:
+                self.eye = inverse @ camera.translation
+            else:
+                # No eye: every ray goes the way the view looks from.
+                self.towards = (inverse.to_3x3() @ camera.col[2].xyz).normalized()
+        # From the point towards the eye: hidden if a face is met on the way.
+        if self.towards is not None:
+            hit, *_ = self.tree.ray_cast(co + self.eps * self.towards, self.towards)
+            return hit is None
+        way = self.eye - co
+        reach = way.length
+        if reach <= self.eps:
+            return True
+        way /= reach
+        hit, *_ = self.tree.ray_cast(co + self.eps * way, way, reach - self.eps)
+        return hit is None
 
 
 def xray(space):
@@ -1044,7 +1218,10 @@ def overlay_for(key, owner, report, worst, view, seen, region=None, region_view=
 def _view_settled():
     global _view_timer_set
     _view_timer_set = False
-    tag_redraw(kinds=("VIEW_3D",))
+    try:
+        tag_redraw(kinds=("VIEW_3D",))
+    except Exception as error:  # noqa: BLE001 - a timer must not raise into Blender
+        say_once("redraw", error)
     return None
 
 
@@ -1070,11 +1247,24 @@ def _batches(segments):
 def draw_view():
     """Draws the worst faults of the cage in Edit Mode, when the check is
     shown, the overlays are, and what was found is up to date: from the
-    batches already built, unless they are for another report or view."""
+    batches already built, unless they are for another report or view. An
+    error stops the drawing of that cage until it changes, and is said
+    once."""
+    global _draw_failed
+    if _draw_failed == _generation:
+        return
+    try:
+        _draw(bpy.context)
+    except Exception as error:  # noqa: BLE001 - a draw must not raise into Blender at each redraw
+        _draw_failed = _generation
+        _drawn.clear()
+        say_once("draw", error)
+
+
+def _draw(context):
     global _view_timer_set
     import gpu
 
-    context = bpy.context
     if not active(context.scene):
         return
     space = context.space_data
@@ -1091,12 +1281,17 @@ def draw_view():
     if report is None or not current:
         return
     region, region_view = context.region, context.region_data
+    if region is None or region_view is None:
+        return
     see_all = xray(space)
     view = (tuple(map(tuple, region_view.perspective_matrix)), region.width, region.height, see_all,
             tuple(map(tuple, owner.matrix_world)))
+    if len(_drawn) > 32:
+        # Regions long closed: only pointers are kept.
+        _drawn.clear()
     drawn, built = overlay_for(
         region.as_pointer(), owner, report, settings.worst, view,
-        SeeAll if see_all else (lambda: Visibility(context)), region, region_view,
+        SeeAll if see_all else (lambda: Visibility(context, report)), region, region_view,
     )
     if drawn.built_for != view and not _view_timer_set:
         # Drawn as last built while the view moves; built again once it stops.
@@ -1107,16 +1302,19 @@ def draw_view():
     scale = context.preferences.system.ui_scale
     gpu.state.blend_set("ALPHA")
     gpu.state.depth_test_set("NONE")
-    for name, shader, batch in drawn.batches:
-        shader.bind()
-        if name == "lines":
-            shader.uniform_float("viewportSize", (region.width, region.height))
-            shader.uniform_float("lineWidth", 3.0 * scale)
-        else:
-            gpu.state.point_size_set((9 if name == "vertices" else 6) * scale)
-        batch.draw(shader)
-    gpu.state.point_size_set(1.0)
-    gpu.state.blend_set("NONE")
+    try:
+        for name, shader, batch in drawn.batches:
+            shader.bind()
+            if name == "lines":
+                shader.uniform_float("viewportSize", (region.width, region.height))
+                shader.uniform_float("lineWidth", 3.0 * scale)
+            else:
+                gpu.state.point_size_set((9 if name == "vertices" else 6) * scale)
+            batch.draw(shader)
+    finally:
+        # Whatever happened, Blender gets its drawing state back.
+        gpu.state.point_size_set(1.0)
+        gpu.state.blend_set("NONE")
 
 
 # ---------------------------------------------------------------- registration

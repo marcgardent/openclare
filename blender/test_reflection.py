@@ -417,7 +417,173 @@ looks, checks = stats.looks, stats.checks
 due()
 assert (stats.looks - looks, stats.checks - checks) == (1, 0)
 
+# ---------------------------------------------------------------- hardening
+#
+# What keeps Blender safe from the check: no look under a modal operator,
+# no cage given to the engine that is not sound, no error raised into
+# Blender, nothing asked of Blender to tell what is seen.
+from mathutils import Vector  # noqa: E402
+
+bpy.ops.mesh.reveal()
+report = reflection.check(ball, settings, None)
+
+# What hides a point is the cage as it was read: from outside, along x, the
+# near face of the cube is hit before the face x = 1 behind it.
+tree = report.tree()
+assert tree is report.tree()
+hit = tree.ray_cast(Vector((-5.0, 0.5, 0.5)), Vector((1.0, 0.0, 0.0)), 10.0)
+assert hit[0] is not None and hit[0].x < 0.9, hit   # the near face, which the moves above bent
+# A face hidden in Edit Mode hides nothing: the ray goes on to the far one.
+near = int(hit[2])
+bm = bmesh.from_edit_mesh(ball.data)
+bm.faces.ensure_lookup_table()
+bm.faces[near].hide_set(True)
+bmesh.update_edit_mesh(ball.data, loop_triangles=False, destructive=False)
+checks = stats.checks
+same = reflection.check(ball, settings, report)
+assert same is report and stats.checks == checks and report.hidden is not None and report.hidden[near]
+hit = report.tree().ray_cast(Vector((-5.0, 0.5, 0.5)), Vector((1.0, 0.0, 0.0)), 10.0)
+assert hit[0] is not None and close(hit[0].x, 1.0, 1e-5), hit
+bpy.ops.mesh.reveal()
+bpy.ops.mesh.select_all(action="DESELECT")
+assert not reflection.check(ball, settings, report).hide(None)
+
+# Seen from above, with and without an eye: the middle of the top face of
+# the cube is seen, the middle of its bottom face is hidden by the top, and
+# is seen once the top is hidden in Edit Mode. Blender is asked for nothing:
+# the view is this stand-in, and there is no window here to ask.
+from mathutils import Matrix  # noqa: E402
+
+
+class View:
+    view_matrix = Matrix.Translation((-0.5, -0.5, -10.0))   # the eye at (0.5, 0.5, 10), looking down
+    perspective_matrix = Matrix.Diagonal((0.2, 0.2, -0.01, 1.0)) @ view_matrix
+
+    def __init__(self, is_perspective):
+        self.is_perspective = is_perspective
+
+
+class Region:
+    width, height = 800, 600
+
+
+def looker(report, is_perspective):
+    stand_in = type("Context", (), {"region": Region(), "region_data": View(is_perspective)})()
+    return reflection.Visibility(stand_in, report)
+
+
+# The cube as it was made: the moves above had pushed its first vertex along x.
+bm = bmesh.from_edit_mesh(ball.data)
+bm.verts.ensure_lookup_table()
+bm.verts[0].co = corner_of(0)
+bmesh.update_edit_mesh(ball.data)
+report = reflection.check(ball, settings, report)
+ball.matrix_world = Matrix.Diagonal((2.0, 2.0, 3.0, 1.0))   # a scale that is not the same along each axis
+top, bottom = Vector((0.5, 0.5, 1.0)), Vector((0.5, 0.5, 0.0))
+for is_perspective in (False, True):
+    seen = looker(report, is_perspective)
+    assert seen.sees(ball, top) and not seen.sees(ball, bottom), is_perspective
+    assert seen.rays == 2 and seen.sees(ball, top) and seen.rays == 2    # asked once for a point
+bm = bmesh.from_edit_mesh(ball.data)
+bm.faces.ensure_lookup_table()
+upper = next(f for f in bm.faces if all(v.co.z > 0.5 for v in f.verts))
+upper.hide_set(True)
+bmesh.update_edit_mesh(ball.data, loop_triangles=False, destructive=False)
+report = reflection.check(ball, settings, report)
+for is_perspective in (False, True):
+    assert looker(report, is_perspective).sees(ball, bottom), is_perspective
+bpy.ops.mesh.reveal()
+bpy.ops.mesh.select_all(action="DESELECT")
+report = reflection.check(ball, settings, report)
+ball.matrix_world = Matrix.Identity(4)
+
+
+class Window:
+    def __init__(self, *names):
+        self.modal_operators = [type("Operator", (), {"bl_idname": name})() for name in names]
+
+
+class Windows:
+    def __init__(self, *windows):
+        self.window_manager = type("Manager", (), {"windows": list(windows)})()
+
+
+# A modal operator in any window: busy. None: not.
+assert reflection.busy(Windows(Window(), Window("TRANSFORM_OT_vert_slide"))) == "TRANSFORM_OT_vert_slide"
+assert reflection.busy(Windows(Window(), Window())) is None and reflection.busy() is None
+
+# While one runs, the timer looks at nothing and comes back later; once it
+# has ended, it looks.
+real_busy, real_look = reflection.busy, reflection.look
+looked = []
+reflection.look = lambda *args, **kwargs: looked.append("look")
+reflection._last_change = time.monotonic() - 10.0
+reflection.busy = lambda context=None: "TRANSFORM_OT_vert_slide"
+assert reflection._wait() == reflection.SETTLE_SECONDS and looked == []
+reflection.busy = lambda context=None: None
+assert reflection._wait() is None and looked == ["look"]
+
+
+# An error in the timer or in the draw goes no further, and is said once.
+def fails(*_args, **_kwargs):
+    looked.append("failed")
+    raise RuntimeError("on purpose")
+
+
+reflection.look = fails
+said = len(reflection._said)
+assert reflection._wait() is None and reflection._wait() is None
+assert len(reflection._said) == said + 1 and not reflection._timer_set
+reflection.look, reflection.busy = real_look, real_busy
+real_draw, reflection._draw = reflection._draw, fails
+looked.clear()
+reflection.draw_view()
+reflection.draw_view()
+assert looked == ["failed"], looked            # not tried again for this cage
+reflection._cage_changed()
+reflection.draw_view()
+assert looked == ["failed", "failed"]          # tried again once it has changed
+reflection._draw = real_draw
+reflection.look(bpy.context)
+reflection._pending = False
+
+# A cage that is not sound is never given to the engine: a vertex at no
+# finite place stops the look, and the operator reports it and is cancelled.
+bm = bmesh.from_edit_mesh(ball.data)
+bm.verts.ensure_lookup_table()
+kept = bm.verts[0].co.x
+bm.verts[0].co.x = float("nan")
+checks = stats.checks
+try:
+    reflection.cage_arrays(ball)
+    raise AssertionError("a cage with a vertex at no finite place was read")
+except ValueError:
+    pass
+try:
+    bpy.ops.mesh.openclare_reflection_check()
+    raise AssertionError("the check of such a cage was not cancelled")
+except RuntimeError as error:
+    assert "finite" in str(error), error
+try:
+    bpy.ops.mesh.openclare_reflection_repair()
+    raise AssertionError("the repair of such a cage was not cancelled")
+except RuntimeError as error:
+    assert "finite" in str(error), error
+assert stats.checks == checks
+bm = bmesh.from_edit_mesh(ball.data)
+bm.verts.ensure_lookup_table()
+bm.verts[0].co.x = kept
+bmesh.update_edit_mesh(ball.data)
+assert bpy.ops.mesh.openclare_reflection_check() == {"FINISHED"}
+
 bpy.ops.object.mode_set(mode="OBJECT")
+# Out of Edit Mode there is no edit mesh to read.
+try:
+    reflection.edit_mesh(ball)
+    raise AssertionError("an edit mesh was had out of Edit Mode")
+except ValueError:
+    pass
+print("HARDENING ok")
 
 # Without a Catmull-Clark modifier, nothing is checked.
 plain = cage("plain cube", [corner_of(v) for v in range(8)], CUBE)
