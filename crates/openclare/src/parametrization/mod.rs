@@ -68,7 +68,27 @@ pub struct Report {
     pub distortion_mean: f64,
     /// Largest ratio between the two stretches of a face (1 is ideal).
     pub stretch_max: f64,
+    /// The face of the work mesh that has it, if any face is stretched.
+    pub stretch_max_face: Option<usize>,
+    /// The faces of the work mesh that folded over at some round of the
+    /// stiffening.
+    pub folded_faces: Vec<usize>,
+    /// How many faces away from the nearest of those the worst stretch is
+    /// (0 on one of them); `None` when no face folded.
+    pub stretch_max_from_fold: Option<usize>,
+    /// Faces of the map kept that are stretched or skewed past what is
+    /// tolerated.
+    pub distorted_faces: usize,
+    /// Of those, how many lie within [`NEAR_FOLDS`] faces of one that
+    /// folded, one count per distance.
+    pub distorted_near_folds: [usize; NEAR_FOLDS.len()],
+    /// The share of the excess of stretch and skew, weighted by area, that
+    /// lies within the same distances.
+    pub excess_near_folds: [f64; NEAR_FOLDS.len()],
 }
+
+/// The distances, in faces, at which [`Report::distorted_near_folds`] counts.
+pub const NEAR_FOLDS: [usize; 5] = [1, 2, 4, 8, 16];
 
 /// `(u, v)` per corner of the work mesh, on the surface cut open.
 pub struct Parametrization {

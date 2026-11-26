@@ -463,6 +463,33 @@ impl<'a> Problem<'a> {
         }
     }
 
+    /// How many faces away from the nearest face of `sources` each face is,
+    /// going from a face to the ones across its edges; `None` where none
+    /// can be reached, or when `sources` names no face.
+    pub fn faces_away(&self, sources: &[bool]) -> Vec<Option<usize>> {
+        let mut away = vec![None; sources.len()];
+        let mut front: Vec<usize> = (0..sources.len()).filter(|&f| sources[f]).collect();
+        for &f in &front {
+            away[f] = Some(0);
+        }
+        let mut distance = 0;
+        while !front.is_empty() {
+            distance += 1;
+            let mut next = Vec::new();
+            for f in front {
+                for h in 3 * f..3 * f + 3 {
+                    let g = self.frames.across[h];
+                    if g != INVALID && away[g as usize].is_none() {
+                        away[g as usize] = Some(distance);
+                        next.push(g as usize);
+                    }
+                }
+            }
+            front = next;
+        }
+        away
+    }
+
     pub fn quality(&self, uv: &[[f64; 2]]) -> Quality {
         Quality::measure(uv, &self.ideal, &self.frames.area)
     }
@@ -597,11 +624,13 @@ pub(super) struct Quality {
     pub distortion_mean: f64,
     /// Largest ratio between the two stretches of a face.
     pub stretch_max: f64,
+    /// The face that has it, if any face is stretched at all.
+    pub stretch_max_face: Option<usize>,
 }
 
 impl Quality {
     fn measure(uv: &[[f64; 2]], ideal: &[[[f64; 2]; 3]], areas: &[f64]) -> Self {
-        let mut quality = Quality { flipped: Vec::new(), distortion_mean: 0.0, stretch_max: 1.0 };
+        let mut quality = Quality { flipped: Vec::new(), distortion_mean: 0.0, stretch_max: 1.0, stretch_max_face: None };
         let mut total_area = 0.0;
         for (f, corners) in ideal.iter().enumerate() {
             let ideal_area = signed_area(corners);
@@ -625,8 +654,9 @@ impl Quality {
             let norm = j[0][0].powi(2) + j[0][1].powi(2) + j[1][0].powi(2) + j[1][1].powi(2);
             let gap = (norm * norm - 4.0 * jacobian * jacobian).max(0.0).sqrt();
             let (largest, smallest) = (((norm + gap) / 2.0).sqrt(), ((norm - gap) / 2.0).max(0.0).sqrt());
-            if jacobian > FOLDED && smallest > 0.0 {
-                quality.stretch_max = quality.stretch_max.max(largest / smallest);
+            if jacobian > FOLDED && smallest > 0.0 && largest / smallest > quality.stretch_max {
+                quality.stretch_max = largest / smallest;
+                quality.stretch_max_face = Some(f);
             }
         }
         quality.distortion_mean /= total_area.max(f64::MIN_POSITIVE);

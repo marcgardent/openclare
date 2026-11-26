@@ -288,6 +288,7 @@ pub(super) fn untangle(
     let total_area: f64 = problem.frames.area.iter().sum();
     let mut best: Option<Best> = None;
     let (mut round, mut fold_rounds, mut passes_done) = (0, 0, 0);
+    let mut folded = vec![false; problem.frames.area.len()];
     loop {
         let (x, mismatch) = match problem.solve(weights, constraints, solver) {
             Ok(solved) => solved,
@@ -324,6 +325,9 @@ pub(super) fn untangle(
                 weights: kept_weights,
             });
         }
+        for &f in &quality.flipped {
+            folded[f] = true;
+        }
         if !quality.flipped.is_empty() {
             let heaviest = quality.flipped.iter().map(|&f| weights[f]).fold(0.0, f64::max);
             if heaviest >= MAX_STIFFNESS {
@@ -351,5 +355,26 @@ pub(super) fn untangle(
         weights.copy_from_slice(&kept_weights);
     }
     *report = kept.report;
+    near_folds(problem, &kept.uv, &folded, report);
     Ok(kept.uv)
+}
+
+/// Fills in where the stretch and skew of the map `uv` lie from the faces
+/// that `folded` at some round: what tells a leftover of the stiffening
+/// against folds from a stretch the field asked for.
+fn near_folds(problem: &Problem, uv: &[[f64; 2]], folded: &[bool], report: &mut Report) {
+    let away = problem.faces_away(folded);
+    let distortion = problem.distortion(uv);
+    report.folded_faces = (0..folded.len()).filter(|&f| folded[f]).collect();
+    report.stretch_max_face = problem.quality(uv).stretch_max_face;
+    report.stretch_max_from_fold = report.stretch_max_face.and_then(|f| away[f]);
+    report.distorted_faces = distortion.iter().filter(|&&d| d > 0.0).count();
+    let excess = |f: usize| distortion[f] * problem.frames.area[f];
+    let total: f64 = (0..distortion.len()).map(excess).sum();
+    for (k, &reach) in super::NEAR_FOLDS.iter().enumerate() {
+        let near = |f: &usize| distortion[*f] > 0.0 && away[*f].is_some_and(|d| d <= reach);
+        report.distorted_near_folds[k] = (0..distortion.len()).filter(near).count();
+        report.excess_near_folds[k] =
+            (0..distortion.len()).filter(near).map(excess).sum::<f64>() / total.max(f64::MIN_POSITIVE) + 0.0;
+    }
 }

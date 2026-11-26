@@ -1235,6 +1235,33 @@ fn parametrize_command(args: &[String]) -> Result<(), String> {
         println!("distortion     {} of those rounds against stretch and skew", report.distortion_passes);
     }
     println!("distortion     mean {:.4}, worst stretch {:.2}", report.distortion_mean, report.stretch_max);
+    let centre = |f: usize| {
+        let corners = work.mesh.triangles[f].map(|v| work.mesh.positions[v as usize]);
+        (corners[0] + corners[1] + corners[2]) / 3.0
+    };
+    if let Some(f) = report.stretch_max_face {
+        let at = centre(f);
+        println!("worst stretch  on face {f}, at {:.3} {:.3} {:.3}", at.x, at.y, at.z);
+    }
+    match report.stretch_max_from_fold {
+        Some(away) => println!(
+            "folds          {} faces folded at some round; the worst stretch is {away} faces from the nearest",
+            report.folded_faces.len()
+        ),
+        None => println!("folds          {} faces folded at some round", report.folded_faces.len()),
+    }
+    for &f in &report.folded_faces {
+        let at = centre(f);
+        println!("fold           face {f}, at {:.3} {:.3} {:.3}", at.x, at.y, at.z);
+    }
+    let near = |values: &[String]| values.join(" / ");
+    println!(
+        "off tolerance  {} faces stretched or skewed; within {} faces of a fold: {} (of the excess: {} %)",
+        report.distorted_faces,
+        near(&parametrization::NEAR_FOLDS.map(|n| n.to_string())),
+        near(&report.distorted_near_folds.map(|n| n.to_string())),
+        near(&report.excess_near_folds.map(|share| format!("{:.0}", 100.0 * share))),
+    );
     println!("conditions     worst mismatch {:.2e}, {} whole numbers imposed", report.seam_error, report.integers);
     println!("seconds        {seconds:.3}");
     Ok(())
