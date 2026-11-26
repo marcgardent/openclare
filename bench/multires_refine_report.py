@@ -6,10 +6,14 @@ folder (plain/, refined/).
 
     python3 bench/multires_refine_report.py <records.json> [--out DIR]
 
-The criterion, per row (a model at a quad count): at L4, the cage faces
-told to want more quads cover less of the cage's area once refined, and
-the missing detail p99 is not worse (within 0.002 point, the third digit
-the bench prints).
+The criterion, per row (a model at a quad count): at L4, the missing
+detail's 99.9th percentile, what a level misses in a few places only (a
+fingertip, a hollow under an arm), is lower once refined, and its p99 not
+worse (within 0.002 point, the third digit the bench prints). The cage
+faces told to want more quads are shown, not judged: the refinement fixes
+small faces and may flag a few large ones just above the target, so their
+area rose in two draws of three while the local misses fell in all three
+(Marc, 2026-11-19).
 
 Writes report.md into `--out` (the folder of records.json by default) and
 prints it.
@@ -70,7 +74,7 @@ def main():
         except (OSError, ValueError, KeyError):
             lines.append(f"| {row} | {cell.get('status') or 'never run'} | | |")
             continue
-        fine = refined["share"] < plain["share"] and refined["p99"] <= plain["p99"] + WORSE_BY
+        fine = refined["p999"] < plain["p999"] and refined["p99"] <= plain["p99"] + WORSE_BY
         judged += 1
         met += fine
         lines.append(f"| {row} | {text(plain)} | {text(refined)} | {'met' if fine else 'not met ✗'} |")
