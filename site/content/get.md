@@ -8,8 +8,10 @@ This is the Community edition of the add-on.
 
 One archive holds everything: the add-on and its engine, compiled. There is nothing else to install, no Python package, no program beside it, and nothing is downloaded when it runs.
 
-1. Take the archive of your system from the [releases](https://github.com/marcgardent/openclare/releases): `openclare-<version>-<platform>.zip`, the platform being `linux-x64`, `windows-x64`, `macos-arm64` or `macos-x64`. Or build it yourself (below).
-2. In Blender 4.2 or later: *Edit › Preferences › Get Extensions*, the arrow at the top right, *Install from Disk*, and pick the archive.
+- **From Blender, with its updates.** In Blender 4.2 or later, online access allowed: *Edit › Preferences › Get Extensions*, *Repositories*, *+*, *Add Remote Repository*, and paste `https://marcgardent.github.io/openclare/extensions/index.json`. Then install *openclare* from *Get Extensions*: Blender takes the archive of its own system, and offers each new release. The [page of the repository](https://marcgardent.github.io/openclare/extensions/) says which version it holds.
+- **Or from an archive.** Take the archive of your system from the [releases](https://github.com/marcgardent/openclare/releases): `openclare-<version>-<platform>.zip`, the platform being `linux-x64`, `windows-x64`, `macos-arm64` or `macos-x64`, or build it yourself (below). Then *Edit › Preferences › Get Extensions*, the arrow at the top right, *Install from Disk*, and pick the archive. Blender does not update an add-on installed this way. To move to the repository, remove it first, or Blender keeps both copies.
+
+These pages describe add-on {{addon}}, the one of the main branch: the latest release can be older.
 
 A panel named *openclare* appears in the Properties editor, on the tab of the mesh (Object Data). Select a mesh, set what follows, press *Remesh to Quads*. The result is a new object beside the original, which is left as it is. The engine runs in the background: Blender stays free, and the panel shows a bar of its progress with a button to stop it.
 

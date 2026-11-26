@@ -4,6 +4,9 @@ name: pages
 # published by GitHub Pages (Settings › Pages › Source: GitHub Actions) on
 # every push to main. The PDFs of the research papers, which the site serves,
 # are not in the repository: papers.yml builds them from the commit pushed.
+# The site also serves the add-on's extension repository (extensions/, #344),
+# made from the latest published release; extensions.yml runs this workflow
+# on main when a release is published, so that it lists the new one.
 on:
   push:
     branches: [main]
@@ -34,6 +37,12 @@ jobs:
       # copied as they are rather than made WebP, a few hundred kilobytes more.
       - name: Build
         run: python3 site/build.py
+      # The latest published release's add-on archives, checked against its
+      # SHA256SUMS, with the index.json Blender reads (scripts/extensions.py).
+      - name: The extension repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/extensions.py --out site/_build/extensions
       - name: Check the links
         run: python3 site/check_links.py
       - uses: actions/upload-pages-artifact@v5
