@@ -2,7 +2,7 @@
 
 *[English version](LOOP_EDITING.md)*
 
-**État :** validé le 27 novembre 2026 ; jalon 1 écrit (greffon 0.28.0), les autres pas encore.
+**État :** validé le 27 novembre 2026 ; jalons 1 et 2 écrits (greffon 0.29.0), les autres pas encore. Le jalon 2 s'écarte des sections 1 et 5 sur trois points, pour l'instant : l'analyse est celle qu'a faite *Analyse*, pas lancée d'elle-même ; avec *Sizes*, la taille unique d'avant elle est le *Largest* ; les arêtes dures ne rendent pas une rangée rouge.
 
 Aujourd'hui, une loop se demande en traçant une courbe : *Draw Curve* ou *Cut Volume* crée un
 objet courbe, enfant du maillage et tenu dessus par un Shrinkwrap, que le moteur pose dans le
@@ -169,6 +169,7 @@ fiole expérimentale.
 - Le nombre d'arêtes le long d'une loop demandé (12 autour d'un œil), qui demande le moteur : le
   compte de la section 5 dit ce que donne la taille, il n'en demande pas un autre.
 - Le nombre de quads entre deux loops (un anneau d'arêtes), de même.
+- Une v2 avec un réglage de plusieurs loops : les rangées de part et d'autre tenues elles aussi, pas seulement la ligne du milieu (demandé par Marc le 27 novembre 2026). D'ici là, seule la loop va au moteur ; les rangées sont ce que demande la taille.
 - Une loop tracée d'un côté reflétée de l'autre sous *Symmetry* ; d'ici là, les loops passent
   la coupe comme les courbes.
 

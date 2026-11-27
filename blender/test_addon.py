@@ -643,6 +643,55 @@ assert len(sharp_off) >= 12, "a loop a little off the surface is lost"
 alone(ball)
 assert openclare.loops.owner_shown(bpy.context) == ball
 assert bpy.ops.object.openclare_loops_clear() == {"FINISHED"} and not project.items
+
+
+# The quads along the loops (milestone 2): a loop round the equator of the
+# ball, of radius r = 1, has 2πr / h edges round it, h the quad size of the
+# project; a second loop closer than h is red on the side facing the other,
+# one further away is not.
+def latitude(height, count=360):
+    ring = (1.0 - height ** 2) ** 0.5
+    return [(ring * math.cos(2 * math.pi * k / count), ring * math.sin(2 * math.pi * k / count), height)
+            for k in range(count)]
+
+
+def quads_now():
+    rows = openclare.loops.quads_along(bpy.context, ball)
+    return rows, openclare.loops.size_field(bpy.context, ball)
+
+
+equator = openclare.loops.add(ball.data, latitude(0.0), True, (False, 0.0, False))
+settings.target, settings.quads = "COUNT", 600
+rows, field = quads_now()
+assert field.sizes is None, "sizes from an analysis that does not hold"
+round_it = 2 * math.pi / field.uniform
+print("LOOP QUADS uniform size %.4f:" % field.uniform, rows[0]["edges"], "edges round, 2πr/h = %.1f" % round_it)
+assert abs(rows[0]["edges"] - round_it) <= 1.5 and not rows[0]["red_left"].any() and not rows[0]["red_right"].any()
+assert openclare.loops.row_text(rows[0]) == f"{rows[0]['edges']} round"
+# With Sizes, analysed: the size of the analysis, a Largest of 0.1.
+shape(settings, "organic")
+settings.target, settings.largest_quad, settings.smallest_quad, settings.adaptive_size = "SIZE", 0.1, 0.05, 0.0
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+settings.largest_quad, settings.smallest_quad = 0.1, 0.05
+rows, field = quads_now()
+assert field.sizes is not None and "from the analysis" in field.said(), field.said()
+print("LOOP QUADS analysed:", field.said(), ";", rows[0]["edges"], "edges round, 2πr/h = %.1f" % (2 * math.pi / 0.1))
+assert abs(rows[0]["edges"] - 2 * math.pi / 0.1) <= 3, rows[0]["edges"]
+# A second loop 0.05 above: red between the two; 0.4 above, not.
+for height, red in ((0.05, True), (0.4, False)):
+    beside = openclare.loops.add(ball.data, latitude(height), True, (False, 0.0, False))
+    rows, _ = quads_now()
+    reds = [bool(row["red_left"].any() or row["red_right"].any()) for row in rows]
+    print("LOOP QUADS a second loop at height", height, "red:", reds)
+    assert reds == [red, red], reds
+    project.items.remove(len(project.items) - 1)
+# An open loop: two ends, each needing a pole.
+project.items.remove(0)
+openclare.loops.add(ball.data, latitude(0.0)[:90], False, (False, 0.0, False))
+rows, _ = quads_now()
+assert len(rows[0]["ends"]) == 2 and openclare.loops.row_text(rows[0]).endswith("2 ends")
+project.items.clear()
+settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
 settings.quads, settings.adaptive_size = 800, 50.0
 
 # Materials: a flat grid whose left third is of another material. The result

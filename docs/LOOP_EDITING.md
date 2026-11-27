@@ -2,7 +2,7 @@
 
 *[Version française](LOOP_EDITING.fr.md)*
 
-**State:** validated on 27 November 2026; milestone 1 written (add-on 0.28.0), the others not yet.
+**State:** validated on 27 November 2026; milestones 1 and 2 written (add-on 0.29.0), the others not yet. Milestone 2 departs from section 1 and 5 in three ways, for now: the analysis is the one *Analyse* made, not started by itself; with *Sizes* the one size before it is the *Largest*; hard edges do not make a row red.
 
 Today a loop is asked for by drawing a curve: *Draw Curve* or *Cut Volume* makes a curve
 object, child of the mesh and held on it by a Shrinkwrap, which the engine lays into the work
@@ -161,6 +161,7 @@ the experimental flask.
 - The number of edges along a loop asked for (12 round an eye), which needs the engine: the
   count of section 5 says what the size gives, it does not ask for another.
 - The number of quads between two loops (an edge ring), the same.
+- A v2 with a setting of several loops: the rows either side held too, not only the line in the middle (asked by Marc on 27 November 2026). Until then only the loop itself goes to the engine; the rows are what the size asks for.
 - A loop drawn on one side mirrored on the other under *Symmetry*; until then, the loops go
   through the cut as the curves do.
 
