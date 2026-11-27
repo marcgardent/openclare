@@ -86,6 +86,9 @@ fn bridge(mesh: &DynamicMesh, from: u32, to: u32, reach: f64, taken: &[u32]) -> 
 /// A crossing nearer than this to an end of the edge, as a share of its
 /// length, uses the vertex there instead of making a new one next to it.
 const SNAP: f64 = 0.2;
+/// A vertex nearer than this to where the curve crosses, as a share of the
+/// mean edge, is on the curve already.
+const THERE: f64 = 1e-6;
 
 /// Cuts `curves` into `mesh`, whose shape is `surface` (with `face_normals`
 /// for its triangles), and marks them as lines to keep.
@@ -256,9 +259,15 @@ pub(crate) fn imprint(mesh: &mut DynamicMesh, surface: &Bvh, face_normals: &[Vec
             // to it, if it can be brought onto the curve: one that is held,
             // or that would fold a triangle, is left alone and the edge is
             // split after all.
+            // A vertex the curve already goes through (a curve drawn along
+            // the edges of the mesh) is taken as it is, whatever holds it:
+            // splitting the edge there would put a second vertex on it, and
+            // the two would make a triangle with no area.
             let close = if t < SNAP { Some(a) } else { Some(b).filter(|_| t > 1.0 - SNAP) };
             let moved = close.filter(|&v| {
-                !on.contains_key(&v) && mesh.feature_degree(v) == 0 && mesh.move_keeps_orientation(v, point, u32::MAX)
+                let there = mesh.positions[v as usize].distance(point) <= THERE * spacing;
+                !on.contains_key(&v)
+                    && (there || mesh.feature_degree(v) == 0 && mesh.move_keeps_orientation(v, point, u32::MAX))
             });
             let vertex = match (moved, close) {
                 (Some(v), _) => {
