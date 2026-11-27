@@ -2,7 +2,7 @@
 
 *[English version](LOOP_EDITING.md)*
 
-**État :** brouillon pour revue, 27 novembre 2026. Rien n'en est encore écrit.
+**État :** validé le 27 novembre 2026 ; jalon 1 écrit (greffon 0.28.0), les autres pas encore.
 
 Aujourd'hui, une loop se demande en traçant une courbe : *Draw Curve* ou *Cut Volume* crée un
 objet courbe, enfant du maillage et tenu dessus par un Shrinkwrap, que le moteur pose dans le

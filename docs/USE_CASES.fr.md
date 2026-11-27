@@ -12,7 +12,7 @@ dit ; *revue* est dans une pull request ; *prévu* a un ticket.
 
 | Usage | Qui | Ce qu'il demande | Ce qui y répond | Édition | État |
 |---|---|---|---|---|---|
-| Une sculpture faite maillage à animer | artistes de personnages | des quads, peu de sommets irréguliers, des boucles autour des yeux, de la bouche, des articulations | le remaillage ; les courbes tracées sur le modèle, la boucle autour d'un membre avec Cut Volume | Community | fait ; les courbes expérimentales |
+| Une sculpture faite maillage à animer | artistes de personnages | des quads, peu de sommets irréguliers, des boucles autour des yeux, de la bouche, des articulations | le remaillage ; les courbes tracées sur le modèle, la boucle autour d'un membre avec Cut Volume ; les loops gardées sur le maillage, à éditer directement ([LOOP_EDITING.fr.md](LOOP_EDITING.fr.md)) | Community | fait ; les courbes et les loops expérimentales, l'outil des loops en cours |
 | Une pièce mécanique en quads propres | modeleurs hard surface | ses arêtes vives gardées comme lignes d'arêtes | Hard Edges, Marked Sharp | Community | fait |
 | Un maillage prêt pour la subdivision | modeleurs | les arêtes vives qui restent vives sous un Subdivision Surface | des poids de crease sur les arêtes vives, et sur les arêtes le long d'une courbe selon la courbe | Community | fait ; par courbe expérimental |
 | Un maillage qui garde la forme une fois subdivisé | modeleurs, artistes de personnages | que le maillage subdivisé, pas le maillage de quads, garde le volume et suive la forme | `--fitter limit-surface` : la surface limite de la subdivision ajustée à la forme | Community | expérimental, en ligne de commande seulement (#39) |

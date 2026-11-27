@@ -22,7 +22,7 @@ import bpy
 from bl_operators.presets import AddPresetBase
 from bl_ui.utils import PresetPanel
 
-from . import draw, engine, experimental, extend, poles, preview, reflection
+from . import draw, engine, experimental, extend, loops, poles, preview, reflection
 
 PRESETS = [
     ("organic", "Organic", "Sculpts and characters: edges follow the shape closely, quads are smaller where it bends"),
@@ -1530,8 +1530,14 @@ class Remeshing:
         source = evaluated.to_mesh()
         try:
             engine_settings, density = engine_settings_of(original, evaluated, source)
-            # Curves and poles are experimental: hidden, there are none.
-            self.curves, marks = curves_of(original) if experimental.shown() else ([], [])
+            # Loops, curves and poles are experimental: hidden, there are
+            # none. The loops first, then the curve objects: one list, the
+            # index of each kept for its marks.
+            self.curves, marks = ([], [])
+            if experimental.shown():
+                for curves, marked in (loops.loops_of(original.data), curves_of(original)):
+                    self.curves += curves
+                    marks += marked
             given = engine_input(
                 source, BASE_PRESET, engine_settings, density, settings.export_materials, copy,
                 sharp=settings.use_marked_sharp, stretch=stretch_of(original), curves=self.curves, curve_marks=marks,
@@ -2474,6 +2480,7 @@ class OPENCLARE_PT_curves(DataPanel, bpy.types.Panel):
         if not drawn:
             layout.label(text="Draw Curve or Cut Volume in the toolbar (T), or parent a curve here", icon="INFO")
             return
+        layout.operator(loops.OPENCLARE_OT_curves_to_loops.bl_idname)
         column = layout.column(align=True)
         for curve in drawn:
             row = column.row(align=True)
@@ -2511,6 +2518,42 @@ class OPENCLARE_PT_poles(DataPanel, bpy.types.Panel):
         row = layout.row(align=True)
         row.operator(poles.OPENCLARE_OT_poles_free.bl_idname)
         row.operator(poles.OPENCLARE_OT_poles_clear.bl_idname)
+
+
+class OPENCLARE_PT_loops(DataPanel, bpy.types.Panel):
+    """The loops of the retopo project: lines on the object the result is to
+    have edges along"""
+
+    bl_label = "Loops"
+    bl_idname = "OPENCLARE_PT_loops"
+    bl_parent_id = "OPENCLARE_PT_input"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context):
+        return is_source(context) and experimental.shown()
+
+    def draw_header(self, context):
+        self.layout.label(text="", icon=experimental.ICON)
+
+    def draw(self, context):
+        layout = self.layout
+        owner = object_to_remesh(context)
+        project = owner.data.openclare_loops
+        if not project.items:
+            layout.label(text="Convert the curves drawn on the object into loops", icon="INFO")
+            layout.operator(loops.OPENCLARE_OT_curves_to_loops.bl_idname)
+            return
+        layout.label(text=loops.summary(project))
+        column = layout.column(align=True)
+        for loop in project.items:
+            row = column.row(align=True)
+            row.label(text=loop.name, icon="CURVE_PATH")
+            row.label(text=loops.marks_text(loop))
+        layout.prop(project, "show")
+        row = layout.row(align=True)
+        row.operator(loops.OPENCLARE_OT_curves_to_loops.bl_idname)
+        row.operator(loops.OPENCLARE_OT_loops_clear.bl_idname)
 
 
 class OPENCLARE_PT_curve(DataPanel, bpy.types.Panel):
@@ -2565,6 +2608,7 @@ CLASSES = (
     OPENCLARE_PT_output,
     OPENCLARE_PT_go,
     OPENCLARE_PT_curves,
+    OPENCLARE_PT_loops,
     OPENCLARE_PT_poles,
     OPENCLARE_PT_curve,
 )
@@ -2588,6 +2632,7 @@ def register():
     preview.register()
     draw.register()
     poles.register()
+    loops.register()
     reflection.register()
     experimental.register(draw.tools, poles.tools)
     bpy.types.Object.openclare = bpy.props.PointerProperty(type=OpenclareSettings)
@@ -2621,6 +2666,7 @@ def unregister():
     preview.unregister()
     draw.unregister()
     poles.unregister()
+    loops.unregister()
     reflection.unregister()
     bpy.utils.unregister_preset_path(ADDON_FOLDER)
     for handlers, handler in HANDLERS:

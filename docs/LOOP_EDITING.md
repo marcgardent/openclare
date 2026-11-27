@@ -2,7 +2,7 @@
 
 *[Version française](LOOP_EDITING.fr.md)*
 
-**State:** draft for review, 27 November 2026. Nothing here is written yet.
+**State:** validated on 27 November 2026; milestone 1 written (add-on 0.28.0), the others not yet.
 
 Today a loop is asked for by drawing a curve: *Draw Curve* or *Cut Volume* makes a curve
 object, child of the mesh and held on it by a Shrinkwrap, which the engine lays into the work
