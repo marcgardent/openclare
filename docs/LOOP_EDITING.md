@@ -71,13 +71,13 @@ click would do is shown before it is done, as the snap circle of *Draw Curve* is
 | Gesture | Input | What it does |
 |---|---|---|
 | **Draw** | left drag | a new loop along the stroke, with everything *Draw Curve* has: the rope, back along the stroke to undo, *Ridge*/*Valley* snap, F for the radius. Let go with the mouse on its start (not the point on the rope, which lags): closed; a ring round the start fills while letting go would close it. The quads along it are drawn as it goes. |
-| **Ring** | Alt + left drag | a closed loop all round a limb, as *Cut Volume* makes it. |
-| **Pick** | Shift + click on an edge of the result | the edge loop of the quad mesh through that edge becomes a loop: walked through vertices of four edges, stopped at a pole or a border, closed if it comes back. Each Shift + click past a pole carries it on to the next one. |
+| **Ring** | Ctrl + left drag | a closed loop all round a limb, as *Cut Volume* makes it. |
+| **Pick** | Ctrl + Shift + click on an edge of the result | the edge loop of the quad mesh through that edge becomes a loop: walked through vertices of four edges, stopped at a pole or a border, closed if it comes back. Each Ctrl + Shift + click past a pole carries it on to the next one. |
 | **Move** | left drag on a loop, away from its ends | the points within the radius, along the loop, slide on the surface with the mouse, the farther the less (the falloff of Blender's proportional editing); the loop stays on the surface and keeps its spacing. The radius is a circle round the mouse, shown with *Move* as soon as the mouse is over a loop; F there sets it, as it sets the radius of the snap elsewhere, and the wheel changes it while moving. |
-| **Redraw** | Ctrl + left drag starting on a loop and ending on it | the stretch between the two places is replaced by the stroke. |
+| **Redraw** | Shift + left drag starting on a loop and ending on it | the stretch between the two places is replaced by the stroke. |
 | **Join, Close** | a stroke or a Move that ends on an end | an end let go on the end of another loop joins the two; on the loop's own start, closes it. |
-| **Cut** | C + click on a loop | an open loop becomes two; a closed one is opened there. |
-| **Delete** | X + click on a loop | the loop goes. A stretch goes by cutting twice and deleting the middle. |
+| **Cut** | Ctrl + click on a loop, without dragging (a drag is Ring) | an open loop becomes two; a closed one is opened there. |
+| **Delete** | X with the mouse on a loop | the loop goes; elsewhere X does nothing under the tool, and never deletes the object. A stretch goes by cutting twice and deleting the middle. |
 | **Marks** | the header of the tool | *Sharp*, *Crease*, *Seam* for the loops to come, and for the loop under the mouse with M. |
 
 The rules of these gestures (where a stroke joins, what Redraw replaces, what Cut leaves, where
@@ -174,4 +174,4 @@ the experimental flask.
 - **D3**: *Loops* replaces *Draw Curve* and *Cut Volume* at milestone 3 (section 3).
 - **D4**: the order of the milestones; Draw first, then Pick (changed by Marc on 27 November
   2026: Pick came before Draw).
-- **D5**: the keys of section 3.
+- **D5**: the keys of section 3. None takes Alt, so that *Emulate 3 Button Mouse* keeps Alt + drag to orbit, Alt + Shift to pan and Alt + Ctrl to zoom (changed by Marc on 27 November 2026: Ring was Alt + drag, Redraw Ctrl + drag, Pick Shift + click, Cut C + click, Delete X + click).

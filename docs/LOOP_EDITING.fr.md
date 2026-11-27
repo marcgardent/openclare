@@ -75,13 +75,13 @@ s'allume ; ce qu'un clic ferait se voit avant d'être fait, comme le cercle d'ac
 | Geste | Entrée | Ce qu'il fait |
 |---|---|---|
 | **Draw** | glisser, bouton gauche | une nouvelle loop le long du trait, avec tout ce qu'a *Draw Curve* : la corde, le retour le long du trait pour défaire, l'accroche *Ridge*/*Valley*, F pour le rayon. Lâché avec la souris sur son départ (pas le point au bout de la corde, qui traîne) : fermée ; un anneau autour du départ se remplit tant que lâcher la fermerait. Les quads le long d'elle se dessinent à mesure. |
-| **Ring** | Alt + glisser | une loop fermée tout autour d'un membre, comme la fait *Cut Volume*. |
-| **Pick** | Maj + clic sur une arête du résultat | la loop d'arêtes du maillage de quads par cette arête devient une loop : parcourue par les sommets à quatre arêtes, arrêtée à un pôle ou à un bord, fermée si elle revient. Chaque Maj + clic au-delà d'un pôle la prolonge jusqu'au suivant. |
+| **Ring** | Ctrl + glisser | une loop fermée tout autour d'un membre, comme la fait *Cut Volume*. |
+| **Pick** | Ctrl + Maj + clic sur une arête du résultat | la loop d'arêtes du maillage de quads par cette arête devient une loop : parcourue par les sommets à quatre arêtes, arrêtée à un pôle ou à un bord, fermée si elle revient. Chaque Ctrl + Maj + clic au-delà d'un pôle la prolonge jusqu'au suivant. |
 | **Move** | glisser sur une loop, loin de ses bouts | les points dans le rayon, le long de la loop, glissent sur la surface avec la souris, d'autant moins qu'ils sont loin (l'atténuation de l'édition proportionnelle de Blender) ; la loop reste sur la surface et garde son espacement. Le rayon est un cercle autour de la souris, affiché avec *Move* dès que la souris est sur une loop ; F au-dessus d'elle le règle, comme il règle ailleurs le rayon de l'aimantation, et la molette le change pendant le déplacement. |
-| **Redraw** | Ctrl + glisser d'une loop jusqu'à elle | le tronçon entre les deux endroits est remplacé par le trait. |
+| **Redraw** | Maj + glisser d'une loop jusqu'à elle | le tronçon entre les deux endroits est remplacé par le trait. |
 | **Join, Close** | un trait ou un Move qui finit sur un bout | un bout lâché sur le bout d'une autre loop joint les deux ; sur le départ de la loop elle-même, la ferme. |
-| **Cut** | C + clic sur une loop | une loop ouverte en devient deux ; une fermée s'ouvre là. |
-| **Delete** | X + clic sur une loop | la loop s'en va. Un tronçon s'en va en coupant deux fois et en supprimant le milieu. |
+| **Cut** | Ctrl + clic sur une loop, sans glisser (glisser, c'est Ring) | une loop ouverte en devient deux ; une fermée s'ouvre là. |
+| **Delete** | X avec la souris sur une loop | la loop s'en va ; ailleurs, X ne fait rien sous l'outil et ne supprime jamais l'objet. Un tronçon s'en va en coupant deux fois et en supprimant le milieu. |
 | **Marks** | l'en-tête de l'outil | *Sharp*, *Crease*, *Seam* pour les loops à venir, et pour la loop sous la souris avec M. |
 
 Les règles de ces gestes (où un trait se joint, ce que Redraw remplace, ce que Cut laisse, où
@@ -183,4 +183,4 @@ fiole expérimentale.
 - **D3** : *Loops* remplace *Draw Curve* et *Cut Volume* au jalon 3 (section 3).
 - **D4** : l'ordre des jalons ; Draw d'abord, puis Pick (changé par Marc le 27 novembre 2026 :
   Pick venait avant Draw).
-- **D5** : les touches de la section 3.
+- **D5** : les touches de la section 3. Aucune ne prend Alt, pour que *Emulate 3 Button Mouse* garde Alt + glisser pour tourner, Alt + Maj pour déplacer la vue et Alt + Ctrl pour zoomer (changé par Marc le 27 novembre 2026 : Ring était Alt + glisser, Redraw Ctrl + glisser, Pick Maj + clic, Cut C + clic, Delete X + clic).
