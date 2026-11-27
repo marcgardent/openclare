@@ -33,6 +33,10 @@ the brush move toward the mean of the curve round them, as wide as the
 brush, the more the nearer its centre: the bends of the size of the brush
 and smaller go, as under Blender's Smooth brush. A closed curve rubbed all
 round draws in a little, as a mesh does under that brush.
+
+A curve moved or smoothed is laid on the surface again (`laid`): its points,
+and the points of the surface under the middle of any stretch that leaves
+it, as across an edge.
 """
 
 import math
@@ -265,6 +269,34 @@ def smoothed(points, closed, weights, reach, strength=0.5):
         mean = [a / mass for a in sums]
         pull = min(1.0, strength * weight)
         out.append(tuple(x + pull * (m - x) for x, m in zip(point, mean)))
+    return out
+
+
+def laid(points, closed, project, tolerance, depth=16):
+    """The curve kept on the surface between its points: where the middle of
+    a stretch is farther than `tolerance` from the surface (`project` gives
+    the nearest point of the surface), the point of the surface there is put
+    in, and both halves looked at again, `depth` times at most (round the
+    edge of a cube, each time halves the gap). A stretch across an edge of
+    the surface otherwise cuts through the volume."""
+    points = [tuple(point) for point in points]
+    count = len(points)
+
+    def between_on(a, b, depth):
+        if depth == 0:
+            return []
+        middle = tuple(0.5 * (x + y) for x, y in zip(a, b))
+        on = tuple(project(middle))
+        if distance(middle, on) <= tolerance:
+            return []
+        return between_on(a, on, depth - 1) + [on] + between_on(on, b, depth - 1)
+
+    out = []
+    for k in range(count if closed else count - 1):
+        out.append(points[k])
+        out.extend(between_on(points[k], points[(k + 1) % count], depth))
+    if not closed and count:
+        out.append(points[-1])
     return out
 
 

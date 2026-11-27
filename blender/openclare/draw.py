@@ -603,6 +603,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
                 after = tuple(found) if found is not None else after
             laid.append(after)
         laid = trace.resampled(laid, grab["spacing"], grab["closed"]) if grab["spacing"] > 0.0 else laid
+        laid = trace.laid(laid, grab["closed"], self.on_surface, self.pixel)
         loops.set_points(self.owner.data.openclare_loops.items[grab["loop"]], laid, grab["closed"])
 
     def start_smooth(self, context, start, mouse):
@@ -638,7 +639,12 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
                     found = self.tree.find_nearest(mathutils.Vector(point))[0]
                     point = tuple(found) if found is not None else point
                 laid.append(point)
-            loops.set_points(loop, laid, loop.closed)
+            loops.set_points(loop, trace.laid(laid, loop.closed, self.on_surface, self.pixel), loop.closed)
+
+    def on_surface(self, point):
+        """The point of the surface nearest `point`, or `point` if none."""
+        found = self.tree.find_nearest(mathutils.Vector(point))[0]
+        return tuple(found) if found is not None else tuple(point)
 
     def step_smooth(self, context, event):
         from . import loops
