@@ -2,7 +2,7 @@
 
 *[Version française](LOOP_EDITING.fr.md)*
 
-**State:** validated on 27 November 2026; milestones 1 to 3 written (add-on 0.29.0); then, on Marc's word, one tool for each action, with Move and Delete brought forward and Smooth added (0.30.0); the others not yet. Milestone 2 departs from section 1 and 5 in three ways, for now: the analysis is the one *Analyse* made, not started by itself; with *Sizes* the one size before it is the *Largest*; hard edges do not make a row red.
+**State:** validated on 27 November 2026; milestones 1 to 3 written (add-on 0.29.0); then, on Marc's word, one tool for each action, with Move and Delete brought forward and Smooth added (0.30.0), and Push, a brush where Move grabs (0.31.0); the others not yet. Milestone 2 departs from section 1 and 5 in three ways, for now: the analysis is the one *Analyse* made, not started by itself; with *Sizes* the one size before it is the *Largest*; hard edges do not make a row red.
 
 Today a loop is asked for by drawing a curve: *Draw Curve* or *Cut Volume* makes a curve
 object, child of the mesh and held on it by a Shrinkwrap, which the engine lays into the work
@@ -67,7 +67,7 @@ with the loops. *Convert Curves to Loops* turns them into loops, one per stretch
 One tool for each action, side by side in the toolbar (T) in Object Mode, on the mesh selected
 and active: no modifier key, no shortcut to learn beyond those Blender's own tools have (F for
 a radius, Esc to undo a drag). What a press would do is shown before it is done: the snap
-circle of *Draw Loop*, the brush circle of *Move Loop* and *Smooth Loop*, the loop in red under
+circle of *Draw Loop*, the brush circle of *Move Loop*, *Push Loop* and *Smooth Loop*, the loop in red under
 the mouse for *Delete Loop*.
 
 | Tool | Input | What it does |
@@ -75,6 +75,7 @@ the mouse for *Delete Loop*.
 | **Draw Loop** | drag | a new loop along the stroke, with everything *Draw Curve* has: the rope, back along the stroke to undo, *Ridge*/*Valley* snap, F for the radius. From an end of an open loop, takes it up again. Let go with the mouse on its start (not the point on the rope, which lags): closed; a ring round the start fills while letting go would close it. Marks of the loops to come in the header. |
 | **Ring Loop** | drag across a limb | a closed loop all round it, as *Cut Volume* makes it. Marks in the header. |
 | **Move Loop** | drag a loop | the point pressed follows the mouse on the surface; the points within the radius, along the loop, follow it the farther the less (the falloff of Blender's proportional editing); the loop stays on the surface and keeps its spacing. |
+| **Push Loop** | push the loops with the brush | what the brush covers goes away from its centre toward its edge, sideways to the loop, by the *Strength* of the header at each pass: the loop goes ahead of the brush as it moves, as under a sculpt brush that pushes. From on a loop, the loop goes the way the brush goes. |
 | **Smooth Loop** | rub the loops | the points under the brush move toward the mean of the loop round them, as wide as the brush, the more the nearer its centre, by the *Strength* of the header at each pass: the bends as wide as the brush and smaller go, as under Blender's Smooth brush. A closed loop rubbed all round draws in a little, as a mesh does under that brush. Moved or smoothed, a loop is laid on the surface again between its points too: a stretch that would cut through the volume, across an edge, gets the points of the surface under it. The ends of an open loop stay. |
 | **Delete Loop** | click a loop | the loop goes. |
 | **Cut Loop** | click a loop | an open loop becomes two; a closed one is opened there. A stretch goes by cutting twice and deleting the middle. |
@@ -82,7 +83,7 @@ the mouse for *Delete Loop*.
 | **Pick Loop** | click an edge of the result | the edge loop of the quad mesh through that edge becomes a loop: walked through vertices of four edges, stopped at a pole or a border, closed if it comes back. Each click past a pole carries it on to the next one. |
 | **Join, Close** | a stroke or a Move that ends on an end | an end let go on the end of another loop joins the two; on the loop's own start, closes it. |
 
-The brush of *Move Loop* and *Smooth Loop* is a circle round the mouse with the name of the
+The brush of *Move Loop*, *Push Loop* and *Smooth Loop* is a circle round the mouse with the name of the
 tool; F sets its radius, the wheel changes it while dragging; Esc or the right button puts the
 loops back. Each action is one step of undo. In the *Loops* panel each loop has its row: its
 count of edges, its marks (*Sharp*, *Seam*, *Crease*) set there, and a cross that deletes it;

@@ -81,4 +81,16 @@ hairpin = numpy.vstack([line(0.0, 0.0, 5.0, 100), line(0.2, 5.0, 0.0, 100)])
 made, _ = quads_of(hairpin, 0.5, False)
 assert made["red_left"].any() or made["red_right"].any()
 print("HAIRPIN a loop running back along itself 0.2 away is red")
+# Sizes of nothing, infinite, not a number or a thousand times too small
+# (an analysis gone wrong somewhere), and a point off in the infinite: the
+# count stays that of the others, never an error (it froze Blender: the
+# timer that lays the quads failed, and was asked again at each redraw).
+points = circle(1.0)
+sizes = numpy.full(len(points), 0.1)
+sizes[[3, 50, 100, 150]] = [0.0, numpy.inf, numpy.nan, 1e-320]
+points[200] = numpy.inf
+_, _, count = loop_quads.stations(points, sizes, True)
+assert 60 <= count <= 64, count
+assert loop_quads.stations(points, numpy.zeros(len(points)), True)[2] == 0
+print("BAD SIZES a size of 0, inf, nan, 1e-320 and a point at infinity: still", count, "edges round")
 print("loop quads: all good")

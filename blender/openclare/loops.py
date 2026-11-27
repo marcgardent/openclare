@@ -20,6 +20,8 @@ draw, by a timer, and kept while the loops, the shape and the sizes stay
 the same.
 """
 
+import math
+
 import bpy
 
 from . import experimental, loop_quads
@@ -197,7 +199,7 @@ class SizeField:
         offsets = self.positions[vertices] - point
         nearest = vertices[int((offsets * offsets).sum(axis=1).argmin())]
         size = float(self.sizes[nearest])
-        return size if size == size and size > 0.0 else self.uniform
+        return size if math.isfinite(size) and size > 0.0 else self.uniform
 
     def said(self):
         """The size, in words, in the units of the scene."""
@@ -304,8 +306,8 @@ def refresh():
     if key != QUADS["key"]:
         try:
             QUADS["made"] = quads_along(bpy.context, owner)
-        except (ReferenceError, RuntimeError, ValueError) as error:
-            print(f"openclare: the quads along the loops could not be laid: {error}")
+        except Exception as error:  # noqa: BLE001 - said once, and not tried again until the loops change
+            print(f"openclare: the quads along the loops could not be laid: {type(error).__name__}: {error}")
             QUADS["made"] = None
         QUADS["key"] = key
         redraw_views()
