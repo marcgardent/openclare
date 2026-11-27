@@ -11,7 +11,7 @@ A French version is in [USE_CASES.fr.md](USE_CASES.fr.md).
 
 | Use | Who | What it asks | What serves it | Edition | State |
 |---|---|---|---|---|---|
-| A sculpt made into a mesh to animate | character artists | quads, few irregular vertices, loops round eyes, mouth and joints | the remesh; loops drawn on the model with the Loops tool, a ring round a limb with Alt, moved by a drag, the quads along them shown ([LOOP_EDITING.md](LOOP_EDITING.md)) | Community | done; the loops experimental, cutting and deleting them under way |
+| A sculpt made into a mesh to animate | character artists | quads, few irregular vertices, loops round eyes, mouth and joints | the remesh; loops drawn on the model with the Loops tool, a ring round a limb with Ctrl, moved by a drag, the quads along them shown ([LOOP_EDITING.md](LOOP_EDITING.md)) | Community | done; the loops experimental, cutting and deleting them under way |
 | A mechanical part made into clean quads | hard-surface modellers | its hard edges kept as lines of edges | Hard Edges, Marked Sharp | Community | done |
 | A mesh ready for subdivision | modellers | the hard edges to stay sharp under a Subdivision Surface | crease weights on the hard edges, and on the edges along a curve as the curve says | Community | done; per curve experimental |
 | A mesh that keeps the shape once subdivided | modellers, character artists | the subdivided mesh, not the quad mesh, to keep the volume and lie on the shape | `--fitter limit-surface`: the limit surface of the subdivision fitted to the shape | Community | experimental, command line only (#39) |

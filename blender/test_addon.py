@@ -416,7 +416,9 @@ tools = [item for item in ToolSelectPanelHelper._tools_flatten(toolbar.tools_fro
          if item is not None]
 assert any(item.idname == "openclare.loops" for item in tools), "no Loops tool in the toolbar"
 assert not any(item.idname in {"openclare.draw_curve", "openclare.cut_volume"} for item in tools), "Draw Curve still there"
-loop_keys = {(entry[1]["type"], entry[1].get("alt", False)): entry for entry in openclare.draw.OPENCLARE_TL_loops.bl_keymap}
+# No Alt: Emulate 3 Button Mouse keeps Alt + drag to orbit the view.
+assert not any(entry[1].get("alt") for entry in openclare.draw.OPENCLARE_TL_loops.bl_keymap)
+loop_keys = {(entry[1]["type"], entry[1].get("ctrl", False)): entry for entry in openclare.draw.OPENCLARE_TL_loops.bl_keymap}
 assert loop_keys[("LEFTMOUSE", False)][0] == "object.openclare_draw_curve"
 assert loop_keys[("LEFTMOUSE", True)][0] == "object.openclare_cut_volume"
 assert all(dict(loop_keys[key][2]["properties"])["loop"] for key in (("LEFTMOUSE", False), ("LEFTMOUSE", True)))

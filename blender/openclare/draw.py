@@ -1419,14 +1419,14 @@ class OPENCLARE_TL_loops(bpy.types.WorkSpaceTool):
     bl_description = (
         "Experimental. Draw the loops of the selected mesh, for its result to have edges along them: drag to draw "
         "one (back along the stroke to undo, let go at its start to close it, from an end of a loop to take it up "
-        "again); drag a loop elsewhere to move it (F over it or the wheel sets how much of it goes); Alt + drag across a limb for "
+        "again); drag a loop elsewhere to move it (F over it or the wheel sets how much of it goes); Ctrl + drag across a limb for "
         "a loop all round it. The quads along each loop are drawn"
     )
     bl_icon = "ops.curve.draw"
     bl_widget = None
     bl_keymap = (
         (OPENCLARE_OT_draw_curve.bl_idname, {"type": "LEFTMOUSE", "value": "PRESS"}, {"properties": [("loop", True)]}),
-        (OPENCLARE_OT_cut_volume.bl_idname, {"type": "LEFTMOUSE", "value": "PRESS", "alt": True},
+        (OPENCLARE_OT_cut_volume.bl_idname, {"type": "LEFTMOUSE", "value": "PRESS", "ctrl": True},
          {"properties": [("loop", True)]}),
         (OPENCLARE_OT_snap_radius.bl_idname, {"type": "F", "value": "PRESS"}, None),
         ("wm.call_menu", {"type": "S", "value": "PRESS"}, {"properties": [("name", "OPENCLARE_MT_snap")]}),
