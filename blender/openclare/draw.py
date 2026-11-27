@@ -609,9 +609,17 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
     def start_smooth(self, context, start, mouse):
         """A press of Smooth Loop: the loops under the brush are rubbed
         smooth while the mouse moves (`trace.smoothed`)."""
+        import numpy
+
         from . import loops
 
         self.rubbing = [(loops.points_of(loop).copy(), loop.closed) for loop in self.owner.data.openclare_loops.items]
+        # The spacing of each loop, kept while it is rubbed: laid again at it
+        # after each pass, so that its points do not pile up.
+        self.spacings = []
+        for points, _closed in self.rubbing:
+            gaps = numpy.linalg.norm(numpy.diff(points, axis=0), axis=1) if len(points) > 1 else numpy.zeros(1)
+            self.spacings.append(float(gaps.mean()) if len(gaps) else 0.0)
         self.colour = (1.0, 1.0, 1.0, 1.0)
         self.head = self.mouse = mouse
         self.rub(start)
@@ -627,7 +635,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         from . import loops
 
         radius = self.move_radius * self.pixel
-        for loop in self.owner.data.openclare_loops.items:
+        for loop, spacing in zip(self.owner.data.openclare_loops.items, self.spacings):
             points = [tuple(point) for point in loops.points_of(loop)]
             weights = trace.brushed(points, centre, radius)
             if not any(weights):
@@ -639,6 +647,8 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
                     found = self.tree.find_nearest(mathutils.Vector(point))[0]
                     point = tuple(found) if found is not None else point
                 laid.append(point)
+            if spacing > 0.0:
+                laid = trace.resampled(laid, spacing, loop.closed)
             loops.set_points(loop, trace.laid(laid, loop.closed, self.on_surface, self.pixel), loop.closed)
 
     def on_surface(self, point):

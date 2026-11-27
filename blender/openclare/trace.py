@@ -272,13 +272,15 @@ def smoothed(points, closed, weights, reach, strength=0.5):
     return out
 
 
-def laid(points, closed, project, tolerance, depth=16):
+def laid(points, closed, project, tolerance, depth=7):
     """The curve kept on the surface between its points: where the middle of
     a stretch is farther than `tolerance` from the surface (`project` gives
     the nearest point of the surface), the point of the surface there is put
-    in, and both halves looked at again, `depth` times at most (round the
-    edge of a cube, each time halves the gap). A stretch across an edge of
-    the surface otherwise cuts through the volume."""
+    in, and both halves looked at again, `depth` times at most: at most
+    2^depth - 1 points in a stretch, so that a curved edge made of facets
+    does not fill the curve with points. Round the edge of a cube each time
+    halves the gap. A stretch across an edge of the surface otherwise cuts
+    through the volume."""
     points = [tuple(point) for point in points]
     count = len(points)
 
