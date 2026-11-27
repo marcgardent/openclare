@@ -340,3 +340,30 @@ fn each_edge_along_a_curve_says_which_curve() {
     assert_eq!(set(&ring_edges), set(&report.guide_edges));
     assert_eq!(set(&diagonal_edges), set(&report.sharp_curve_edges));
 }
+
+#[test]
+fn a_ring_drawn_along_the_edges_of_the_input_is_kept() {
+    // A ring round a cube at the height of one of its rows of edges: where it
+    // turns the corners it goes through vertices of the input, which must be
+    // taken as they are, not doubled by a split next to them.
+    let source = primitives::cube(40);
+    for z in [0.0, 0.05, 0.5] {
+        let points = (0..64)
+            .map(|k| {
+                let turn = std::f64::consts::TAU * k as f64 / 64.0;
+                let (x, y) = (turn.cos(), turn.sin());
+                let s = x.abs().max(y.abs());
+                Vec3::new(x / s, y / s, z)
+            })
+            .collect();
+        let (mesh, report) = remesh(&source, 2000, &[GuideCurve { points, closed: true, sharp: false }]);
+        assert_eq!(report.guides_let_go, 0, "at {z}: {:?}", report.line_causes);
+        let line = joined(&report.guide_edges);
+        assert!(line.len() >= 60, "at {z}: {} vertices on the loop", line.len());
+        for (&v, neighbours) in &line {
+            let p = mesh.positions[v as usize];
+            assert_eq!(neighbours.len(), 2, "at {z}: vertex {v} at {p:?}");
+            assert!((p.z - z).abs() < 1e-6, "at {z}: vertex {v} at {p:?}");
+        }
+    }
+}
