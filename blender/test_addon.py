@@ -406,22 +406,33 @@ on_it = [vertex.index for vertex in mesh.vertices if abs(vertex.co.z - height) <
 print("DRAWN a stroke of", len(points), "points round the ball, a loop of", len(on_it), "vertices on it")
 assert len(on_it) >= 12, "the drawn curve has no loop of edges"
 
-# The Loops tool: in the toolbar of the 3D viewport in Object Mode, in the
-# place of Draw Curve and Cut Volume, whose operators it calls. The mouse
-# cannot be driven here; what it relies on can.
+# The tools of the loops, one for each action: in the toolbar of the 3D
+# viewport in Object Mode, in the place of Draw Curve and Cut Volume, whose
+# operators Draw Loop and Ring Loop call. The mouse cannot be driven here;
+# what it relies on can.
 from bl_ui.space_toolsystem_common import ToolSelectPanelHelper  # noqa: E402
 
 toolbar = ToolSelectPanelHelper._tool_class_from_space_type("VIEW_3D")
 tools = [item for item in ToolSelectPanelHelper._tools_flatten(toolbar.tools_from_context(bpy.context, mode="OBJECT"))
          if item is not None]
-assert any(item.idname == "openclare.loops" for item in tools), "no Loops tool in the toolbar"
+loop_tools = ["openclare.loop_draw", "openclare.loop_ring", "openclare.loop_move", "openclare.loop_smooth",
+              "openclare.loop_delete"]
+shown = [item.idname for item in tools if item.idname.startswith("openclare.loop_")]
+assert shown == loop_tools, shown
 assert not any(item.idname in {"openclare.draw_curve", "openclare.cut_volume"} for item in tools), "Draw Curve still there"
-# No Alt: Emulate 3 Button Mouse keeps Alt + drag to orbit the view.
-assert not any(entry[1].get("alt") for entry in openclare.draw.OPENCLARE_TL_loops.bl_keymap)
-loop_keys = {(entry[1]["type"], entry[1].get("ctrl", False)): entry for entry in openclare.draw.OPENCLARE_TL_loops.bl_keymap}
-assert loop_keys[("LEFTMOUSE", False)][0] == "object.openclare_draw_curve"
-assert loop_keys[("LEFTMOUSE", True)][0] == "object.openclare_cut_volume"
-assert all(dict(loop_keys[key][2]["properties"])["loop"] for key in (("LEFTMOUSE", False), ("LEFTMOUSE", True)))
+# One left press each, and no Alt nor Ctrl: Emulate 3 Button Mouse keeps
+# Alt + drag to orbit the view.
+presses = {}
+for tool in openclare.draw.LOOP_TOOLS:
+    assert not any(entry[1].get("alt") or entry[1].get("ctrl") or entry[1].get("shift") for entry in tool.bl_keymap)
+    left = [entry for entry in tool.bl_keymap if entry[1]["type"] == "LEFTMOUSE"]
+    assert len(left) == 1, tool.bl_idname
+    presses[tool.bl_idname] = (left[0][0], dict(left[0][2]["properties"]) if left[0][2] else {})
+assert presses["openclare.loop_draw"] == ("object.openclare_draw_curve", {"loop": True, "action": "DRAW"})
+assert presses["openclare.loop_ring"] == ("object.openclare_cut_volume", {"loop": True})
+assert presses["openclare.loop_move"] == ("object.openclare_draw_curve", {"loop": True, "action": "MOVE"})
+assert presses["openclare.loop_smooth"] == ("object.openclare_draw_curve", {"loop": True, "action": "SMOOTH"})
+assert presses["openclare.loop_delete"] == ("object.openclare_loop_delete", {})
 assert hasattr(bpy.ops.object, "openclare_cut_volume")
 assert hasattr(bpy.ops.object, "openclare_draw_curve")
 # The tools draw on the active object if it is a selected mesh; otherwise
@@ -441,7 +452,7 @@ ball.select_set(True)
 bpy.context.view_layer.objects.active = ball
 from bl_ui.space_toolsystem_common import _activate_by_item  # noqa: E402,F401
 
-item = next(item for item in tools if item.idname == "openclare.loops")
+item = next(item for item in tools if item.idname == "openclare.loop_draw")
 assert item._replace(cursor=openclare.draw.DISABLED).cursor == "STOP"
 assert "STOP" in {e.identifier for e in bpy.types.Window.bl_rna.functions["cursor_set"].parameters["cursor"].enum_items}
 assert openclare.draw.follow_cursor() == openclare.draw.LOOK_FOR_CURSOR
@@ -451,7 +462,7 @@ assert draw_properties["snap_radius"].default == 15.0
 assert [draw_properties[name].default for name in ("width", "spacing", "back_band", "close", "fit")] == [8.0, 5.0, 30.0, 15.0, 5.0]
 # The settings of the stroke are in the popover of the header, as those of
 # Blender's own tools: drawn without fault in a layout of a panel.
-draw_tool = next(item for item in tools if item.idname == "openclare.loops")
+draw_tool = next(item for item in tools if item.idname == "openclare.loop_draw")
 assert "extra" in __import__("inspect").signature(draw_tool.draw_settings).parameters
 assert {item.identifier for item in draw_properties["snap"].enum_items} == {"NONE", "RIDGE", "VALLEY"}
 # The snap on a roof with a sharp ridge at x = 0.123, the screen seen from
@@ -697,7 +708,7 @@ assert len(rows[0]["ends"]) == 2 and openclare.loops.row_text(rows[0]).endswith(
 project.items.clear()
 settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
 
-# A stroke of the Loops tool let go (milestone 3, Draw): a loop of the mesh
+# A stroke of Draw Loop let go (milestone 3, Draw): a loop of the mesh
 # with the marks of the header, no curve object; a stroke from its end takes
 # it up again, and closing it closes the loop.
 stroke_points = latitude(0.2)[:120]
@@ -712,7 +723,12 @@ assert openclare.loops.marks_of(project.items[0]) == (True, 0.5, False), "taken 
 # Ring: a cut across the ball made a closed loop.
 openclare.draw.kept(bpy.context, ball, latitude(-0.3), True, (False, 0.0, True), None, True, 0.01)
 assert len(project.items) == 2 and project.items[1].closed and project.items[1].seam
-print("DRAW LOOPS a stroke made a loop, taken up and closed; a ring made a loop")
+# Delete Loop, or the cross of its row in the panel: that loop goes, the
+# other stays.
+bpy.context.view_layer.objects.active = ball
+assert bpy.ops.object.openclare_loop_delete(index=0) == {"FINISHED"}
+assert len(project.items) == 1 and project.items[0].seam
+print("DRAW LOOPS a stroke made a loop, taken up and closed; a ring made a loop; the first deleted")
 project.items.clear()
 settings.quads, settings.adaptive_size = 800, 50.0
 

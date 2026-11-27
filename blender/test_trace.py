@@ -228,4 +228,32 @@ bent = trace.moved(pin, False, 5, (0.0, 0.0, 1.0), 0.6)
 assert bent[5][2] == 1.0 and all(point[2] == 0.0 for point in bent[30:])
 print("MOVED a point of the equator 0.2 north, its neighbours within 0.5 the less the farther; a hairpin by one leg")
 
+# Smooth: a circle of radius 1 shaken (0.05 in and out, a wave every 6
+# points, as a hand shakes) comes back round when rubbed all over; a clean circle rubbed as long keeps its
+# radius (Taubin's steps); an open line keeps its ends; a point the brush
+# does not reach stays.
+def ring_of(radius, bumps=0, height=0.0, count=120):
+    return [((radius + height * math.sin(bumps * a)) * math.cos(a), (radius + height * math.sin(bumps * a)) * math.sin(a), 0.0)
+            for a in (2 * math.pi * k / count for k in range(count))]
+
+
+def spread(points):
+    radii = [math.hypot(x, y) for x, y, _ in points]
+    return max(radii) - min(radii), sum(radii) / len(radii)
+
+
+bumpy = trace.smoothed(ring_of(1.0, 20, 0.05), True, [1.0] * 120, passes=40)
+clean = trace.smoothed(ring_of(1.0), True, [1.0] * 120, passes=40)
+assert spread(bumpy)[0] < 0.2 * 0.1, spread(bumpy)
+assert abs(spread(clean)[1] - 1.0) < 0.005, spread(clean)
+wavy = [(x / 10, 0.05 * (-1) ** x, 0.0) for x in range(21)]
+calm = trace.smoothed(wavy, False, [1.0] * 21, passes=20)
+assert calm[0] == wavy[0] and calm[-1] == wavy[-1] and max(abs(y) for _, y, _ in calm[3:-3]) < 0.01
+weights = trace.brushed(wavy, (1.0, 0.0, 0.0), 0.35)
+assert weights[10] > 0.9 and weights[0] == 0.0 and weights[14] == 0.0
+part = trace.smoothed(wavy, False, weights, passes=5)
+assert part[:6] == wavy[:6] and part[15:] == wavy[15:] and abs(part[10][1]) < abs(wavy[10][1])
+print("SMOOTH a shake of 0.1 rubbed down to %.4f; a clean circle keeps a radius of %.4f; ends and the unbrushed stay"
+      % (spread(bumpy)[0], spread(clean)[1]))
+
 print("TRACE all checks passed")

@@ -2,7 +2,7 @@
 
 *[English version](LOOP_EDITING.md)*
 
-**État :** validé le 27 novembre 2026 ; jalons 1 à 3 écrits (greffon 0.29.0), et Move du jalon 5, avancé (0.30.0) : glisser sur une loop loin de ses bouts la déplace, Redraw sera donc Ctrl + glisser ; les autres pas encore. Le jalon 2 s'écarte des sections 1 et 5 sur trois points, pour l'instant : l'analyse est celle qu'a faite *Analyse*, pas lancée d'elle-même ; avec *Sizes*, la taille unique d'avant elle est le *Largest* ; les arêtes dures ne rendent pas une rangée rouge.
+**État :** validé le 27 novembre 2026 ; jalons 1 à 3 écrits (greffon 0.29.0) ; puis, à la demande de Marc, un outil par action, avec Move et Delete avancés et Smooth ajouté (0.30.0) ; les autres pas encore. Le jalon 2 s'écarte des sections 1 et 5 sur trois points, pour l'instant : l'analyse est celle qu'a faite *Analyse*, pas lancée d'elle-même ; avec *Sizes*, la taille unique d'avant elle est le *Largest* ; les arêtes dures ne rendent pas une rangée rouge.
 
 Aujourd'hui, une loop se demande en traçant une courbe : *Draw Curve* ou *Cut Volume* crée un
 objet courbe, enfant du maillage et tenu dessus par un Shrinkwrap, que le moteur pose dans le
@@ -67,22 +67,29 @@ gardées.
 
 ## 3. Les gestes
 
-Un outil, *Loops*, dans la barre d'outils (T) en Object Mode, sur la source ou sur un de ses
-résultats (il travaille alors sur sa source, comme l'outil *Poles*). La loop sous la souris
-s'allume ; ce qu'un clic ferait se voit avant d'être fait, comme le cercle d'accroche de
-*Draw Curve*.
+Un outil par action, côte à côte dans la barre d'outils (T) en Object Mode, sur le maillage
+sélectionné et actif : aucune touche de modification, aucun raccourci à apprendre au-delà de ceux
+des outils de Blender (F pour un rayon, Échap pour défaire un glisser). Ce qu'un appui ferait se
+voit avant d'être fait : le cercle d'accroche de *Draw Loop*, le cercle de pinceau de *Move
+Loop* et *Smooth Loop*, la loop en rouge sous la souris pour *Delete Loop*.
 
-| Geste | Entrée | Ce qu'il fait |
+| Outil | Entrée | Ce qu'il fait |
 |---|---|---|
-| **Draw** | glisser, bouton gauche | une nouvelle loop le long du trait, avec tout ce qu'a *Draw Curve* : la corde, le retour le long du trait pour défaire, l'accroche *Ridge*/*Valley*, F pour le rayon. Lâché avec la souris sur son départ (pas le point au bout de la corde, qui traîne) : fermée ; un anneau autour du départ se remplit tant que lâcher la fermerait. Les quads le long d'elle se dessinent à mesure. |
-| **Ring** | Ctrl + glisser | une loop fermée tout autour d'un membre, comme la fait *Cut Volume*. |
-| **Pick** | Ctrl + Maj + clic sur une arête du résultat | la loop d'arêtes du maillage de quads par cette arête devient une loop : parcourue par les sommets à quatre arêtes, arrêtée à un pôle ou à un bord, fermée si elle revient. Chaque Ctrl + Maj + clic au-delà d'un pôle la prolonge jusqu'au suivant. |
-| **Move** | glisser sur une loop, loin de ses bouts | les points dans le rayon, le long de la loop, glissent sur la surface avec la souris, d'autant moins qu'ils sont loin (l'atténuation de l'édition proportionnelle de Blender) ; la loop reste sur la surface et garde son espacement. Le rayon est un cercle autour de la souris, affiché avec *Move* dès que la souris est sur une loop ; F au-dessus d'elle le règle, comme il règle ailleurs le rayon de l'aimantation, et la molette le change pendant le déplacement. |
-| **Redraw** | Maj + glisser d'une loop jusqu'à elle | le tronçon entre les deux endroits est remplacé par le trait. |
+| **Draw Loop** | glisser | une nouvelle loop le long du trait, avec tout ce qu'a *Draw Curve* : la corde, le retour le long du trait pour défaire, l'accroche *Ridge*/*Valley*, F pour le rayon. Depuis un bout d'une loop ouverte, la reprend. Lâché avec la souris sur son départ (pas le point au bout de la corde, qui traîne) : fermée ; un anneau autour du départ se remplit tant que lâcher la fermerait. Marques des loops à venir dans l'en-tête. |
+| **Ring Loop** | glisser à travers un membre | une loop fermée tout autour, comme la fait *Cut Volume*. Marques dans l'en-tête. |
+| **Move Loop** | glisser une loop | le point attrapé suit la souris sur la surface ; les points dans le rayon, le long de la loop, le suivent d'autant moins qu'ils sont loin (l'atténuation de l'édition proportionnelle de Blender) ; la loop reste sur la surface et garde son espacement. |
+| **Smooth Loop** | frotter les loops | les points sous le pinceau vont vers le milieu de leurs voisins, d'autant plus qu'ils sont près de son centre, en deux pas de Taubin pour qu'une loop longtemps frottée ne rétrécisse pas. Le tremblement s'en va, des ondes jusqu'à une douzaine de points environ ; les courbes plus longues sont la forme, et Move les change. Les bouts d'une loop ouverte restent. |
+| **Delete Loop** | clic sur une loop | la loop s'en va. |
+| **Cut Loop** | clic sur une loop | une loop ouverte en devient deux ; une fermée s'ouvre là. Un tronçon s'en va en coupant deux fois et en supprimant le milieu. |
+| **Redraw Loop** | glisser d'une loop jusqu'à elle | le tronçon entre les deux endroits est remplacé par le trait. |
+| **Pick Loop** | clic sur une arête du résultat | la loop d'arêtes du maillage de quads par cette arête devient une loop : parcourue par les sommets à quatre arêtes, arrêtée à un pôle ou à un bord, fermée si elle revient. Chaque clic au-delà d'un pôle la prolonge jusqu'au suivant. |
 | **Join, Close** | un trait ou un Move qui finit sur un bout | un bout lâché sur le bout d'une autre loop joint les deux ; sur le départ de la loop elle-même, la ferme. |
-| **Cut** | Ctrl + clic sur une loop, sans glisser (glisser, c'est Ring) | une loop ouverte en devient deux ; une fermée s'ouvre là. |
-| **Delete** | X avec la souris sur une loop | la loop s'en va ; ailleurs, X ne fait rien sous l'outil et ne supprime jamais l'objet. Un tronçon s'en va en coupant deux fois et en supprimant le milieu. |
-| **Marks** | l'en-tête de l'outil | *Sharp*, *Crease*, *Seam* pour les loops à venir, et pour la loop sous la souris avec M. |
+
+Le pinceau de *Move Loop* et *Smooth Loop* est un cercle autour de la souris avec le nom de
+l'outil ; F règle son rayon, la molette le change pendant le glisser ; Échap ou le clic droit
+remet les loops en place. Chaque action est une étape d'annulation. Dans le panneau *Loops*,
+chaque loop a sa ligne : son compte d'arêtes, ses marques (*Sharp*, *Seam*, *Crease*) réglées
+là, et une croix qui la supprime ; *Clear* les supprime toutes.
 
 Les règles de ces gestes (où un trait se joint, ce que Redraw remplace, ce que Cut laisse, où
 tombent les quads le long d'une loop) vont dans un module qui ignore Blender, comme `trace.py`
@@ -90,9 +97,9 @@ pour un trait, pour être testées sans fenêtre. La surface, l'arbre BVH gardé
 change pas, la corde, l'accroche, le ruban et le découpeur de *Cut Volume* sont ceux de
 `draw.py`, déplacés là où les deux outils les atteignent.
 
-**Décision D3.** *Loops* reprend *Draw Curve* et *Cut Volume* : son Draw et son Ring sont les
-leurs. Proposé : les deux outils quittent la barre d'outils quand *Loops* dessine (jalon 3), et
-les objets courbes restent lus.
+**Décision D3.** Les outils des loops reprennent *Draw Curve* et *Cut Volume* : *Draw Loop* et
+*Ring Loop* sont les leurs. Les deux outils quittent la barre d'outils dès que les loops se
+tracent (jalon 3), et les objets courbes restent lus.
 
 ## 4. Ce qui va au moteur
 
@@ -157,13 +164,13 @@ fiole expérimentale.
    rouges là où elles le sont.
 3. **Draw et Ring.** Les traits de *Draw Curve* et *Cut Volume* font des loops ; D3 appliquée.
    Avancé par Marc le 27 novembre 2026, après avoir tracé une courbe là où il voulait une loop.
-4. **Pick et Delete.** Une loop d'arêtes du résultat faite loop de la source, et retirée. Avec
+4. **Pick.** Une loop d'arêtes du résultat faite loop de la source (Delete écrit avec les outils, 0.30.0). Avec
    les états de la section 5 (et les deux ajouts de la section 4) dès ici : une loop prise ne
    vaut que si le remesh suivant dit s'il l'a tenue. Fini quand une loop prise sur un résultat
    de l'ogre est tenue par *Remesh Again*, ou dite non tenue.
-5. **Move et Redraw.** Fini quand le module de règles les couvre en tests, et qu'une loop
-   déplacée sur l'ogre reste sur la surface avec son espacement.
-6. **Cut, Join, Close, Marks.**
+5. **Redraw.** Fini quand le module de règles le couvre en tests (Move et Smooth écrits avec les
+   outils, 0.30.0).
+6. **Cut, Join, Close.** (Les marques d'une loop se règlent dans le panneau depuis 0.30.0.)
 
 ## 7. Hors champ, pour plus tard
 
@@ -180,7 +187,7 @@ fiole expérimentale.
   que l'analyse n'est pas prête (section 1), et non une taille unique réglée à la main pour tout
   le projet.
 - **D2** : les loops comme données du maillage, pas des objets courbes (section 2).
-- **D3** : *Loops* remplace *Draw Curve* et *Cut Volume* au jalon 3 (section 3).
+- **D3** : les outils des loops remplacent *Draw Curve* et *Cut Volume* au jalon 3 (section 3).
 - **D4** : l'ordre des jalons ; Draw d'abord, puis Pick (changé par Marc le 27 novembre 2026 :
   Pick venait avant Draw).
-- **D5** : les touches de la section 3. Aucune ne prend Alt, pour que *Emulate 3 Button Mouse* garde Alt + glisser pour tourner, Alt + Maj pour déplacer la vue et Alt + Ctrl pour zoomer (changé par Marc le 27 novembre 2026 : Ring était Alt + glisser, Redraw Ctrl + glisser, Pick Maj + clic, Cut C + clic, Delete X + clic).
+- **D5** : un outil par action, sans touche de modification (Marc, 27 novembre 2026 : « ce n'est pas un pipeline exigeant qui demande plein de raccourcis, surtout que c'est un plugin »). Avant : un seul outil *Loops*, avec Ctrl, Maj et des touches pour ses gestes ; avant encore, Alt, que *Emulate 3 Button Mouse* prend pour tourner la vue.
