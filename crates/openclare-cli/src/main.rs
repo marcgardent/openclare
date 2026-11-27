@@ -157,7 +157,8 @@ guarded projection of the Multires, PRO #6); the output keeps the vertices and f
                            the hard edges of the source
     --settings <TEXT>      'key = value' lines or ';' between them: reach (shares of the shortest edge,
                            default 1), far (the same, straight along the normal, 8), stretch (times
-                           an edge may grow, 4), tilt (degrees a face may turn, 180: any), crease_angle (degrees, 30),
+                           an edge may grow, 4), hug (an edge grown more is kept when its middle is this share of its
+                           length before from the source, 0.5; 0: never), tilt (degrees a face may turn, 180: any), crease_angle (degrees, 30),
                            samples (points of the measure, 60000; 0 measures nothing), seed (1)
     --status <FILE>        writes what became of each vertex, one number a line: 0 moved, 1 on a hard
                            edge, 2 stopped by the reach, 3 nothing found, 4 taken back, 5 held

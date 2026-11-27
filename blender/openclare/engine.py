@@ -541,7 +541,7 @@ def project_level(positions, quads, source_positions, source_triangles, crease_e
     edges if any, `crease_edges` (two vertices each) and `crease_weights`
     (a 32-bit float each). The source is `source_positions` and
     `source_triangles`. `settings` is `key = value` lines (reach, far,
-    stretch, tilt, crease_angle, samples, seed, target, stall, stuck);
+    stretch, hug, tilt, crease_angle, samples, seed, target, stall, stuck);
     `samples = 0` skips the measure.
 
     `cage_face`, for each face of the level the face of the cage it was

@@ -319,7 +319,9 @@ farther than `far` times its shortest edge (8: the subdivision leaves fingertips
 more than an edge), else to the closest such point within `reach` times that edge (1), else along
 its normal as far as the reach allows; a vertex inside a creased line of the level goes to the
 source's hard edges (sharper than `crease_angle`, 30 degrees); a face that comes out folded, or with
-an edge more than `stretch` times as long as it was (4), has its vertices taken back. The output keeps the vertices and faces of the level; the report counts what became of
+an edge more than `stretch` times as long as it was (4), has its vertices taken back, unless that edge
+hugs the source (its middle no farther from it than `hug` times its length before, 0.5: the walls of a
+deep pocket, which the level goes down; 0 takes back every stretched edge). The output keeps the vertices and faces of the level; the report counts what became of
 the vertices and measures the level as `detail` does (`samples = 0` skips that):
 
 ```bash

@@ -26,6 +26,12 @@
 //!   has its vertices taken back, half their move at a pass, pass after
 //!   pass. A tip brought out stretches the edges along it about three times;
 //!   a vertex thrown far while its neighbour found nothing, seven to eleven.
+//!   An edge stretched that way is kept when it hugs the source
+//!   ([`Settings::hug`]): the level going down a deep, narrow pocket (the
+//!   ear canal of the ogre) stretches the edges along its walls, which stay
+//!   on the source; a vertex thrown onto another part stretches one across
+//!   the air. Without it the ogre's L4 missed up to 1.4 % of the diagonal at
+//!   the bottom of an ear, with it 0.7 %; its p99.9 went from 0.10 to 0.07.
 //!   Fitting also takes back a face turned by more than 20°; here that is
 //!   [`Settings::tilt`], off by default: on the ogre of #6 it took back a
 //!   quarter of the vertices of the first level, which then missed more of
@@ -109,6 +115,14 @@ pub struct Settings {
     /// Longest an edge may come out, as a multiple of its length before:
     /// longer, the moves of its ends are taken back as a fold's are.
     pub stretch: f64,
+    /// An edge longer than [`Settings::stretch`] allows is kept all the same
+    /// when it hugs the source: its middle no farther from the source than
+    /// this share of its length before. The edges along the wall of a deep
+    /// pocket stretch as the level goes down it, and stay on the source; a
+    /// vertex thrown onto another part stretches an edge across the air. 0,
+    /// every stretched edge is taken back; 0.5 by default (0.25 kept the
+    /// ogre's ear canal out).
+    pub hug: f64,
     /// Most a face may turn, in degrees, before its vertices are taken
     /// back; 180, the default, never.
     pub tilt: f64,
@@ -140,6 +154,7 @@ impl Default for Settings {
             reach: 1.0,
             far: 8.0,
             stretch: 4.0,
+            hug: 0.5,
             tilt: 180.0,
             crease_angle: 30.0,
             samples: DETAIL_SAMPLES,
@@ -177,6 +192,7 @@ impl FromStr for Settings {
                 "reach" => settings.reach = number()?,
                 "far" => settings.far = number()?,
                 "stretch" => settings.stretch = number()?,
+                "hug" => settings.hug = number()?,
                 "tilt" => settings.tilt = number()?.min(180.0),
                 "crease_angle" => settings.crease_angle = number()?.min(180.0),
                 "samples" => settings.samples = number()? as usize,
@@ -459,7 +475,7 @@ pub fn place_on_cage(
         })
         .unzip();
 
-    put_back_folds(level, start, &mut positions, &mut status, settings.tilt.to_radians(), settings.stretch);
+    put_back_folds(level, start, &mut positions, &mut status, settings, &surface);
     let seconds = clock.elapsed().as_secs_f64();
 
     if settings.samples == 0 {
@@ -547,13 +563,21 @@ fn put_back_folds(
     start: &[Vec3],
     positions: &mut [Vec3],
     status: &mut [Status],
-    tilt: f64,
-    stretch: f64,
+    settings: &Settings,
+    surface: &Bvh,
 ) {
+    let (tilt, stretch, hug) = (settings.tilt.to_radians(), settings.stretch, settings.hug);
+    let hugs = |a: Vec3, b: Vec3, before: f64| {
+        hug > 0.0
+            && surface
+                .closest_point((a + b) * 0.5)
+                .is_some_and(|hit| hit.distance_squared <= (hug * before) * (hug * before))
+    };
     let stretched = |positions: &[Vec3], face: &[u32]| {
         (0..face.len()).any(|i| {
             let (a, b) = (face[i] as usize, face[(i + 1) % face.len()] as usize);
-            positions[a].distance(positions[b]) > stretch * start[a].distance(start[b])
+            let before = start[a].distance(start[b]);
+            positions[a].distance(positions[b]) > stretch * before && !hugs(positions[a], positions[b], before)
         })
     };
     for pass in 0..BACK_PASSES {

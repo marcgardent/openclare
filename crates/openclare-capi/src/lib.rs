@@ -1154,7 +1154,7 @@ pub struct OpenclareLevel {
 ///   [`openclare_level_copy_missing`] gave for the level below; or null, for
 ///   the first level.
 /// - `source_positions`, `source_triangles`: the source.
-/// - `settings`: `key = value` lines (reach, far, stretch, tilt,
+/// - `settings`: `key = value` lines (reach, far, stretch, hug, tilt,
 ///   crease_angle, samples, seed, target, stall, stuck), or null for the
 ///   defaults.
 ///
