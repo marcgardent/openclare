@@ -46,8 +46,9 @@ impl Spoke {
 
 impl Race<'_> {
     /// Lays every wall as a trace and starts the traces their corners send
-    /// out. `is_wall` flags half-edges; `is_singular`, vertices.
-    pub(super) fn lay_walls(&mut self, is_wall: &[bool], is_singular: &[bool]) {
+    /// out. `is_wall` flags half-edges, `is_guide` those of them along a
+    /// guide curve; `is_singular`, vertices.
+    pub(super) fn lay_walls(&mut self, is_wall: &[bool], is_guide: &[bool], is_singular: &[bool]) {
         let map = self.map;
         let twin = &map.topology.opposite;
         let vertices = map.mesh.positions.len();
@@ -187,7 +188,7 @@ impl Race<'_> {
 
             let id = self.outcome.traces.len() as u32;
             let (mut path, mut stretches, mut length) = (Vec::new(), Vec::new(), 0.0);
-            let mut border = true;
+            let (mut border, mut guide) = (true, true);
             let (mut at, mut spoke) = (from, fans[from].spokes[index]);
             let end = loop {
                 used[spoke.edge()] = true;
@@ -224,6 +225,7 @@ impl Race<'_> {
                     self.walls[half] = Some(Wall { trace: id, time, sense, length: own_length, axis });
                 }
                 border &= spoke.back.is_none();
+                guide &= [spoke.out, spoke.back].into_iter().flatten().any(|half| is_guide[half]);
                 path.push(map.mesh.positions[v]);
                 length += along;
 
@@ -254,6 +256,7 @@ impl Race<'_> {
                 path,
                 stretches,
                 border,
+                guide,
             ));
         }
 

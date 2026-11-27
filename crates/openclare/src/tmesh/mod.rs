@@ -64,6 +64,10 @@ pub struct Arc {
     pub border: bool,
     /// It runs along a border or a hard edge of the shape.
     pub feature: bool,
+    /// It runs along a guide curve the user drew, all of it: the line of
+    /// edges along the curve is to be an edge loop, which a singularity
+    /// brought onto it would break (#360).
+    pub guide: bool,
     /// The trace it is a piece of, and the lengths of that trace at its
     /// first and second node.
     pub trace: u32,
@@ -212,6 +216,19 @@ impl TMesh {
                 topology.opposite[h] == INVALID || features.contains(&(a.min(b), a.max(b)))
             })
             .collect();
+        // Of those, the edges along a curve the user drew.
+        let drawn: std::collections::HashSet<(u32, u32)> = work
+            .guide_edge_curves
+            .iter()
+            .map(|&([a, b], _)| (a.min(b), a.max(b)))
+            .filter(|edge| features.contains(edge))
+            .collect();
+        let is_guide: Vec<bool> = (0..3 * mesh.triangles.len())
+            .map(|h| {
+                let (a, b) = (mesh.triangles[h / 3][h % 3], mesh.triangles[h / 3][(h % 3 + 1) % 3]);
+                is_wall[h] && drawn.contains(&(a.min(b), a.max(b)))
+            })
+            .collect();
         // Pieces of the surface with neither singularity nor wall (a ring, a
         // torus) are cut from one of their vertices, any.
         let mut cut = is_singular.clone();
@@ -239,7 +256,7 @@ impl TMesh {
                 }
             }
         }
-        let outcome = motorcycle::race(&walk, &is_singular, &is_wall, &seeds, max_trace_length);
+        let outcome = motorcycle::race(&walk, &is_singular, &is_wall, &is_guide, &seeds, max_trace_length);
 
         let mut tmesh = TMesh::assemble(&outcome, &field.indices);
         for trace in tmesh.traces.iter_mut().filter(|trace| !trace.feature) {
@@ -296,6 +313,7 @@ impl TMesh {
                     patches: [INVALID; 2],
                     border: trace.border,
                     feature: trace.wall,
+                    guide: trace.guide,
                     trace: index as u32,
                     span: [from.0, to.0],
                 });

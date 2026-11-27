@@ -72,6 +72,9 @@ pub(super) struct Trace {
     pub wall: bool,
     /// A stretch of open border: the surface is on its left only.
     pub border: bool,
+    /// A run of wall all along a guide curve the user drew: a line of edges
+    /// that no singularity may be brought onto (#360).
+    pub guide: bool,
     pub(super) face: usize,
     pub(super) point: [f64; 2],
     pub(super) axis: Axis,
@@ -91,6 +94,7 @@ impl Trace {
         path: Vec<Vec3>,
         stretches: Vec<Stretch>,
         border: bool,
+        guide: bool,
     ) -> Self {
         Self {
             start,
@@ -101,6 +105,7 @@ impl Trace {
             stretches,
             wall: true,
             border,
+            guide,
             face: 0,
             point: [0.0; 2],
             axis: 0,
@@ -178,10 +183,17 @@ pub(super) struct Race<'a> {
 }
 
 /// Runs the race on `map` from the vertices flagged in `is_singular`, with
-/// the half-edges flagged in `is_wall` for cuts already there. `seeds` are
-/// plain vertices to start from as well, for the pieces of surface that
-/// have neither.
-pub(super) fn race(map: &Map, is_singular: &[bool], is_wall: &[bool], seeds: &[u32], max_length: f64) -> Outcome {
+/// the half-edges flagged in `is_wall` for cuts already there, those of
+/// guide curves also flagged in `is_guide`. `seeds` are plain vertices to
+/// start from as well, for the pieces of surface that have neither.
+pub(super) fn race(
+    map: &Map,
+    is_singular: &[bool],
+    is_wall: &[bool],
+    is_guide: &[bool],
+    seeds: &[u32],
+    max_length: f64,
+) -> Outcome {
     let vertices = map.mesh.positions.len();
     let mut race = Race {
         map,
@@ -216,7 +228,7 @@ pub(super) fn race(map: &Map, is_singular: &[bool], is_wall: &[bool], seeds: &[u
             race.start(node, rank as f64, departure);
         }
     }
-    race.lay_walls(is_wall, is_singular);
+    race.lay_walls(is_wall, is_guide, is_singular);
     // A piece with no singularity and no wall (a ring) has nothing to be cut
     // from. Any vertex will do to start: it sends a trace along each of its
     // four grid directions, which go round the piece and stop on one
@@ -270,6 +282,7 @@ impl Race<'_> {
             stretches: Vec::new(),
             wall: false,
             border: false,
+            guide: false,
             face,
             point: self.map.uv[3 * face + corner],
             axis,

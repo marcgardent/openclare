@@ -4,8 +4,8 @@
 //! numbers must agree on the opposite sides of each rectangle, stay close to
 //! the real lengths, add up to the number of quads asked for, and leave the
 //! structure intact: an arc may shrink to nothing, which closes up a sliver
-//! between two cuts, but not so that two singularities land on each other
-//! or a tube is pinched shut.
+//! between two cuts, but not so that two singularities land on each other,
+//! a singularity lands on a guide curve (#360) or a tube is pinched shut.
 //!
 //! The stage is a [`Quantizer`]; chains get one from [`create`].
 

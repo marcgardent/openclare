@@ -2174,6 +2174,16 @@ curve is made into one.
   third edge is turned wherever that leaves the surface as it is; and where it could not be
   turned, a trace of the layout that comes to it stops there as on the wall itself, instead of
   stepping into a triangle with no inside.
+- **No pole on a curve** (#360, 27 November 2026). A curve drawn is to come out as an edge
+  loop, which a vertex of valence 3 or 5 on its line of edges breaks: Blender's loop select
+  stops there. A closed curve does call for poles, but inside or outside it. The field put
+  them half a quad to one quad from the line, and the quantization gave the arc between such
+  a pole and the curve no length, which brought the pole onto the line: around Suzanne's
+  mouth, a valence 3 at each side from 2,000 quads on. The walls of the T-mesh along a
+  curve drawn are marked as such, and a singularity the lengths bring onto one is a defect
+  of the lattice, like two singularities brought together: the arc between them is held
+  open, and the pole stays one quad off the line. A singularity the field already has on a
+  vertex of the line stays there; no length can move it.
 - **Letting go.** When the map cannot keep every line on a grid line without folding, the
   guide curves are let go before the creases are: each curve is tried alone, then those that
   can be kept together. A curve let go is still followed by the cross field, so edges run
