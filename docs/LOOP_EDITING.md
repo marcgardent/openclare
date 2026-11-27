@@ -2,7 +2,7 @@
 
 *[Version française](LOOP_EDITING.fr.md)*
 
-**State:** validated on 27 November 2026; milestones 1 to 3 written (add-on 0.29.0), and Move of milestone 5, brought forward (0.30.0): a drag on a loop away from its ends moves it, so Redraw will be Ctrl + drag; the others not yet. Milestone 2 departs from section 1 and 5 in three ways, for now: the analysis is the one *Analyse* made, not started by itself; with *Sizes* the one size before it is the *Largest*; hard edges do not make a row red.
+**State:** validated on 27 November 2026; milestones 1 to 3 written (add-on 0.29.0); then, on Marc's word, one tool for each action, with Move and Delete brought forward and Smooth added (0.30.0); the others not yet. Milestone 2 departs from section 1 and 5 in three ways, for now: the analysis is the one *Analyse* made, not started by itself; with *Sizes* the one size before it is the *Largest*; hard edges do not make a row red.
 
 Today a loop is asked for by drawing a curve: *Draw Curve* or *Cut Volume* makes a curve
 object, child of the mesh and held on it by a Shrinkwrap, which the engine lays into the work
@@ -64,21 +64,29 @@ with the loops. *Convert Curves to Loops* turns them into loops, one per stretch
 
 ## 3. Gestures
 
-One tool, *Loops*, in the toolbar (T) in Object Mode, on the source or on a result of it (it
-then works on its source, as the *Poles* tool does). The loop under the mouse is lit; what a
-click would do is shown before it is done, as the snap circle of *Draw Curve* is.
+One tool for each action, side by side in the toolbar (T) in Object Mode, on the mesh selected
+and active: no modifier key, no shortcut to learn beyond those Blender's own tools have (F for
+a radius, Esc to undo a drag). What a press would do is shown before it is done: the snap
+circle of *Draw Loop*, the brush circle of *Move Loop* and *Smooth Loop*, the loop in red under
+the mouse for *Delete Loop*.
 
-| Gesture | Input | What it does |
+| Tool | Input | What it does |
 |---|---|---|
-| **Draw** | left drag | a new loop along the stroke, with everything *Draw Curve* has: the rope, back along the stroke to undo, *Ridge*/*Valley* snap, F for the radius. Let go with the mouse on its start (not the point on the rope, which lags): closed; a ring round the start fills while letting go would close it. The quads along it are drawn as it goes. |
-| **Ring** | Ctrl + left drag | a closed loop all round a limb, as *Cut Volume* makes it. |
-| **Pick** | Ctrl + Shift + click on an edge of the result | the edge loop of the quad mesh through that edge becomes a loop: walked through vertices of four edges, stopped at a pole or a border, closed if it comes back. Each Ctrl + Shift + click past a pole carries it on to the next one. |
-| **Move** | left drag on a loop, away from its ends | the points within the radius, along the loop, slide on the surface with the mouse, the farther the less (the falloff of Blender's proportional editing); the loop stays on the surface and keeps its spacing. The radius is a circle round the mouse, shown with *Move* as soon as the mouse is over a loop; F there sets it, as it sets the radius of the snap elsewhere, and the wheel changes it while moving. |
-| **Redraw** | Shift + left drag starting on a loop and ending on it | the stretch between the two places is replaced by the stroke. |
+| **Draw Loop** | drag | a new loop along the stroke, with everything *Draw Curve* has: the rope, back along the stroke to undo, *Ridge*/*Valley* snap, F for the radius. From an end of an open loop, takes it up again. Let go with the mouse on its start (not the point on the rope, which lags): closed; a ring round the start fills while letting go would close it. Marks of the loops to come in the header. |
+| **Ring Loop** | drag across a limb | a closed loop all round it, as *Cut Volume* makes it. Marks in the header. |
+| **Move Loop** | drag a loop | the point pressed follows the mouse on the surface; the points within the radius, along the loop, follow it the farther the less (the falloff of Blender's proportional editing); the loop stays on the surface and keeps its spacing. |
+| **Smooth Loop** | rub the loops | the points under the brush move toward the middle of their neighbours, the more the nearer its centre, in Taubin's two steps so that a loop rubbed long does not shrink. The shake goes, waves up to a dozen points or so; longer bends are the shape, and Move changes them. The ends of an open loop stay. |
+| **Delete Loop** | click a loop | the loop goes. |
+| **Cut Loop** | click a loop | an open loop becomes two; a closed one is opened there. A stretch goes by cutting twice and deleting the middle. |
+| **Redraw Loop** | drag from a loop to it | the stretch between the two places is replaced by the stroke. |
+| **Pick Loop** | click an edge of the result | the edge loop of the quad mesh through that edge becomes a loop: walked through vertices of four edges, stopped at a pole or a border, closed if it comes back. Each click past a pole carries it on to the next one. |
 | **Join, Close** | a stroke or a Move that ends on an end | an end let go on the end of another loop joins the two; on the loop's own start, closes it. |
-| **Cut** | Ctrl + click on a loop, without dragging (a drag is Ring) | an open loop becomes two; a closed one is opened there. |
-| **Delete** | X with the mouse on a loop | the loop goes; elsewhere X does nothing under the tool, and never deletes the object. A stretch goes by cutting twice and deleting the middle. |
-| **Marks** | the header of the tool | *Sharp*, *Crease*, *Seam* for the loops to come, and for the loop under the mouse with M. |
+
+The brush of *Move Loop* and *Smooth Loop* is a circle round the mouse with the name of the
+tool; F sets its radius, the wheel changes it while dragging; Esc or the right button puts the
+loops back. Each action is one step of undo. In the *Loops* panel each loop has its row: its
+count of edges, its marks (*Sharp*, *Seam*, *Crease*) set there, and a cross that deletes it;
+*Clear* deletes them all.
 
 The rules of these gestures (where a stroke joins, what Redraw replaces, what Cut leaves, where
 the quads along a loop fall) go in a module that knows nothing of Blender, as `trace.py` does
@@ -86,9 +94,9 @@ for a stroke, so that they are tested without a window. The surface, the BVH tre
 the shape stays the same, the rope, the snap, the ribbon and the cutter of *Cut Volume* are
 those of `draw.py`, moved where both tools reach them.
 
-**Decision D3.** *Loops* takes over *Draw Curve* and *Cut Volume*: its Draw and Ring are theirs.
-Proposed: the two tools are removed from the toolbar once *Loops* draws (milestone 3), and the
-curve objects stay readable.
+**Decision D3.** The tools of the loops take over *Draw Curve* and *Cut Volume*: *Draw Loop* and
+*Ring Loop* are theirs. The two tools are removed from the toolbar once loops are drawn
+(milestone 3), and the curve objects stay readable.
 
 ## 4. What goes to the engine
 
@@ -149,13 +157,13 @@ the experimental flask.
    its equator is `2πr / h`, and two loops drawn closer than `h` are red where they are.
 3. **Draw and Ring.** The strokes of *Draw Curve* and *Cut Volume* make loops; D3 applied.
    Brought forward by Marc on 27 November 2026, once he had drawn a curve where he wanted a loop.
-4. **Pick and Delete.** An edge loop of the result made a loop of the source, and taken away.
+4. **Pick.** An edge loop of the result made a loop of the source. (Delete written with the tools, 0.30.0.)
    With the states of section 5 (and the two additions of section 4) from here, since a picked
    loop is only worth something if the next remesh says whether it held it. Done when a loop
    picked on a result of the ogre is held by *Remesh Again*, or is said not to be.
-5. **Move and Redraw.** Done when the module of rules covers them in tests, and a loop moved
-   on the ogre stays on the surface with its spacing.
-6. **Cut, Join, Close, Marks.**
+5. **Redraw.** Done when the module of rules covers it in tests. (Move and Smooth written with
+   the tools, 0.30.0.)
+6. **Cut, Join, Close.** (The marks of a loop are set in the panel since 0.30.0.)
 
 ## 7. Out of scope, for later
 
@@ -171,7 +179,7 @@ the experimental flask.
 - **D1**: the quad size of the project is the engine's size field `h(p)`, uniform until the
   analysis is ready (section 1), not one size set by hand for the whole project.
 - **D2**: loops as data of the mesh, not curve objects (section 2).
-- **D3**: *Loops* replaces *Draw Curve* and *Cut Volume* at milestone 3 (section 3).
+- **D3**: the tools of the loops replace *Draw Curve* and *Cut Volume* at milestone 3 (section 3).
 - **D4**: the order of the milestones; Draw first, then Pick (changed by Marc on 27 November
   2026: Pick came before Draw).
-- **D5**: the keys of section 3. None takes Alt, so that *Emulate 3 Button Mouse* keeps Alt + drag to orbit, Alt + Shift to pan and Alt + Ctrl to zoom (changed by Marc on 27 November 2026: Ring was Alt + drag, Redraw Ctrl + drag, Pick Shift + click, Cut C + click, Delete X + click).
+- **D5**: one tool for each action, no modifier key (Marc, 27 November 2026: "not a demanding pipeline that asks for many shortcuts, all the more since it is an add-on"). Before: one *Loops* tool with Ctrl, Shift and keys for its gestures; before that, Alt, which *Emulate 3 Button Mouse* takes to orbit.

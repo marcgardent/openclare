@@ -27,6 +27,12 @@ point goes with the mouse, the others within a radius along the curve go
 with it the less the farther (the smooth falloff of Blender's proportional
 editing), the others stay. The radius is taken along the curve, so a part
 of the curve that passes near but comes from far along it stays.
+
+A curve is smoothed by rubbing it (`brushed`, `smoothed`): the points under
+the brush move toward the middle of their neighbours, the more the nearer
+its centre, in Taubin's two steps so that the curve does not shrink. What
+goes is the shake, waves of up to a dozen points or so; bends longer than
+that are the shape of the curve, and stay: Move changes them.
 """
 
 import math
@@ -219,6 +225,40 @@ def moved(points, closed, index, offset, radius):
         else tuple(point)
         for point, gap in zip(points, away)
     ]
+
+
+# Taubin's two steps: one that smooths, one a little stronger the other way
+# that swells back, so that a curve rubbed many times does not shrink.
+SMOOTH_IN, SMOOTH_OUT = 0.5, -0.53
+
+
+def smoothed(points, closed, weights, passes=1):
+    """The points of a curve once rubbed: each moves toward the middle of
+    its two neighbours by its weight (0 stays, 1 the most), in Taubin's two
+    steps so that the curve does not shrink. The ends of an open curve
+    stay."""
+    points = [tuple(point) for point in points]
+    count = len(points)
+    if count < 3:
+        return points
+    for _ in range(passes):
+        for factor in (SMOOTH_IN, SMOOTH_OUT):
+            moved_to = []
+            for k, (point, weight) in enumerate(zip(points, weights)):
+                if weight <= 0.0 or (not closed and k in (0, count - 1)):
+                    moved_to.append(point)
+                    continue
+                before, after = points[k - 1], points[(k + 1) % count]
+                moved_to.append(tuple(x + factor * weight * (0.5 * (b + c) - x)
+                                      for x, b, c in zip(point, before, after)))
+            points = moved_to
+    return points
+
+
+def brushed(points, centre, radius):
+    """The weight of each point of a curve under a brush of `radius` round
+    `centre`: the smooth falloff of the distance, 0 outside."""
+    return [falloff(distance(point, centre) / radius) if radius > 0.0 else 0.0 for point in points]
 
 
 def taken_up(points, closed, at_start, step, near, reach=None, closing_length=None, back=None):

@@ -60,7 +60,7 @@ The tools of the 3D viewport, in Object Mode.
 
 | Feature | State | What it lacks |
 |---|---|---|
-| The *Loops* tool, in the place of *Draw Curve* and *Cut Volume*: drag to draw a loop, with the snap (*Ridge*, *Valley*, radius on F), from an end of a loop to take it up again; Ctrl + drag across a limb for a ring; a drag on a loop moves it, its radius on F over the loop or on the wheel (milestone 3 and Move of [LOOP_EDITING.md](LOOP_EDITING.md)) | experimental | no tool cuts or deletes a loop yet; lines drawn on a cube leave no edges (#195); the lines drawn are not counted in the sizes and the budget (#196); not kept everywhere (#44) |
+| The tools of the loops, one for each action, in the place of *Draw Curve* and *Cut Volume*: *Draw Loop* (with the snap, *Ridge*, *Valley*, radius on F; from an end of a loop to take it up again), *Ring Loop* across a limb, *Move Loop*, *Smooth Loop* (the shake goes, the loop does not shrink), *Delete Loop*; marks and delete per loop in the *Loops* panel (milestone 3 and section 3 of [LOOP_EDITING.md](LOOP_EDITING.md)) | experimental | no tool cuts, redraws or picks a loop yet; lines drawn on a cube leave no edges (#195); the lines drawn are not counted in the sizes and the budget (#196); not kept everywhere (#44) |
 | *Draw Curve*, *Cut Volume*: their operators, which make curve objects, no longer in the toolbar | experimental | the same (#195, #196, #44) |
 | A curve's *Mesh*, *Sharp*, *Crease*, *Seam* | experimental | a mark is only as good as the line of edges it is on (#195) |
 | *Select Curves*, *Deselect Curves* | stable | |
