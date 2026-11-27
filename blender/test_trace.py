@@ -251,4 +251,30 @@ assert 0.98 < radius < 1.0, radius
 print("SMOOTH a bend 0.3 high rubbed down to %.3f in 10 strokes; a shake halved in one; a circle draws in to %.4f"
       % (height, radius))
 
+# Laid: a loop round a cube of side 2, smoothed, cuts its corners through
+# the volume; laid on the surface again, no stretch leaves it.
+def on_cube(point):
+    x, y, z = (min(1.0, max(-1.0, c)) for c in point)
+    inside = max(abs(x), abs(y), abs(z)) < 1.0
+    if not inside:
+        return (x, y, z)
+    axis = max(range(3), key=lambda k: abs((x, y, z)[k]))
+    out = [x, y, z]
+    out[axis] = 1.0 if out[axis] >= 0.0 else -1.0
+    return tuple(out)
+
+
+def worst(points, closed):
+    pairs = zip(points, points[1:] + (points[:1] if closed else []))
+    return max(trace.distance(m, on_cube(m)) for m in (tuple(0.5 * (u + v) for u, v in zip(a, b)) for a, b in pairs))
+
+
+square = [on_cube((2 * math.cos(a), 2 * math.sin(a), 0.0)) for a in (2 * math.pi * k / 40 for k in range(40))]
+rounded = [on_cube(point) for point in trace.smoothed(square, True, [1.0] * 40, 1.0, 1.0)]
+assert worst(rounded, True) > 0.05, worst(rounded, True)
+kept = trace.laid(rounded, True, on_cube, 0.001)
+assert worst(kept, True) <= 0.001 and len(kept) > len(rounded), (worst(kept, True), len(kept))
+print("LAID a loop round a cube, smoothed, cut %.3f into it; laid again in %d points, %.4f at most"
+      % (worst(rounded, True), len(kept), worst(kept, True)))
+
 print("TRACE all checks passed")
