@@ -107,6 +107,21 @@ drawn(loop, along_equator(355, 340, every=1.0))
 assert not loop.closed and not loop.curve()[1]
 print("CLOSED round the equator in", count, "points when let go at its start; open past it, or back from it")
 
+# With a rope the head lags the mouse: the head stops 20 degrees short of
+# the start, the mouse is on it. It closes, by the mouse, and the gap from
+# the head to the start is laid down in steps.
+lagging = trace.Trace(on_ball(0, 0), STEP, NEAR)
+drawn(lagging, along_equator(0, 340, every=3.0))
+assert not lagging.closed
+lagging.aim(on_ball(359, 0))
+points, shut = lagging.curve()
+assert lagging.closed and shut and abs(len(points) - count) < 10, (len(points), count)
+gaps = [trace.distance(a, b) for a, b in zip(points, points[1:] + points[:1])]
+assert max(gaps) < 1.01 * STEP, max(gaps)
+lagging.aim(on_ball(300, 0))
+assert not lagging.closed
+print("CLOSED BY THE MOUSE the head 20 degrees behind, the gap filled in", len(points) - len(lagging.points), "points")
+
 # A small scribble near its start does not close.
 scribble = trace.Trace(on_ball(0, 0), STEP, NEAR)
 drawn(scribble, [on_ball(2, 0), on_ball(3, 1), on_ball(2, 2), on_ball(0.5, 1.0), on_ball(0.2, 0.2)])

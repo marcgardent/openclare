@@ -11,8 +11,8 @@ curve is a child of the mesh it was drawn on: its children that are curves
 are what a mesh is remeshed with.
 
 The left button held down draws a stroke on the surface, as `trace` keeps
-it: forward, back along the stroke to undo it, closed if let go at its
-start (the ribbon closes to show it); pressed near an end of a curve drawn
+it: forward, back along the stroke to undo it, closed if let go with the
+mouse at its start (a ring round the start fills to show it); pressed near an end of a curve drawn
 before, it takes that curve up again from there. A ribbon is drawn over the
 surface while the stroke goes on; on release the stroke becomes a curve with
 the marks chosen in the header of the tool (`drawn_curve`), one step of undo. Esc or the right
@@ -536,8 +536,17 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
                     point = snapped(context, self.owner, self.tree, head, (-pull[1] / length, pull[0] / length), self.snap,
                                     self.snap_radius)
                 changed = point is not None and self.stroke.move(point) != "still"
+            # Closing is judged under the mouse, not at the head that lags
+            # it on the rope.
+            was = self.stroke.closed
+            if self.rope > 0.0:
+                under = hit(context, self.owner, self.tree, self.mouse)
+                if under is not None:
+                    self.stroke.aim(under)
+            changed = changed or self.stroke.closed != was
             # Only the region of the viewport is drawn again, and only when
-            # the ribbon, the rope or the circle of the snap changed.
+            # the ribbon, the rope, the circle of the snap or the cue of
+            # closing changed.
             if changed or self.rope > 0.0 or (self.snap != "NONE" and pull != (0.0, 0.0)):
                 context.region.tag_redraw()
             return {"RUNNING_MODAL"}
@@ -583,6 +592,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         from gpu_extras.batch import batch_for_shader
 
         draw_snap(context, self.head, self.snap_radius, self.snap, self.colour)
+        draw_close(context, self.owner.matrix_world, self.stroke, self.close, self.colour)
         if self.rope <= 0.0:
             return
         colour = self.colour[:3] + (0.6,)
@@ -647,6 +657,49 @@ def draw_snap(context, centre, radius, snap, colour, size=None):
         blf.color(font, *colour[:3], 1.0)
         blf.position(font, centre[0] + radius + 6.0, centre[1] - 5.0, 0.0)
         blf.draw(font, SNAP_NAMES[snap])
+    gpu.state.blend_set("NONE")
+
+
+def draw_close(context, matrix_world, stroke, radius, colour):
+    """The cue of closing, round the start of a stroke long enough to close:
+    a dashed ring of the radius that closes it, whole and filled when
+    letting go now would close it, with "Close" beside it."""
+    import math
+
+    import blf
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+
+    if len(stroke.points) < 3 or stroke.length() < stroke.closing_length:
+        return
+    at = view3d_utils.location_3d_to_region_2d(context.region, context.region_data,
+                                               matrix_world @ mathutils.Vector(stroke.points[0]))
+    if at is None:
+        return
+    shut = stroke.closed
+    ring = [(at.x + radius * math.cos(a), at.y + radius * math.sin(a), 0.0)
+            for a in (2.0 * math.pi * k / 32 for k in range(32))]
+    gpu.state.blend_set("ALPHA")
+    if shut:
+        fill = gpu.shader.from_builtin("UNIFORM_COLOR")
+        fill.bind()
+        fill.uniform_float("color", colour[:3] + (0.35,))
+        batch_for_shader(fill, "TRI_FAN", {"pos": [(at.x, at.y, 0.0)] + ring + ring[:1]}).draw(fill)
+    line = gpu.shader.from_builtin("POLYLINE_UNIFORM_COLOR")
+    line.bind()
+    line.uniform_float("viewportSize", (context.region.width, context.region.height))
+    line.uniform_float("lineWidth", 2.5 if shut else 1.5)
+    line.uniform_float("color", colour[:3] + (1.0 if shut else 0.6,))
+    if shut:
+        batch_for_shader(line, "LINE_LOOP", {"pos": ring}).draw(line)
+        font = 0
+        blf.size(font, 13.0)
+        blf.color(font, *colour[:3], 1.0)
+        blf.position(font, at.x + radius + 6.0, at.y - 5.0, 0.0)
+        blf.draw(font, "Close")
+    else:
+        dashes = [point for k in range(0, 32, 2) for point in (ring[k], ring[k + 1])]
+        batch_for_shader(line, "LINES", {"pos": dashes}).draw(line)
     gpu.state.blend_set("NONE")
 
 
