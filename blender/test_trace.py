@@ -228,32 +228,27 @@ bent = trace.moved(pin, False, 5, (0.0, 0.0, 1.0), 0.6)
 assert bent[5][2] == 1.0 and all(point[2] == 0.0 for point in bent[30:])
 print("MOVED a point of the equator 0.2 north, its neighbours within 0.5 the less the farther; a hairpin by one leg")
 
-# Smooth: a circle of radius 1 shaken (0.05 in and out, a wave every 6
-# points, as a hand shakes) comes back round when rubbed all over; a clean circle rubbed as long keeps its
-# radius (Taubin's steps); an open line keeps its ends; a point the brush
+# Smooth: a line with a bend 0.3 high and 1 long in its middle is rubbed
+# flat by a brush as wide as the bend; its ends stay, and what the brush
 # does not reach stays.
-def ring_of(radius, bumps=0, height=0.0, count=120):
-    return [((radius + height * math.sin(bumps * a)) * math.cos(a), (radius + height * math.sin(bumps * a)) * math.sin(a), 0.0)
-            for a in (2 * math.pi * k / count for k in range(count))]
-
-
-def spread(points):
-    radii = [math.hypot(x, y) for x, y, _ in points]
-    return max(radii) - min(radii), sum(radii) / len(radii)
-
-
-bumpy = trace.smoothed(ring_of(1.0, 20, 0.05), True, [1.0] * 120, passes=40)
-clean = trace.smoothed(ring_of(1.0), True, [1.0] * 120, passes=40)
-assert spread(bumpy)[0] < 0.2 * 0.1, spread(bumpy)
-assert abs(spread(clean)[1] - 1.0) < 0.005, spread(clean)
-wavy = [(x / 10, 0.05 * (-1) ** x, 0.0) for x in range(21)]
-calm = trace.smoothed(wavy, False, [1.0] * 21, passes=20)
-assert calm[0] == wavy[0] and calm[-1] == wavy[-1] and max(abs(y) for _, y, _ in calm[3:-3]) < 0.01
-weights = trace.brushed(wavy, (1.0, 0.0, 0.0), 0.35)
-assert weights[10] > 0.9 and weights[0] == 0.0 and weights[14] == 0.0
-part = trace.smoothed(wavy, False, weights, passes=5)
-assert part[:6] == wavy[:6] and part[15:] == wavy[15:] and abs(part[10][1]) < abs(wavy[10][1])
-print("SMOOTH a shake of 0.1 rubbed down to %.4f; a clean circle keeps a radius of %.4f; ends and the unbrushed stay"
-      % (spread(bumpy)[0], spread(clean)[1]))
+line = [(x / 20, 0.3 * math.exp(-((x / 20 - 2.0) / 0.3) ** 2), 0.0) for x in range(81)]
+rubbed = line
+for _ in range(10):
+    rubbed = trace.smoothed(rubbed, False, trace.brushed(rubbed, (2.0, 0.0, 0.0), 1.0), 1.0)
+height = max(y for _, y, _ in rubbed)
+assert height < 0.1, height
+assert rubbed[0] == line[0] and rubbed[-1] == line[-1] and rubbed[:15] == line[:15]
+# A shake of 0.05 from one point to the next goes in one stroke of the brush.
+shaky = [(x / 20, 0.05 * (-1) ** x, 0.0) for x in range(81)]
+calm = trace.smoothed(shaky, False, [1.0] * 81, 0.3)
+assert max(abs(y) for _, y, _ in calm[5:-5]) < 0.03
+# A circle of radius 1 rubbed all round with a brush of 0.3 draws in a
+# little, as a mesh under Blender's Smooth brush.
+circle = [(math.cos(a), math.sin(a), 0.0) for a in (2 * math.pi * k / 120 for k in range(120))]
+drawn_in = trace.smoothed(circle, True, [1.0] * 120, 0.3)
+radius = sum(math.hypot(x, y) for x, y, _ in drawn_in) / 120
+assert 0.98 < radius < 1.0, radius
+print("SMOOTH a bend 0.3 high rubbed down to %.3f in 10 strokes; a shake halved in one; a circle draws in to %.4f"
+      % (height, radius))
 
 print("TRACE all checks passed")

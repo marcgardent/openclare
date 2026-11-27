@@ -29,10 +29,10 @@ editing), the others stay. The radius is taken along the curve, so a part
 of the curve that passes near but comes from far along it stays.
 
 A curve is smoothed by rubbing it (`brushed`, `smoothed`): the points under
-the brush move toward the middle of their neighbours, the more the nearer
-its centre, in Taubin's two steps so that the curve does not shrink. What
-goes is the shake, waves of up to a dozen points or so; bends longer than
-that are the shape of the curve, and stay: Move changes them.
+the brush move toward the mean of the curve round them, as wide as the
+brush, the more the nearer its centre: the bends of the size of the brush
+and smaller go, as under Blender's Smooth brush. A closed curve rubbed all
+round draws in a little, as a mesh does under that brush.
 """
 
 import math
@@ -227,32 +227,45 @@ def moved(points, closed, index, offset, radius):
     ]
 
 
-# Taubin's two steps: one that smooths, one a little stronger the other way
-# that swells back, so that a curve rubbed many times does not shrink.
-SMOOTH_IN, SMOOTH_OUT = 0.5, -0.53
-
-
-def smoothed(points, closed, weights, passes=1):
-    """The points of a curve once rubbed: each moves toward the middle of
-    its two neighbours by its weight (0 stays, 1 the most), in Taubin's two
-    steps so that the curve does not shrink. The ends of an open curve
-    stay."""
+def smoothed(points, closed, weights, reach, strength=0.5):
+    """The points of a curve once rubbed: each goes toward the mean of the
+    curve round it, within `reach` along it (a bell, its width half the
+    reach), by `strength` times its weight (0 stays). The bends of the size
+    of the reach and smaller go, as under Blender's Smooth brush; the ends
+    of an open curve stay."""
     points = [tuple(point) for point in points]
     count = len(points)
-    if count < 3:
+    if count < 3 or reach <= 0.0:
         return points
-    for _ in range(passes):
-        for factor in (SMOOTH_IN, SMOOTH_OUT):
-            moved_to = []
-            for k, (point, weight) in enumerate(zip(points, weights)):
-                if weight <= 0.0 or (not closed and k in (0, count - 1)):
-                    moved_to.append(point)
-                    continue
-                before, after = points[k - 1], points[(k + 1) % count]
-                moved_to.append(tuple(x + factor * weight * (0.5 * (b + c) - x)
-                                      for x, b, c in zip(point, before, after)))
-            points = moved_to
-    return points
+    gaps = [distance(points[k], points[(k + 1) % count]) for k in range(count)]
+    total = sum(gaps) if closed else sum(gaps[:-1])
+    sigma = 0.5 * reach
+    out = []
+    for k, (point, weight) in enumerate(zip(points, weights)):
+        if weight <= 0.0 or (not closed and k in (0, count - 1)):
+            out.append(point)
+            continue
+        sums, mass = [0.0, 0.0, 0.0], 0.0
+        for way in (1, -1):
+            along, at = 0.0, k
+            while True:
+                bell = math.exp(-0.5 * (along / sigma) ** 2)
+                if way == 1 or at != k:
+                    mass += bell
+                    sums = [a + bell * x for a, x in zip(sums, points[at])]
+                nxt = at + way
+                if closed:
+                    nxt %= count
+                elif not 0 <= nxt < count:
+                    break
+                along += gaps[at] if way == 1 else gaps[nxt]
+                if along > reach or along > total / 2.0 or nxt == k:
+                    break
+                at = nxt
+        mean = [a / mass for a in sums]
+        pull = min(1.0, strength * weight)
+        out.append(tuple(x + pull * (m - x) for x, m in zip(point, mean)))
+    return out
 
 
 def brushed(points, centre, radius):

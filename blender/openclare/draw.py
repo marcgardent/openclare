@@ -35,7 +35,7 @@ Move Loop drags a loop by the point pressed (`trace.moved`): it follows the
 mouse on the surface, the points within a radius along the loop follow it
 the less the farther, and the loop is laid on the surface and every step
 again. Smooth Loop rubs the loops under its brush (`trace.smoothed`): their
-shake goes, their shape stays. The radius of both is a circle round the
+bends as wide as the brush and smaller go, by its strength at each pass. The radius of both is a circle round the
 mouse, with the name of the tool; F sets it and the wheel changes it while
 dragging. Esc or the right button puts the loops back. Delete Loop shows the
 loop under the mouse in red, and a click deletes it.
@@ -486,6 +486,14 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         min=3.0,
         soft_max=100.0,
     )
+    strength: bpy.props.FloatProperty(
+        name="Strength",
+        description="Smooth Loop: how far each pass of the brush takes the loop toward the mean of the loop round it",
+        subtype="FACTOR",
+        default=0.5,
+        min=0.0,
+        max=1.0,
+    )
     move_radius: bpy.props.FloatProperty(
         name="Radius",
         description=(
@@ -623,7 +631,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
             weights = trace.brushed(points, centre, radius)
             if not any(weights):
                 continue
-            smooth = trace.smoothed(points, loop.closed, weights)
+            smooth = trace.smoothed(points, loop.closed, weights, radius, self.strength)
             laid = []
             for weight, point in zip(weights, smooth):
                 if weight > 0.0:
@@ -1632,14 +1640,16 @@ class OPENCLARE_TL_loop_smooth(LoopTool, bpy.types.WorkSpaceTool):
     bl_idname = "openclare.loop_smooth"
     bl_label = "Smooth Loop (openclare)"
     bl_description = (
-        "Experimental. Rub the loops to smooth them: the shake of the hand goes, the shape stays and the loop does "
-        "not shrink. F or the wheel sets the radius; Esc puts them back"
+        "Experimental. Rub the loops to smooth them: their bends as wide as the brush and smaller go, as under "
+        "Blender's Smooth brush. F or the wheel sets the radius; Esc puts them back"
     )
     bl_icon = "ops.sculpt.mesh_filter"
     bl_keymap = (loop_key("SMOOTH"), RADIUS_KEY)
 
     def draw_settings(context, layout, tool):
-        layout.prop(tool.operator_properties(OPENCLARE_OT_draw_curve.bl_idname), "move_radius")
+        properties = tool.operator_properties(OPENCLARE_OT_draw_curve.bl_idname)
+        layout.prop(properties, "move_radius")
+        layout.prop(properties, "strength", slider=True)
 
 
 class OPENCLARE_TL_loop_delete(LoopTool, bpy.types.WorkSpaceTool):
