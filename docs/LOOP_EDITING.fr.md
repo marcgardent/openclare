@@ -74,7 +74,7 @@ s'allume ; ce qu'un clic ferait se voit avant d'être fait, comme le cercle d'ac
 
 | Geste | Entrée | Ce qu'il fait |
 |---|---|---|
-| **Draw** | glisser, bouton gauche | une nouvelle loop le long du trait, avec tout ce qu'a *Draw Curve* : la corde, le retour le long du trait pour défaire, l'accroche *Ridge*/*Valley*, F pour le rayon. Lâché sur son départ : fermée. Les quads le long d'elle se dessinent à mesure. |
+| **Draw** | glisser, bouton gauche | une nouvelle loop le long du trait, avec tout ce qu'a *Draw Curve* : la corde, le retour le long du trait pour défaire, l'accroche *Ridge*/*Valley*, F pour le rayon. Lâché avec la souris sur son départ (pas le point au bout de la corde, qui traîne) : fermée ; un anneau autour du départ se remplit tant que lâcher la fermerait. Les quads le long d'elle se dessinent à mesure. |
 | **Ring** | Alt + glisser | une loop fermée tout autour d'un membre, comme la fait *Cut Volume*. |
 | **Pick** | Maj + clic sur une arête du résultat | la loop d'arêtes du maillage de quads par cette arête devient une loop : parcourue par les sommets à quatre arêtes, arrêtée à un pôle ou à un bord, fermée si elle revient. Chaque Maj + clic au-delà d'un pôle la prolonge jusqu'au suivant. |
 | **Move** | glisser sur une loop | les points dans le rayon glissent sur la surface avec la souris, d'autant moins qu'ils sont loin (l'atténuation de l'édition proportionnelle de Blender) ; la loop reste sur la surface et garde son espacement. |

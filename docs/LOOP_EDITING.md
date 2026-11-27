@@ -70,7 +70,7 @@ click would do is shown before it is done, as the snap circle of *Draw Curve* is
 
 | Gesture | Input | What it does |
 |---|---|---|
-| **Draw** | left drag | a new loop along the stroke, with everything *Draw Curve* has: the rope, back along the stroke to undo, *Ridge*/*Valley* snap, F for the radius. Let go on its start: closed. The quads along it are drawn as it goes. |
+| **Draw** | left drag | a new loop along the stroke, with everything *Draw Curve* has: the rope, back along the stroke to undo, *Ridge*/*Valley* snap, F for the radius. Let go with the mouse on its start (not the point on the rope, which lags): closed; a ring round the start fills while letting go would close it. The quads along it are drawn as it goes. |
 | **Ring** | Alt + left drag | a closed loop all round a limb, as *Cut Volume* makes it. |
 | **Pick** | Shift + click on an edge of the result | the edge loop of the quad mesh through that edge becomes a loop: walked through vertices of four edges, stopped at a pole or a border, closed if it comes back. Each Shift + click past a pole carries it on to the next one. |
 | **Move** | left drag on a loop | the points within the radius slide on the surface with the mouse, the farther the less (the falloff of Blender's proportional editing); the loop stays on the surface and keeps its spacing. |

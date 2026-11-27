@@ -15,10 +15,12 @@ The rules, for a head moving to a new point:
   bit by bit; crossing an older part of the stroke, further back than
   `reach`, does not, so a curve may cross itself.
 - Closing: the curve is closed if the button is let go with the mouse near
-  the start, once the stroke is longer than `closing_length`. While the
-  button is down nothing closes: the stroke may pass by its start and go
-  on; `closed` tells whether letting go now would close it, for the ribbon
-  to show it.
+  the start, once the stroke is longer than `closing_length`. The mouse is
+  where the tool says it is (`aim`): with a rope, the point under the
+  mouse, not the head that lags behind it. While the button is down
+  nothing closes: the stroke may pass by its start and go on; `closed`
+  tells whether letting go now would close it, for the tool to show it.
+  Closed, the stretch from the head to the start is laid down in steps.
 """
 
 import math
@@ -86,6 +88,11 @@ class Trace:
             return None
         return found
 
+    def aim(self, point):
+        """The mouse is over `point` of the surface, ahead of the head: what
+        closing is judged by."""
+        self.mouse = tuple(point)
+
     def move(self, point):
         """The head moves to `point`: the stroke goes forward or back.
         Returns what happened: "forward", "back" or "still" (too close to
@@ -113,7 +120,16 @@ class Trace:
         whether it closes on itself; None if it is too short to be a curve."""
         if len(self.points) < 2:
             return None
-        return list(self.points), self.closed
+        if not self.closed:
+            return list(self.points), False
+        # The head lags the mouse: the gap to the start is filled, in steps.
+        start, head = self.points[0], self.head
+        gap = distance(head, start)
+        count = int(gap // self.step)
+        filled = [between(head, start, (k + 1) * self.step / gap) for k in range(count)]
+        if filled and distance(filled[-1], start) < self.step / 2.0:
+            filled.pop()
+        return list(self.points) + filled, True
 
 
 def end_near(curves, point, near):
