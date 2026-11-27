@@ -30,6 +30,13 @@ snap is drawn round the mouse, in the colour of the marks, with the name of
 the snap beside it, dashed when there is none: what the next stroke does
 is seen before it is drawn.
 
+With the Loops tool, a press on a loop away from its ends moves it
+(`trace.moved`): the point pressed follows the mouse on the surface, the
+points within a radius along the loop follow it the less the farther, and
+the loop is laid on the surface and every step again. The radius is drawn
+as a circle with "Move" while the mouse is over a loop and while moving;
+the wheel changes it. Esc or the right button puts the loop back.
+
 Cut Volume draws a straight line across a limb, as a knife would, from one
 side of it to the other: the plane of the view through the line cuts the
 object, and the loop of that cut under the line is the curve, all round the
@@ -466,6 +473,17 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         min=3.0,
         soft_max=100.0,
     )
+    move_radius: bpy.props.FloatProperty(
+        name="Move Radius",
+        description=(
+            "Loops tool: how far along a loop, either side of the point dragged, moving it carries the loop, in "
+            "pixels; drawn as a circle, changed with the wheel while moving"
+        ),
+        subtype="PIXEL",
+        default=80.0,
+        min=5.0,
+        soft_max=400.0,
+    )
 
     @classmethod
     def poll(cls, context):
@@ -493,6 +511,10 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         self.taken = None
         curves = drawn_loops(self.owner) if self.loop else drawn_curves(context, self.owner)
         end = trace.end_near([(points, closed) for _, points, closed in curves], start, near)
+        self.grab = None
+        grip = trace.grabbed([(points, closed) for _, points, closed in curves], start, near) if self.loop else None
+        if end is None and grip is not None:
+            return self.start_move(context, curves, grip, start, mouse)
         if end is not None:
             index, at_start = end
             self.taken, points, closed = curves[index]
@@ -521,7 +543,75 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         finally:
             self.timings.event(began)
 
+    def start_move(self, context, curves, grip, start, mouse):
+        """A press on a loop, away from its ends: the loop is moved by the
+        point pressed (`trace.moved`)."""
+        from . import curve_colour
+
+        index, at = grip
+        taken, points, closed = curves[index]
+        gaps = [trace.distance(a, b) for a, b in zip(points, points[1:])]
+        told = self.owner.data.openclare_loops.items[taken]
+        self.colour = curve_colour(told.sharp, told.crease, told.seam)
+        self.grab = {"loop": taken, "points": points, "closed": closed, "at": at, "start": tuple(start),
+                     "under": tuple(start), "spacing": sum(gaps) / max(len(gaps), 1)}
+        self.head = self.mouse = mouse
+        self.handles = (bpy.types.SpaceView3D.draw_handler_add(self.draw_pull, (context,), "WINDOW", "POST_PIXEL"),)
+        context.window_manager.modal_handler_add(self)
+        context.region.tag_redraw()
+        self.timings.ready()
+        return {"RUNNING_MODAL"}
+
+    def place(self):
+        """The loop moved with the mouse over `under`, laid on the surface
+        where it moved, and laid again every step."""
+        from . import loops
+
+        grab = self.grab
+        offset = tuple(u - s for u, s in zip(grab["under"], grab["start"]))
+        shifted = trace.moved(grab["points"], grab["closed"], grab["at"], offset, self.move_radius * self.pixel)
+        laid = []
+        for before, after in zip(grab["points"], shifted):
+            if after != tuple(before):
+                found = self.tree.find_nearest(mathutils.Vector(after))[0]
+                after = tuple(found) if found is not None else after
+            laid.append(after)
+        laid = trace.resampled(laid, grab["spacing"], grab["closed"]) if grab["spacing"] > 0.0 else laid
+        loops.set_points(self.owner.data.openclare_loops.items[grab["loop"]], laid, grab["closed"])
+
+    def step_move(self, context, event):
+        from . import loops
+
+        if event.type == "MOUSEMOVE":
+            self.head = self.mouse = (event.mouse_region_x, event.mouse_region_y)
+            under = hit(context, self.owner, self.tree, self.mouse)
+            if under is not None:
+                self.grab["under"] = tuple(under)
+                self.place()
+            context.region.tag_redraw()
+        elif event.type in {"WHEELUPMOUSE", "WHEELDOWNMOUSE", "PAGE_UP", "PAGE_DOWN"} and event.value == "PRESS":
+            # Wider or narrower, as the falloff of Blender's proportional
+            # editing; kept for the next move.
+            wider = event.type in {"WHEELUPMOUSE", "PAGE_UP"}
+            self.move_radius = max(5.0, self.move_radius * (1.1 if wider else 1.0 / 1.1))
+            properties = draw_tool_properties(context)
+            if properties is not None:
+                properties.move_radius = self.move_radius
+            self.place()
+            context.region.tag_redraw()
+        elif event.type == "LEFTMOUSE" and event.value == "RELEASE":
+            self.stop(context)
+            return {"FINISHED"}
+        elif event.type in {"ESC", "RIGHTMOUSE"}:
+            grab = self.grab
+            loops.set_points(self.owner.data.openclare_loops.items[grab["loop"]], grab["points"], grab["closed"])
+            self.stop(context)
+            return {"CANCELLED"}
+        return {"RUNNING_MODAL"}
+
     def step(self, context, event):
+        if self.grab is not None:
+            return self.step_move(context, event)
         if event.type == "MOUSEMOVE":
             self.mouse = (event.mouse_region_x, event.mouse_region_y)
             head = trace.pulled(self.head, self.mouse, self.rope)
@@ -591,6 +681,9 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         import gpu
         from gpu_extras.batch import batch_for_shader
 
+        if self.grab is not None:
+            draw_move(context, self.mouse, self.move_radius, self.colour)
+            return
         draw_snap(context, self.head, self.snap_radius, self.snap, self.colour)
         draw_close(context, self.owner.matrix_world, self.stroke, self.close, self.colour)
         if self.rope <= 0.0:
@@ -703,6 +796,70 @@ def draw_close(context, matrix_world, stroke, radius, colour):
     gpu.state.blend_set("NONE")
 
 
+def draw_move(context, centre, radius, colour, size=None):
+    """The circle of a Move round `centre`, in pixels of the region: whole,
+    with "Move" beside it."""
+    import math
+
+    import blf
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+
+    width, height = size or (context.region.width, context.region.height)
+    ring = [(centre[0] + radius * math.cos(a), centre[1] + radius * math.sin(a), 0.0)
+            for a in (2.0 * math.pi * k / 64 for k in range(64))]
+    line = gpu.shader.from_builtin("POLYLINE_UNIFORM_COLOR")
+    gpu.state.blend_set("ALPHA")
+    line.bind()
+    line.uniform_float("viewportSize", (width, height))
+    line.uniform_float("lineWidth", 1.5)
+    line.uniform_float("color", colour[:3] + (0.8,))
+    batch_for_shader(line, "LINE_LOOP", {"pos": ring}).draw(line)
+    font = 0
+    blf.size(font, 13.0)
+    blf.color(font, *colour[:3], 1.0)
+    blf.position(font, centre[0] + 12.0, centre[1] + 12.0, 0.0)
+    blf.draw(font, "Move")
+    gpu.state.blend_set("NONE")
+
+
+def loop_pressed(context, owner, mouse, near):
+    """What a press of the Loops tool at `mouse` would take: "end" near an
+    end of an open loop, "move" near another point of a loop, None; judged
+    on the screen, `near` pixels round the mouse, with the colour of that
+    loop."""
+    import numpy
+
+    from . import curve_colour, loops
+
+    items = owner.data.openclare_loops.items
+    if not len(items):
+        return None, None
+    region, view = context.region, context.region_data
+    matrix = numpy.array(view.perspective_matrix @ owner.matrix_world)
+    best = None
+    for loop in items:
+        points = loops.points_of(loop)
+        if not len(points):
+            continue
+        clip = numpy.hstack([points, numpy.ones((len(points), 1))]) @ matrix.T
+        seen = clip[:, 3] > 1e-9
+        screen = numpy.full((len(points), 2), numpy.inf)
+        screen[seen] = (clip[seen, :2] / clip[seen, 3:4] + 1.0) * 0.5 * numpy.array((region.width, region.height))
+        gaps = numpy.hypot(screen[:, 0] - mouse[0], screen[:, 1] - mouse[1])
+        nearest = int(numpy.argmin(gaps))
+        if gaps[nearest] > near:
+            continue
+        ends = not loop.closed and min(gaps[0], gaps[-1]) <= near
+        found = ("end" if ends else "move", -1.0 if ends else float(gaps[nearest]), loop)
+        if best is None or found[1] < best[1]:
+            best = found
+    if best is None:
+        return None, None
+    loop = best[2]
+    return best[0], curve_colour(loop.sharp, loop.crease, loop.seam)
+
+
 def draw_cursor(mouse):
     """While Draw Curve is the active tool and there is a mesh to draw on,
     the circle of the snap round the mouse (see `draw_snap`), in the colour
@@ -714,6 +871,14 @@ def draw_cursor(mouse):
     if properties is None or DRAWING or target(context) is None:
         return
     colour = curve_colour(properties.sharp, properties.crease, properties.seam)
+    tool = context.workspace.tools.from_space_view3d_mode("OBJECT", create=False)
+    if tool is not None and tool.idname == OPENCLARE_TL_loops.bl_idname:
+        # On a loop, away from its ends, a press would move it: the circle
+        # of the move instead.
+        kind, loop_colour = loop_pressed(context, target(context), mouse, properties.close)
+        if kind == "move":
+            draw_move(context, mouse, properties.move_radius, loop_colour)
+            return
     draw_snap(context, mouse, properties.snap_radius, properties.snap, colour)
 
 
@@ -1244,7 +1409,8 @@ class OPENCLARE_TL_loops(bpy.types.WorkSpaceTool):
     bl_description = (
         "Experimental. Draw the loops of the selected mesh, for its result to have edges along them: drag to draw "
         "one (back along the stroke to undo, let go at its start to close it, from an end of a loop to take it up "
-        "again); Alt + drag across a limb for a loop all round it. The quads along each loop are drawn"
+        "again); drag a loop elsewhere to move it (the wheel sets how much of it goes); Alt + drag across a limb for "
+        "a loop all round it. The quads along each loop are drawn"
     )
     bl_icon = "ops.curve.draw"
     bl_widget = None
@@ -1260,6 +1426,8 @@ class OPENCLARE_TL_loops(bpy.types.WorkSpaceTool):
 
     def draw_settings(context, layout, tool, *, extra=False):
         OPENCLARE_TL_draw_curve.draw_settings(context, layout, tool, extra=extra)
+        if not extra:
+            layout.prop(tool.operator_properties(OPENCLARE_OT_draw_curve.bl_idname), "move_radius")
 
 
 TOOL_IDS = {OPENCLARE_TL_draw_curve.bl_idname, OPENCLARE_TL_cut_volume.bl_idname, OPENCLARE_TL_loops.bl_idname}

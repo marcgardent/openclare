@@ -21,6 +21,12 @@ The rules, for a head moving to a new point:
   nothing closes: the stroke may pass by its start and go on; `closed`
   tells whether letting go now would close it, for the tool to show it.
   Closed, the stretch from the head to the start is laid down in steps.
+
+A curve drawn before is moved by a point of it (`grabbed`, `moved`): the
+point goes with the mouse, the others within a radius along the curve go
+with it the less the farther (the smooth falloff of Blender's proportional
+editing), the others stay. The radius is taken along the curve, so a part
+of the curve that passes near but comes from far along it stays.
 """
 
 import math
@@ -165,6 +171,54 @@ def resampled(points, step, closed=False):
     elif distance(out[-1], points[-1]) > 1e-9:
         out.append(points[-1])
     return out
+
+
+def grabbed(curves, point, near):
+    """The point of a curve that `point` is on, to move the curve by it:
+    (index of the curve, index of the point), the nearest within `near`, or
+    None."""
+    best = None
+    for index, (points, _closed) in enumerate(curves):
+        for at, here in enumerate(points):
+            gap = distance(point, here)
+            if gap <= near and (best is None or gap < best[0]):
+                best = (gap, index, at)
+    return None if best is None else best[1:]
+
+
+def along_from(points, closed, index):
+    """How far each point of the curve is from `points[index]`, along the
+    curve (the shorter way round a closed one)."""
+    count = len(points)
+    steps = [distance(points[k], points[k + 1]) for k in range(count - 1)]
+    sums = [0.0]
+    for gap in steps:
+        sums.append(sums[-1] + gap)
+    away = [abs(sums[k] - sums[index]) for k in range(count)]
+    if closed and count > 2:
+        total = sums[-1] + distance(points[-1], points[0])
+        away = [min(gap, total - gap) for gap in away]
+    return away
+
+
+def falloff(t):
+    """How much a point a fraction `t` of the radius away moves: 1 at the
+    point held, 0 at the radius and beyond, smoothly (Blender's Smooth)."""
+    if t >= 1.0:
+        return 0.0
+    u = 1.0 - max(t, 0.0)
+    return u * u * (3.0 - 2.0 * u)
+
+
+def moved(points, closed, index, offset, radius):
+    """The points of a curve once `points[index]` is moved by `offset`, the
+    others within `radius` along the curve the less the farther."""
+    away = along_from(points, closed, index)
+    return [
+        tuple(x + falloff(gap / radius) * d for x, d in zip(point, offset)) if radius > 0.0 and gap < radius
+        else tuple(point)
+        for point, gap in zip(points, away)
+    ]
 
 
 def taken_up(points, closed, at_start, step, near, reach=None, closing_length=None, back=None):
