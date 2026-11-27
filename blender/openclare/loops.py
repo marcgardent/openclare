@@ -211,7 +211,7 @@ class SizeField:
 
 # The quads along the loops of the object shown, and the size field they were
 # laid with: each kept with what it was made from.
-QUADS = {"key": None, "made": None, "pending": False, "field_key": None, "field": None}
+QUADS = {"key": None, "made": None, "pending": False, "field_key": None, "field": None, "owner": None}
 
 
 def field_key(owner):
@@ -309,20 +309,22 @@ def refresh():
         except Exception as error:  # noqa: BLE001 - said once, and not tried again until the loops change
             print(f"openclare: the quads along the loops could not be laid: {type(error).__name__}: {error}")
             QUADS["made"] = None
-        QUADS["key"] = key
+        QUADS["key"], QUADS["owner"] = key, owner.name
         redraw_views()
     return None
 
 
 def quads_shown(owner):
-    """The quads along the loops of `owner` as they were last worked out if
-    they still hold, else None, and the timer asked to work them out."""
+    """The quads along the loops of `owner` as they were last worked out,
+    and the timer asked to work them out again if they no longer hold.
+    Until it has, those of before are shown, so that the quads do not blink
+    while a brush moves the loops; None if they were of another object."""
     if QUADS["key"] == quads_key(owner):
         return QUADS["made"]
     if not QUADS["pending"]:
         QUADS["pending"] = True
         bpy.app.timers.register(refresh, first_interval=0.0)
-    return None
+    return QUADS["made"] if QUADS["owner"] == owner.name else None
 
 
 def owner_shown(context):
