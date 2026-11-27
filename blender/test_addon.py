@@ -406,18 +406,20 @@ on_it = [vertex.index for vertex in mesh.vertices if abs(vertex.co.z - height) <
 print("DRAWN a stroke of", len(points), "points round the ball, a loop of", len(on_it), "vertices on it")
 assert len(on_it) >= 12, "the drawn curve has no loop of edges"
 
-# The Draw Curve tool: in the toolbar of the 3D viewport in Object Mode, with
-# its operator. The mouse cannot be driven here; what it relies on can.
+# The Loops tool: in the toolbar of the 3D viewport in Object Mode, in the
+# place of Draw Curve and Cut Volume, whose operators it calls. The mouse
+# cannot be driven here; what it relies on can.
 from bl_ui.space_toolsystem_common import ToolSelectPanelHelper  # noqa: E402
 
 toolbar = ToolSelectPanelHelper._tool_class_from_space_type("VIEW_3D")
 tools = [item for item in ToolSelectPanelHelper._tools_flatten(toolbar.tools_from_context(bpy.context, mode="OBJECT"))
          if item is not None]
-assert any(item.idname == "openclare.draw_curve" for item in tools), "no Draw Curve tool in the toolbar"
-# Cut Volume is the other tool of the same button.
-groups = [group for group in toolbar.tools_from_context(bpy.context, mode="OBJECT") if isinstance(group, tuple)]
-assert any({"openclare.draw_curve", "openclare.cut_volume"} <= {getattr(item, "idname", None) for item in group}
-           for group in groups), "Draw Curve and Cut Volume are not one button"
+assert any(item.idname == "openclare.loops" for item in tools), "no Loops tool in the toolbar"
+assert not any(item.idname in {"openclare.draw_curve", "openclare.cut_volume"} for item in tools), "Draw Curve still there"
+loop_keys = {(entry[1]["type"], entry[1].get("alt", False)): entry for entry in openclare.draw.OPENCLARE_TL_loops.bl_keymap}
+assert loop_keys[("LEFTMOUSE", False)][0] == "object.openclare_draw_curve"
+assert loop_keys[("LEFTMOUSE", True)][0] == "object.openclare_cut_volume"
+assert all(dict(loop_keys[key][2]["properties"])["loop"] for key in (("LEFTMOUSE", False), ("LEFTMOUSE", True)))
 assert hasattr(bpy.ops.object, "openclare_cut_volume")
 assert hasattr(bpy.ops.object, "openclare_draw_curve")
 # The tools draw on the active object if it is a selected mesh; otherwise
@@ -437,7 +439,7 @@ ball.select_set(True)
 bpy.context.view_layer.objects.active = ball
 from bl_ui.space_toolsystem_common import _activate_by_item  # noqa: E402,F401
 
-item = next(item for item in tools if item.idname == "openclare.cut_volume")
+item = next(item for item in tools if item.idname == "openclare.loops")
 assert item._replace(cursor=openclare.draw.DISABLED).cursor == "STOP"
 assert "STOP" in {e.identifier for e in bpy.types.Window.bl_rna.functions["cursor_set"].parameters["cursor"].enum_items}
 assert openclare.draw.follow_cursor() == openclare.draw.LOOK_FOR_CURSOR
@@ -447,7 +449,7 @@ assert draw_properties["snap_radius"].default == 15.0
 assert [draw_properties[name].default for name in ("width", "spacing", "back_band", "close", "fit")] == [8.0, 5.0, 30.0, 15.0, 5.0]
 # The settings of the stroke are in the popover of the header, as those of
 # Blender's own tools: drawn without fault in a layout of a panel.
-draw_tool = next(item for item in tools if item.idname == "openclare.draw_curve")
+draw_tool = next(item for item in tools if item.idname == "openclare.loops")
 assert "extra" in __import__("inspect").signature(draw_tool.draw_settings).parameters
 assert {item.identifier for item in draw_properties["snap"].enum_items} == {"NONE", "RIDGE", "VALLEY"}
 # The snap on a roof with a sharp ridge at x = 0.123, the screen seen from
@@ -599,8 +601,117 @@ bpy.context.view_layer.update()
 assert len(openclare.curve_objects(ball)) == 2 and len(openclare.curve_objects(copy)) == 1
 print("COPY the copy of the ball has its own curve; the ball keeps its 2")
 bpy.data.objects.remove(copy)
-for drawn_on_ball in openclare.curve_objects(ball):
-    bpy.data.objects.remove(drawn_on_ball)
+
+
+# Loops (docs/LOOP_EDITING.md, milestone 1): the two curves of the ball made
+# loops of its mesh by Convert Curves to Loops, their points and marks kept
+# and the curve objects taken away; the result has the same edges along the
+# loops as it had along the curves, and the same marks on them.
+def remeshed_ball():
+    alone(ball)
+    assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+    result = bpy.context.active_object
+    made = sorted(tuple(round(c, 5) for c in vertex.co) for vertex in result.data.vertices)
+    sharp = sorted(sorted(tuple(round(c, 5) for c in result.data.vertices[v].co) for v in edge.vertices)
+                   for edge in result.data.edges if edge.use_edge_sharp)
+    bpy.data.objects.remove(result)
+    return made, sharp
+
+
+settings.quads, settings.adaptive_size = 600, 0.0
+curves, marks = openclare.curves_of(ball)
+with_curves, sharp_with_curves = remeshed_ball()
+alone(ball)
+assert bpy.ops.object.openclare_curves_to_loops() == {"FINISHED"}
+assert openclare.curve_objects(ball) == [], "the curves are still there"
+project = ball.data.openclare_loops
+assert len(project.items) == len(curves) == 2
+for loop, (points, closed, sharp), marked in zip(project.items, curves, marks):
+    assert loop.closed == closed and openclare.loops.marks_of(loop) == marked
+    assert (openclare.loops.points_of(loop) == points).all(), "the points of the loop are not those of the curve"
+assert openclare.loops.summary(project) == "2 loops: 1 closed, 1 open", openclare.loops.summary(project)
+assert openclare.OPENCLARE_PT_loops.bl_parent_id == "OPENCLARE_PT_input"
+with_loops, sharp_with_loops = remeshed_ball()
+print("LOOPS 2 curves made loops:", len(with_loops), "vertices with the loops,", len(with_curves), "with the curves;",
+      len(sharp_with_loops), "sharp edges along the belt")
+assert len(sharp_with_loops) >= 12, "the sharp loop has no sharp edges"
+assert with_loops == with_curves and sharp_with_loops == sharp_with_curves, "the loops do not give what the curves gave"
+# A loop sculpted off the surface is laid on it again by the engine.
+belt_loop = next(loop for loop in project.items if loop.sharp)
+belt_loop.points.foreach_set("co", (openclare.loops.points_of(belt_loop) * 1.02).reshape(-1))
+_, sharp_off = remeshed_ball()
+assert len(sharp_off) >= 12, "a loop a little off the surface is lost"
+# Seen on the ball, and on a result of it.
+alone(ball)
+assert openclare.loops.owner_shown(bpy.context) == ball
+assert bpy.ops.object.openclare_loops_clear() == {"FINISHED"} and not project.items
+
+
+# The quads along the loops (milestone 2): a loop round the equator of the
+# ball, of radius r = 1, has 2πr / h edges round it, h the quad size of the
+# project; a second loop closer than h is red on the side facing the other,
+# one further away is not.
+def latitude(height, count=360):
+    ring = (1.0 - height ** 2) ** 0.5
+    return [(ring * math.cos(2 * math.pi * k / count), ring * math.sin(2 * math.pi * k / count), height)
+            for k in range(count)]
+
+
+def quads_now():
+    rows = openclare.loops.quads_along(bpy.context, ball)
+    return rows, openclare.loops.size_field(bpy.context, ball)
+
+
+equator = openclare.loops.add(ball.data, latitude(0.0), True, (False, 0.0, False))
+settings.target, settings.quads = "COUNT", 600
+rows, field = quads_now()
+assert field.sizes is None, "sizes from an analysis that does not hold"
+round_it = 2 * math.pi / field.uniform
+print("LOOP QUADS uniform size %.4f:" % field.uniform, rows[0]["edges"], "edges round, 2πr/h = %.1f" % round_it)
+assert abs(rows[0]["edges"] - round_it) <= 1.5 and not rows[0]["red_left"].any() and not rows[0]["red_right"].any()
+assert openclare.loops.row_text(rows[0]) == f"{rows[0]['edges']} round"
+# With Sizes, analysed: the size of the analysis, a Largest of 0.1.
+shape(settings, "organic")
+settings.target, settings.largest_quad, settings.smallest_quad, settings.adaptive_size = "SIZE", 0.1, 0.05, 0.0
+assert bpy.ops.object.openclare_analyse() == {"FINISHED"}
+settings.largest_quad, settings.smallest_quad = 0.1, 0.05
+rows, field = quads_now()
+assert field.sizes is not None and "from the analysis" in field.said(), field.said()
+print("LOOP QUADS analysed:", field.said(), ";", rows[0]["edges"], "edges round, 2πr/h = %.1f" % (2 * math.pi / 0.1))
+assert abs(rows[0]["edges"] - 2 * math.pi / 0.1) <= 3, rows[0]["edges"]
+# A second loop 0.05 above: red between the two; 0.4 above, not.
+for height, red in ((0.05, True), (0.4, False)):
+    beside = openclare.loops.add(ball.data, latitude(height), True, (False, 0.0, False))
+    rows, _ = quads_now()
+    reds = [bool(row["red_left"].any() or row["red_right"].any()) for row in rows]
+    print("LOOP QUADS a second loop at height", height, "red:", reds)
+    assert reds == [red, red], reds
+    project.items.remove(len(project.items) - 1)
+# An open loop: two ends, each needing a pole.
+project.items.remove(0)
+openclare.loops.add(ball.data, latitude(0.0)[:90], False, (False, 0.0, False))
+rows, _ = quads_now()
+assert len(rows[0]["ends"]) == 2 and openclare.loops.row_text(rows[0]).endswith("2 ends")
+project.items.clear()
+settings.target, settings.largest_quad, settings.smallest_quad = "COUNT", 0.0, 0.0
+
+# A stroke of the Loops tool let go (milestone 3, Draw): a loop of the mesh
+# with the marks of the header, no curve object; a stroke from its end takes
+# it up again, and closing it closes the loop.
+stroke_points = latitude(0.2)[:120]
+openclare.draw.kept(bpy.context, ball, stroke_points, False, (True, 0.5, False), None, True, 0.01)
+assert len(project.items) == 1 and openclare.curve_objects(ball) == []
+assert openclare.loops.marks_of(project.items[0]) == (True, 0.5, False) and not project.items[0].closed
+found = openclare.draw.drawn_loops(ball)
+assert len(found) == 1 and found[0][0] == 0 and len(found[0][1]) == 120
+openclare.draw.kept(bpy.context, ball, latitude(0.2), True, (False, 0.0, False), 0, True, 0.01)
+assert len(project.items) == 1 and project.items[0].closed and len(project.items[0].points) == 360
+assert openclare.loops.marks_of(project.items[0]) == (True, 0.5, False), "taken up, the loop lost its marks"
+# Ring: a cut across the ball made a closed loop.
+openclare.draw.kept(bpy.context, ball, latitude(-0.3), True, (False, 0.0, True), None, True, 0.01)
+assert len(project.items) == 2 and project.items[1].closed and project.items[1].seam
+print("DRAW LOOPS a stroke made a loop, taken up and closed; a ring made a loop")
+project.items.clear()
 settings.quads, settings.adaptive_size = 800, 50.0
 
 # Materials: a flat grid whose left third is of another material. The result

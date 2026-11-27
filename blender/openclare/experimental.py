@@ -109,7 +109,7 @@ class OpenclarePreferences(bpy.types.AddonPreferences):
         description=(
             "Show the features that are not stable yet, marked with this icon: Ask For Sizes and Analyse, "
             "Quads Around Thin Parts, Follow Curvature, Fewer Irregular Vertices, Volume Fit, triangles for "
-            "simulation, the curves and their tools, the poles and their tool. Hidden, they are left out of "
+            "simulation, the curves and their tools, the loops, the poles and their tool. Hidden, they are left out of "
             "the panels and the toolbar, and a remesh gives them their default values"
         ),
         default=True,

@@ -22,7 +22,7 @@ import bpy
 from bl_operators.presets import AddPresetBase
 from bl_ui.utils import PresetPanel
 
-from . import draw, engine, experimental, extend, poles, preview, reflection
+from . import draw, engine, experimental, extend, loops, poles, preview, reflection
 
 PRESETS = [
     ("organic", "Organic", "Sculpts and characters: edges follow the shape closely, quads are smaller where it bends"),
@@ -228,6 +228,26 @@ def linear(hex_colour):
     return [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in channels] + [1.0]
 
 
+def sizes_asked(settings, analysis, scale):
+    """The edge the quads of each vertex are asked to have, in the units of
+    the mesh `analysis` was made of (`scale` long in the scene), whether its
+    shape calls for smaller ones than the smallest, and the largest and the
+    smallest asked for: what Show Sizes colours and the loops are drawn
+    with (`loops`)."""
+    import numpy
+
+    if settings.largest_quad > 0.0:
+        largest = settings.largest_quad / scale
+        smallest = min(settings.smallest_quad / scale, largest) or largest / SIZE_RANGE
+        sizes, coarser = analysis.at_vertices(largest, smallest)
+        return sizes, coarser, largest, smallest
+    # No largest: the sizes the number of quads is meshed with.
+    sizes = analysis.at_vertices_for(settings.quads)
+    seen = sizes[numpy.isfinite(sizes)]
+    largest, smallest = (float(seen.max()), float(seen.min())) if len(seen) else (1.0, 1.0)
+    return sizes, numpy.zeros(len(sizes), bool), largest, smallest
+
+
 def colour_sizes(settings):
     """Colours the object with the sizes asked for now."""
     import numpy
@@ -236,17 +256,7 @@ def colour_sizes(settings):
     held = ANALYSES.get(PREVIEW.get("of", ""))
     if owner is None or held is None or owner.type != "MESH":
         return
-    scale = PREVIEW["scale"]
-    if settings.largest_quad > 0.0:
-        largest = settings.largest_quad / scale
-        smallest = min(settings.smallest_quad / scale, largest) or largest / SIZE_RANGE
-        sizes, coarser = held["analysis"].at_vertices(largest, smallest)
-    else:
-        # No largest: the sizes the number of quads is meshed with.
-        sizes = held["analysis"].at_vertices_for(settings.quads)
-        coarser = numpy.zeros(len(sizes), bool)
-        seen = sizes[numpy.isfinite(sizes)]
-        largest, smallest = (float(seen.max()), float(seen.min())) if len(seen) else (1.0, 1.0)
+    sizes, coarser, largest, smallest = sizes_asked(settings, held["analysis"], PREVIEW["scale"])
     ramp = numpy.array([linear(colour) for colour in SIZE_RAMP], numpy.float32)
     span = max(numpy.log(largest / smallest), 1e-9)
     # From light (largest) to dark (smallest), as a logarithm of the size.
@@ -1530,8 +1540,14 @@ class Remeshing:
         source = evaluated.to_mesh()
         try:
             engine_settings, density = engine_settings_of(original, evaluated, source)
-            # Curves and poles are experimental: hidden, there are none.
-            self.curves, marks = curves_of(original) if experimental.shown() else ([], [])
+            # Loops, curves and poles are experimental: hidden, there are
+            # none. The loops first, then the curve objects: one list, the
+            # index of each kept for its marks.
+            self.curves, marks = ([], [])
+            if experimental.shown():
+                for curves, marked in (loops.loops_of(original.data), curves_of(original)):
+                    self.curves += curves
+                    marks += marked
             given = engine_input(
                 source, BASE_PRESET, engine_settings, density, settings.export_materials, copy,
                 sharp=settings.use_marked_sharp, stretch=stretch_of(original), curves=self.curves, curve_marks=marks,
@@ -2472,8 +2488,9 @@ class OPENCLARE_PT_curves(DataPanel, bpy.types.Panel):
         owner = object_to_remesh(context)
         drawn = curve_objects(owner)
         if not drawn:
-            layout.label(text="Draw Curve or Cut Volume in the toolbar (T), or parent a curve here", icon="INFO")
+            layout.label(text="Parent a curve here, or draw loops with the Loops tool (T)", icon="INFO")
             return
+        layout.operator(loops.OPENCLARE_OT_curves_to_loops.bl_idname)
         column = layout.column(align=True)
         for curve in drawn:
             row = column.row(align=True)
@@ -2511,6 +2528,47 @@ class OPENCLARE_PT_poles(DataPanel, bpy.types.Panel):
         row = layout.row(align=True)
         row.operator(poles.OPENCLARE_OT_poles_free.bl_idname)
         row.operator(poles.OPENCLARE_OT_poles_clear.bl_idname)
+
+
+class OPENCLARE_PT_loops(DataPanel, bpy.types.Panel):
+    """The loops of the retopo project: lines on the object the result is to
+    have edges along"""
+
+    bl_label = "Loops"
+    bl_idname = "OPENCLARE_PT_loops"
+    bl_parent_id = "OPENCLARE_PT_input"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context):
+        return is_source(context) and experimental.shown()
+
+    def draw_header(self, context):
+        self.layout.label(text="", icon=experimental.ICON)
+
+    def draw(self, context):
+        layout = self.layout
+        owner = object_to_remesh(context)
+        project = owner.data.openclare_loops
+        if not project.items:
+            layout.label(text="Draw with the Loops tool (T), or convert the curves drawn on the object", icon="INFO")
+            layout.operator(loops.OPENCLARE_OT_curves_to_loops.bl_idname)
+            return
+        layout.label(text=loops.summary(project))
+        rows = loops.quads_shown(owner) or [None] * len(project.items)
+        if loops.QUADS["field"] is not None and loops.QUADS["field_key"] == loops.field_key(owner):
+            layout.label(text=loops.QUADS["field"].said())
+        column = layout.column(align=True)
+        for loop, quads in zip(project.items, rows):
+            row = column.row(align=True)
+            red = quads is not None and (quads["red_left"].any() or quads["red_right"].any())
+            row.label(text=loop.name, icon="ERROR" if red else "CURVE_PATH")
+            row.label(text=loops.marks_text(loop))
+            row.label(text=loops.row_text(quads))
+        layout.prop(project, "show")
+        row = layout.row(align=True)
+        row.operator(loops.OPENCLARE_OT_curves_to_loops.bl_idname)
+        row.operator(loops.OPENCLARE_OT_loops_clear.bl_idname)
 
 
 class OPENCLARE_PT_curve(DataPanel, bpy.types.Panel):
@@ -2565,6 +2623,7 @@ CLASSES = (
     OPENCLARE_PT_output,
     OPENCLARE_PT_go,
     OPENCLARE_PT_curves,
+    OPENCLARE_PT_loops,
     OPENCLARE_PT_poles,
     OPENCLARE_PT_curve,
 )
@@ -2588,6 +2647,7 @@ def register():
     preview.register()
     draw.register()
     poles.register()
+    loops.register()
     reflection.register()
     experimental.register(draw.tools, poles.tools)
     bpy.types.Object.openclare = bpy.props.PointerProperty(type=OpenclareSettings)
@@ -2621,6 +2681,7 @@ def unregister():
     preview.unregister()
     draw.unregister()
     poles.unregister()
+    loops.unregister()
     reflection.unregister()
     bpy.utils.unregister_preset_path(ADDON_FOLDER)
     for handlers, handler in HANDLERS:

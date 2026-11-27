@@ -62,10 +62,12 @@ Les outils de la vue 3D, en Object Mode.
 
 | Fonction | État | Ce qui lui manque |
 |---|---|---|
-| *Draw Curve*, avec son aimantation (*Ridge*, *Valley*, rayon sur F) | expérimental | des courbes tracées sur un cube ne laissent aucune arête (#195) ; les courbes ne comptent pas dans les tailles et le budget (#196) ; pas gardées partout (#44) |
-| *Cut Volume* | expérimental | fait les mêmes courbes (#195, #196, #44) |
+| L'outil *Loops*, à la place de *Draw Curve* et *Cut Volume* : glisser pour tracer une loop, avec l'aimantation (*Ridge*, *Valley*, rayon sur F), depuis un bout de loop pour la reprendre ; Alt + glisser à travers un membre pour un anneau (jalon 3 de [LOOP_EDITING.fr.md](LOOP_EDITING.fr.md)) | expérimental | aucun outil ne déplace, ne coupe ni ne supprime encore une loop ; des lignes tracées sur un cube ne laissent aucune arête (#195) ; les lignes ne comptent pas dans les tailles et le budget (#196) ; pas gardées partout (#44) |
+| *Draw Curve*, *Cut Volume* : leurs opérateurs, qui font des objets courbes, ne sont plus dans la barre d'outils | expérimental | la même chose (#195, #196, #44) |
 | *Mesh*, *Sharp*, *Crease*, *Seam* d'une courbe | expérimental | une marque ne vaut que si la ligne d'arêtes qui la porte est là (#195) |
 | *Select Curves*, *Deselect Curves* | stable | |
+| Les loops de l'objet, gardées sur son maillage et dessinées sur lui et ses résultats ; *Convert Curves to Loops*, *Clear* ; envoyées au moteur avec les courbes | expérimental | nouvelles au 27 novembre 2026, jalon 1 de [LOOP_EDITING.fr.md](LOOP_EDITING.fr.md) : aucun outil ne les édite encore, et elles ne sont pas mieux tenues que les courbes (#195, #196, #44) |
+| Les quads le long des loops : une rangée de chaque côté, à la taille de quad du projet (les tailles d'*Analyse* quand elle tient, sinon une seule taille : le *Largest* avec *Sizes*, l'arête d'autant de carrés que de *Quads*) ; le nombre d'arêtes autour d'une loop fermée ; rouge là où un virage est plus serré qu'un quad ou qu'une loop, un bord ou la loop elle-même passe à côté à moins d'un quad ; un point à chaque bout ouvert | expérimental | nouveaux au 27 novembre 2026, jalon 2 de [LOOP_EDITING.fr.md](LOOP_EDITING.fr.md) : l'analyse ne se lance pas d'elle-même (*Analyse*), les arêtes dures ne rendent pas une rangée rouge, le moteur ne reçoit pas la demande de quads plus petits qu'une rangée rouge appelle (#196) |
 | Les pôles du dernier résultat, gardés sur l'objet et affichés ; ceux qu'on touche imposés au remaillage suivant | expérimental | nouveaux au 31 octobre 2026, ni mesurés sur le banc ni essayés par des artistes (#249) |
 | L'outil *Poles* : glisser, ajouter (3, 5), épingler (P), retirer (X), *Free All*, *Clear* | expérimental | la même chose (#249) |
 
