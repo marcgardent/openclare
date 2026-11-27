@@ -64,6 +64,7 @@ The tools of the 3D viewport, in Object Mode.
 | *Cut Volume* | experimental | makes the same curves (#195, #196, #44) |
 | A curve's *Mesh*, *Sharp*, *Crease*, *Seam* | experimental | a mark is only as good as the line of edges it is on (#195) |
 | *Select Curves*, *Deselect Curves* | stable | |
+| The loops of the object, kept on its mesh and drawn on it and on its results; *Convert Curves to Loops*, *Clear*; sent to the engine with the curves | experimental | new on 27 November 2026, milestone 1 of [LOOP_EDITING.md](LOOP_EDITING.md): no tool edits them yet, and they are held no better than the curves (#195, #196, #44) |
 | The poles of the last result, kept on the object and shown; those touched imposed on the next remesh | experimental | new on 31 October 2026, not yet measured on the bench nor tried by artists (#249) |
 | The *Poles* tool: drag, add (3, 5), pin (P), remove (X), *Free All*, *Clear* | experimental | the same (#249) |
 

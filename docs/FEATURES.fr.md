@@ -66,6 +66,7 @@ Les outils de la vue 3D, en Object Mode.
 | *Cut Volume* | expérimental | fait les mêmes courbes (#195, #196, #44) |
 | *Mesh*, *Sharp*, *Crease*, *Seam* d'une courbe | expérimental | une marque ne vaut que si la ligne d'arêtes qui la porte est là (#195) |
 | *Select Curves*, *Deselect Curves* | stable | |
+| Les loops de l'objet, gardées sur son maillage et dessinées sur lui et ses résultats ; *Convert Curves to Loops*, *Clear* ; envoyées au moteur avec les courbes | expérimental | nouvelles au 27 novembre 2026, jalon 1 de [LOOP_EDITING.fr.md](LOOP_EDITING.fr.md) : aucun outil ne les édite encore, et elles ne sont pas mieux tenues que les courbes (#195, #196, #44) |
 | Les pôles du dernier résultat, gardés sur l'objet et affichés ; ceux qu'on touche imposés au remaillage suivant | expérimental | nouveaux au 31 octobre 2026, ni mesurés sur le banc ni essayés par des artistes (#249) |
 | L'outil *Poles* : glisser, ajouter (3, 5), épingler (P), retirer (X), *Free All*, *Clear* | expérimental | la même chose (#249) |
 

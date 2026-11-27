@@ -599,8 +599,50 @@ bpy.context.view_layer.update()
 assert len(openclare.curve_objects(ball)) == 2 and len(openclare.curve_objects(copy)) == 1
 print("COPY the copy of the ball has its own curve; the ball keeps its 2")
 bpy.data.objects.remove(copy)
-for drawn_on_ball in openclare.curve_objects(ball):
-    bpy.data.objects.remove(drawn_on_ball)
+
+
+# Loops (docs/LOOP_EDITING.md, milestone 1): the two curves of the ball made
+# loops of its mesh by Convert Curves to Loops, their points and marks kept
+# and the curve objects taken away; the result has the same edges along the
+# loops as it had along the curves, and the same marks on them.
+def remeshed_ball():
+    alone(ball)
+    assert bpy.ops.object.openclare_remesh() == {"FINISHED"}
+    result = bpy.context.active_object
+    made = sorted(tuple(round(c, 5) for c in vertex.co) for vertex in result.data.vertices)
+    sharp = sorted(sorted(tuple(round(c, 5) for c in result.data.vertices[v].co) for v in edge.vertices)
+                   for edge in result.data.edges if edge.use_edge_sharp)
+    bpy.data.objects.remove(result)
+    return made, sharp
+
+
+settings.quads, settings.adaptive_size = 600, 0.0
+curves, marks = openclare.curves_of(ball)
+with_curves, sharp_with_curves = remeshed_ball()
+alone(ball)
+assert bpy.ops.object.openclare_curves_to_loops() == {"FINISHED"}
+assert openclare.curve_objects(ball) == [], "the curves are still there"
+project = ball.data.openclare_loops
+assert len(project.items) == len(curves) == 2
+for loop, (points, closed, sharp), marked in zip(project.items, curves, marks):
+    assert loop.closed == closed and openclare.loops.marks_of(loop) == marked
+    assert (openclare.loops.points_of(loop) == points).all(), "the points of the loop are not those of the curve"
+assert openclare.loops.summary(project) == "2 loops: 1 closed, 1 open", openclare.loops.summary(project)
+assert openclare.OPENCLARE_PT_loops.bl_parent_id == "OPENCLARE_PT_input"
+with_loops, sharp_with_loops = remeshed_ball()
+print("LOOPS 2 curves made loops:", len(with_loops), "vertices with the loops,", len(with_curves), "with the curves;",
+      len(sharp_with_loops), "sharp edges along the belt")
+assert len(sharp_with_loops) >= 12, "the sharp loop has no sharp edges"
+assert with_loops == with_curves and sharp_with_loops == sharp_with_curves, "the loops do not give what the curves gave"
+# A loop sculpted off the surface is laid on it again by the engine.
+belt_loop = next(loop for loop in project.items if loop.sharp)
+belt_loop.points.foreach_set("co", (openclare.loops.points_of(belt_loop) * 1.02).reshape(-1))
+_, sharp_off = remeshed_ball()
+assert len(sharp_off) >= 12, "a loop a little off the surface is lost"
+# Seen on the ball, and on a result of it.
+alone(ball)
+assert openclare.loops.owner_shown(bpy.context) == ball
+assert bpy.ops.object.openclare_loops_clear() == {"FINISHED"} and not project.items
 settings.quads, settings.adaptive_size = 800, 50.0
 
 # Materials: a flat grid whose left third is of another material. The result
