@@ -2488,7 +2488,7 @@ class OPENCLARE_PT_curves(DataPanel, bpy.types.Panel):
         owner = object_to_remesh(context)
         drawn = curve_objects(owner)
         if not drawn:
-            layout.label(text="Parent a curve here, or draw loops with the Loops tool (T)", icon="INFO")
+            layout.label(text="Parent a curve here, or draw loops with the Draw Loop tool (T)", icon="INFO")
             return
         layout.operator(loops.OPENCLARE_OT_curves_to_loops.bl_idname)
         column = layout.column(align=True)
@@ -2551,7 +2551,7 @@ class OPENCLARE_PT_loops(DataPanel, bpy.types.Panel):
         owner = object_to_remesh(context)
         project = owner.data.openclare_loops
         if not project.items:
-            layout.label(text="Draw with the Loops tool (T), or convert the curves drawn on the object", icon="INFO")
+            layout.label(text="Draw with the Draw Loop tool (T), or convert the curves drawn on the object", icon="INFO")
             layout.operator(loops.OPENCLARE_OT_curves_to_loops.bl_idname)
             return
         layout.label(text=loops.summary(project))
@@ -2559,12 +2559,16 @@ class OPENCLARE_PT_loops(DataPanel, bpy.types.Panel):
         if loops.QUADS["field"] is not None and loops.QUADS["field_key"] == loops.field_key(owner):
             layout.label(text=loops.QUADS["field"].said())
         column = layout.column(align=True)
-        for loop, quads in zip(project.items, rows):
+        for index, (loop, quads) in enumerate(zip(project.items, rows)):
             row = column.row(align=True)
             red = quads is not None and (quads["red_left"].any() or quads["red_right"].any())
             row.label(text=loop.name, icon="ERROR" if red else "CURVE_PATH")
-            row.label(text=loops.marks_text(loop))
             row.label(text=loops.row_text(quads))
+            # The marks of the loop, set here; and the loop deleted.
+            row.prop(loop, "sharp", text="", icon="EDGESEL")
+            row.prop(loop, "seam", text="", icon="UV_ISLANDSEL")
+            row.prop(loop, "crease", text="")
+            row.operator(draw.OPENCLARE_OT_loop_delete.bl_idname, text="", icon="X").index = index
         layout.prop(project, "show")
         row = layout.row(align=True)
         row.operator(loops.OPENCLARE_OT_curves_to_loops.bl_idname)

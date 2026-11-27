@@ -62,7 +62,7 @@ Les outils de la vue 3D, en Object Mode.
 
 | Fonction | État | Ce qui lui manque |
 |---|---|---|
-| L'outil *Loops*, à la place de *Draw Curve* et *Cut Volume* : glisser pour tracer une loop, avec l'aimantation (*Ridge*, *Valley*, rayon sur F), depuis un bout de loop pour la reprendre ; Alt + glisser à travers un membre pour un anneau (jalon 3 de [LOOP_EDITING.fr.md](LOOP_EDITING.fr.md)) | expérimental | aucun outil ne déplace, ne coupe ni ne supprime encore une loop ; des lignes tracées sur un cube ne laissent aucune arête (#195) ; les lignes ne comptent pas dans les tailles et le budget (#196) ; pas gardées partout (#44) |
+| Les outils des loops, un par action, à la place de *Draw Curve* et *Cut Volume* : *Draw Loop* (avec l'aimantation, *Ridge*, *Valley*, rayon sur F ; depuis un bout de loop pour la reprendre), *Ring Loop* à travers un membre, *Move Loop*, *Smooth Loop* (les courbes aussi larges que le pinceau s'en vont, avec une force), *Delete Loop* ; marques et suppression par loop dans le panneau *Loops* (jalon 3 et section 3 de [LOOP_EDITING.fr.md](LOOP_EDITING.fr.md)) | expérimental | aucun outil ne coupe, ne retrace ni ne prend encore une loop ; des lignes tracées sur un cube ne laissent aucune arête (#195) ; les lignes ne comptent pas dans les tailles et le budget (#196) ; pas gardées partout (#44) |
 | *Draw Curve*, *Cut Volume* : leurs opérateurs, qui font des objets courbes, ne sont plus dans la barre d'outils | expérimental | la même chose (#195, #196, #44) |
 | *Mesh*, *Sharp*, *Crease*, *Seam* d'une courbe | expérimental | une marque ne vaut que si la ligne d'arêtes qui la porte est là (#195) |
 | *Select Curves*, *Deselect Curves* | stable | |

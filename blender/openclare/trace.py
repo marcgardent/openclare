@@ -21,6 +21,22 @@ The rules, for a head moving to a new point:
   nothing closes: the stroke may pass by its start and go on; `closed`
   tells whether letting go now would close it, for the tool to show it.
   Closed, the stretch from the head to the start is laid down in steps.
+
+A curve drawn before is moved by a point of it (`grabbed`, `moved`): the
+point goes with the mouse, the others within a radius along the curve go
+with it the less the farther (the smooth falloff of Blender's proportional
+editing), the others stay. The radius is taken along the curve, so a part
+of the curve that passes near but comes from far along it stays.
+
+A curve is smoothed by rubbing it (`brushed`, `smoothed`): the points under
+the brush move toward the mean of the curve round them, as wide as the
+brush, the more the nearer its centre: the bends of the size of the brush
+and smaller go, as under Blender's Smooth brush. A closed curve rubbed all
+round draws in a little, as a mesh does under that brush.
+
+A curve moved or smoothed is laid on the surface again (`laid`): its points,
+and the points of the surface under the middle of any stretch that leaves
+it, as across an edge.
 """
 
 import math
@@ -165,6 +181,131 @@ def resampled(points, step, closed=False):
     elif distance(out[-1], points[-1]) > 1e-9:
         out.append(points[-1])
     return out
+
+
+def grabbed(curves, point, near):
+    """The point of a curve that `point` is on, to move the curve by it:
+    (index of the curve, index of the point), the nearest within `near`, or
+    None."""
+    best = None
+    for index, (points, _closed) in enumerate(curves):
+        for at, here in enumerate(points):
+            gap = distance(point, here)
+            if gap <= near and (best is None or gap < best[0]):
+                best = (gap, index, at)
+    return None if best is None else best[1:]
+
+
+def along_from(points, closed, index):
+    """How far each point of the curve is from `points[index]`, along the
+    curve (the shorter way round a closed one)."""
+    count = len(points)
+    steps = [distance(points[k], points[k + 1]) for k in range(count - 1)]
+    sums = [0.0]
+    for gap in steps:
+        sums.append(sums[-1] + gap)
+    away = [abs(sums[k] - sums[index]) for k in range(count)]
+    if closed and count > 2:
+        total = sums[-1] + distance(points[-1], points[0])
+        away = [min(gap, total - gap) for gap in away]
+    return away
+
+
+def falloff(t):
+    """How much a point a fraction `t` of the radius away moves: 1 at the
+    point held, 0 at the radius and beyond, smoothly (Blender's Smooth)."""
+    if t >= 1.0:
+        return 0.0
+    u = 1.0 - max(t, 0.0)
+    return u * u * (3.0 - 2.0 * u)
+
+
+def moved(points, closed, index, offset, radius):
+    """The points of a curve once `points[index]` is moved by `offset`, the
+    others within `radius` along the curve the less the farther."""
+    away = along_from(points, closed, index)
+    return [
+        tuple(x + falloff(gap / radius) * d for x, d in zip(point, offset)) if radius > 0.0 and gap < radius
+        else tuple(point)
+        for point, gap in zip(points, away)
+    ]
+
+
+def smoothed(points, closed, weights, reach, strength=0.5):
+    """The points of a curve once rubbed: each goes toward the mean of the
+    curve round it, within `reach` along it (a bell, its width half the
+    reach), by `strength` times its weight (0 stays). The bends of the size
+    of the reach and smaller go, as under Blender's Smooth brush; the ends
+    of an open curve stay."""
+    points = [tuple(point) for point in points]
+    count = len(points)
+    if count < 3 or reach <= 0.0:
+        return points
+    gaps = [distance(points[k], points[(k + 1) % count]) for k in range(count)]
+    total = sum(gaps) if closed else sum(gaps[:-1])
+    sigma = 0.5 * reach
+    out = []
+    for k, (point, weight) in enumerate(zip(points, weights)):
+        if weight <= 0.0 or (not closed and k in (0, count - 1)):
+            out.append(point)
+            continue
+        sums, mass = [0.0, 0.0, 0.0], 0.0
+        for way in (1, -1):
+            along, at = 0.0, k
+            while True:
+                bell = math.exp(-0.5 * (along / sigma) ** 2)
+                if way == 1 or at != k:
+                    mass += bell
+                    sums = [a + bell * x for a, x in zip(sums, points[at])]
+                nxt = at + way
+                if closed:
+                    nxt %= count
+                elif not 0 <= nxt < count:
+                    break
+                along += gaps[at] if way == 1 else gaps[nxt]
+                if along > reach or along > total / 2.0 or nxt == k:
+                    break
+                at = nxt
+        mean = [a / mass for a in sums]
+        pull = min(1.0, strength * weight)
+        out.append(tuple(x + pull * (m - x) for x, m in zip(point, mean)))
+    return out
+
+
+def laid(points, closed, project, tolerance, depth=7):
+    """The curve kept on the surface between its points: where the middle of
+    a stretch is farther than `tolerance` from the surface (`project` gives
+    the nearest point of the surface), the point of the surface there is put
+    in, and both halves looked at again, `depth` times at most: at most
+    2^depth - 1 points in a stretch, so that a curved edge made of facets
+    does not fill the curve with points. Round the edge of a cube each time
+    halves the gap. A stretch across an edge of the surface otherwise cuts
+    through the volume."""
+    points = [tuple(point) for point in points]
+    count = len(points)
+
+    def between_on(a, b, depth):
+        if depth == 0:
+            return []
+        middle = tuple(0.5 * (x + y) for x, y in zip(a, b))
+        on = tuple(project(middle))
+        if distance(middle, on) <= tolerance:
+            return []
+        return between_on(a, on, depth - 1) + [on] + between_on(on, b, depth - 1)
+
+    out = []
+    for k in range(count if closed else count - 1):
+        out.append(points[k])
+        out.extend(between_on(points[k], points[(k + 1) % count], depth))
+    if not closed and count:
+        out.append(points[-1])
+    return out
+
+
+def brushed(points, centre, radius):
+    """The weight of each point of a curve under a brush of `radius` round
+    `centre`: the smooth falloff of the distance, 0 outside."""
+    return [falloff(distance(point, centre) / radius) if radius > 0.0 else 0.0 for point in points]
 
 
 def taken_up(points, closed, at_start, step, near, reach=None, closing_length=None, back=None):

@@ -208,4 +208,73 @@ def roof_at(x):
 edge = trace.edge_between(roof_at, -0.1, 0.3, rounds=12)
 assert abs(edge[0] - 0.123) < 1e-3, edge
 print("EDGE found by halves at x = %.4f for 0.123" % edge[0])
+# Move: a point of the equator taken 0.2 north, a radius of 0.5 along it.
+equator = [on_ball(lon, 0) for lon in range(0, 360, 2)]
+assert trace.grabbed([(equator, True)], on_ball(41, 0.5), NEAR) in {(0, 20), (0, 21)}
+assert trace.grabbed([(equator, True)], on_ball(41, 30), NEAR) is None
+held = 0
+shifted = trace.moved(equator, True, held, (0.0, 0.0, 0.2), 0.5)
+lifts = [b[2] - a[2] for a, b in zip(equator, shifted)]
+assert abs(lifts[0] - 0.2) < 1e-12
+# The falloff: the less the farther, both ways round (the start of a closed
+# curve has neighbours on both sides), nothing past the radius.
+side = [lifts[k] for k in range(0, 20)]
+assert all(a >= b for a, b in zip(side, side[1:])) and abs(lifts[1] - lifts[-1]) < 1e-12
+far = [k for k, point in enumerate(equator) if min(trace.along_from(equator, True, held)[k], 9) >= 0.5]
+assert far and all(lifts[k] == 0.0 for k in far)
+# Along the curve, not across: a hairpin moved by one leg leaves the other.
+pin = [(x / 10, 0.0, 0.0) for x in range(30)] + [(3.0 - x / 10, 0.1, 0.0) for x in range(30)]
+bent = trace.moved(pin, False, 5, (0.0, 0.0, 1.0), 0.6)
+assert bent[5][2] == 1.0 and all(point[2] == 0.0 for point in bent[30:])
+print("MOVED a point of the equator 0.2 north, its neighbours within 0.5 the less the farther; a hairpin by one leg")
+
+# Smooth: a line with a bend 0.3 high and 1 long in its middle is rubbed
+# flat by a brush as wide as the bend; its ends stay, and what the brush
+# does not reach stays.
+line = [(x / 20, 0.3 * math.exp(-((x / 20 - 2.0) / 0.3) ** 2), 0.0) for x in range(81)]
+rubbed = line
+for _ in range(10):
+    rubbed = trace.smoothed(rubbed, False, trace.brushed(rubbed, (2.0, 0.0, 0.0), 1.0), 1.0)
+height = max(y for _, y, _ in rubbed)
+assert height < 0.1, height
+assert rubbed[0] == line[0] and rubbed[-1] == line[-1] and rubbed[:15] == line[:15]
+# A shake of 0.05 from one point to the next goes in one stroke of the brush.
+shaky = [(x / 20, 0.05 * (-1) ** x, 0.0) for x in range(81)]
+calm = trace.smoothed(shaky, False, [1.0] * 81, 0.3)
+assert max(abs(y) for _, y, _ in calm[5:-5]) < 0.03
+# A circle of radius 1 rubbed all round with a brush of 0.3 draws in a
+# little, as a mesh under Blender's Smooth brush.
+circle = [(math.cos(a), math.sin(a), 0.0) for a in (2 * math.pi * k / 120 for k in range(120))]
+drawn_in = trace.smoothed(circle, True, [1.0] * 120, 0.3)
+radius = sum(math.hypot(x, y) for x, y, _ in drawn_in) / 120
+assert 0.98 < radius < 1.0, radius
+print("SMOOTH a bend 0.3 high rubbed down to %.3f in 10 strokes; a shake halved in one; a circle draws in to %.4f"
+      % (height, radius))
+
+# Laid: a loop round a cube of side 2, smoothed, cuts its corners through
+# the volume; laid on the surface again, no stretch leaves it.
+def on_cube(point):
+    x, y, z = (min(1.0, max(-1.0, c)) for c in point)
+    inside = max(abs(x), abs(y), abs(z)) < 1.0
+    if not inside:
+        return (x, y, z)
+    axis = max(range(3), key=lambda k: abs((x, y, z)[k]))
+    out = [x, y, z]
+    out[axis] = 1.0 if out[axis] >= 0.0 else -1.0
+    return tuple(out)
+
+
+def worst(points, closed):
+    pairs = zip(points, points[1:] + (points[:1] if closed else []))
+    return max(trace.distance(m, on_cube(m)) for m in (tuple(0.5 * (u + v) for u, v in zip(a, b)) for a, b in pairs))
+
+
+square = [on_cube((2 * math.cos(a), 2 * math.sin(a), 0.0)) for a in (2 * math.pi * k / 40 for k in range(40))]
+rounded = [on_cube(point) for point in trace.smoothed(square, True, [1.0] * 40, 1.0, 1.0)]
+assert worst(rounded, True) > 0.05, worst(rounded, True)
+kept = trace.laid(rounded, True, on_cube, 0.001)
+assert worst(kept, True) <= 0.01 and len(rounded) < len(kept) < 2 * len(rounded), (worst(kept, True), len(kept))
+print("LAID a loop round a cube, smoothed, cut %.3f into it; laid again in %d points, %.4f at most"
+      % (worst(rounded, True), len(kept), worst(kept, True)))
+
 print("TRACE all checks passed")
