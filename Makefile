@@ -287,6 +287,7 @@ test-trace:
 	python3 blender/test_trace.py
 	python3 blender/test_fit.py
 	python3 blender/test_cut.py
+	python3 blender/test_loop_quads.py
 
 # The extension repository that the site serves (scripts/extensions.py, #344).
 extensions-test:

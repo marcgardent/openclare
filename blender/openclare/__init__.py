@@ -228,6 +228,26 @@ def linear(hex_colour):
     return [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in channels] + [1.0]
 
 
+def sizes_asked(settings, analysis, scale):
+    """The edge the quads of each vertex are asked to have, in the units of
+    the mesh `analysis` was made of (`scale` long in the scene), whether its
+    shape calls for smaller ones than the smallest, and the largest and the
+    smallest asked for: what Show Sizes colours and the loops are drawn
+    with (`loops`)."""
+    import numpy
+
+    if settings.largest_quad > 0.0:
+        largest = settings.largest_quad / scale
+        smallest = min(settings.smallest_quad / scale, largest) or largest / SIZE_RANGE
+        sizes, coarser = analysis.at_vertices(largest, smallest)
+        return sizes, coarser, largest, smallest
+    # No largest: the sizes the number of quads is meshed with.
+    sizes = analysis.at_vertices_for(settings.quads)
+    seen = sizes[numpy.isfinite(sizes)]
+    largest, smallest = (float(seen.max()), float(seen.min())) if len(seen) else (1.0, 1.0)
+    return sizes, numpy.zeros(len(sizes), bool), largest, smallest
+
+
 def colour_sizes(settings):
     """Colours the object with the sizes asked for now."""
     import numpy
@@ -236,17 +256,7 @@ def colour_sizes(settings):
     held = ANALYSES.get(PREVIEW.get("of", ""))
     if owner is None or held is None or owner.type != "MESH":
         return
-    scale = PREVIEW["scale"]
-    if settings.largest_quad > 0.0:
-        largest = settings.largest_quad / scale
-        smallest = min(settings.smallest_quad / scale, largest) or largest / SIZE_RANGE
-        sizes, coarser = held["analysis"].at_vertices(largest, smallest)
-    else:
-        # No largest: the sizes the number of quads is meshed with.
-        sizes = held["analysis"].at_vertices_for(settings.quads)
-        coarser = numpy.zeros(len(sizes), bool)
-        seen = sizes[numpy.isfinite(sizes)]
-        largest, smallest = (float(seen.max()), float(seen.min())) if len(seen) else (1.0, 1.0)
+    sizes, coarser, largest, smallest = sizes_asked(settings, held["analysis"], PREVIEW["scale"])
     ramp = numpy.array([linear(colour) for colour in SIZE_RAMP], numpy.float32)
     span = max(numpy.log(largest / smallest), 1e-9)
     # From light (largest) to dark (smallest), as a logarithm of the size.
@@ -2545,11 +2555,16 @@ class OPENCLARE_PT_loops(DataPanel, bpy.types.Panel):
             layout.operator(loops.OPENCLARE_OT_curves_to_loops.bl_idname)
             return
         layout.label(text=loops.summary(project))
+        rows = loops.quads_shown(owner) or [None] * len(project.items)
+        if loops.QUADS["field"] is not None and loops.QUADS["field_key"] == loops.field_key(owner):
+            layout.label(text=loops.QUADS["field"].said())
         column = layout.column(align=True)
-        for loop in project.items:
+        for loop, quads in zip(project.items, rows):
             row = column.row(align=True)
-            row.label(text=loop.name, icon="CURVE_PATH")
+            red = quads is not None and (quads["red_left"].any() or quads["red_right"].any())
+            row.label(text=loop.name, icon="ERROR" if red else "CURVE_PATH")
             row.label(text=loops.marks_text(loop))
+            row.label(text=loops.row_text(quads))
         layout.prop(project, "show")
         row = layout.row(align=True)
         row.operator(loops.OPENCLARE_OT_curves_to_loops.bl_idname)
