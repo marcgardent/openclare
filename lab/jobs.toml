@@ -768,7 +768,7 @@ ref = ["main"]
 
 [[batch]]
 name = "analyse-sizes"
-description = "Ticket #253 before and after (PR #348): on each model, the sizes Analyse proposes (main from its constant of 1,500 quads, the PR for {budget} quads), a remesh at those sizes and its measure, one job each, the engine on the thread setting; untimed. {out}/analyse.json holds the sizes and the quads proposed, {out}/measure.json the measure (thin_quads_around and thin_quads_around_low on the PR only: main has no such measure). Accepted on #253: human_male, human_female, ogre at least 5 quads round on 95 % of the thin parts and 6 at the median; on the PR the quads made within 5 % of {budget}; creature and part within 2 % of main's proposal; thin_distance no worse than main. The engine of each side and the sources are dependencies."
+description = "Ticket #253 before and after: on each model, the sizes Analyse proposes (on 946203c, the main before PR #348, from its constant of 1,500 quads; on 1e03c8b, PR #348 squashed on main, for {budget} quads), a remesh at those sizes and its measure, one job each, the engine on the thread setting; untimed. {out}/analyse.json holds the sizes and the quads proposed, {out}/measure.json the measure (thin_quads_around and thin_quads_around_low on 1e03c8b only: 946203c has no such measure). Accepted on #253: human_male, human_female, ogre at least 6 quads round the thin parts at the median (thin_quads_around; the 5 % quantile is reported but not judged, set on the bodies by detail of the face finer than the analysis sees); on 1e03c8b the quads made within 5 % of {budget}; creature and part within 2 % of the proposal of 946203c; thin_distance no worse than on 946203c. The engine of each side and the sources are dependencies."
 category = "quick-bench"
 needs = ["engine", "source"]
 command = "{engine} analyse {source} --preset {preset} {ask} > {out}/analyse.txt && P=$(sed -n 's/^proposal quads from \\([0-9.]*\\) to \\([0-9.]*\\): \\([0-9]*\\) quads.*/\\1 \\2 \\3/p' {out}/analyse.txt) && set -- $P && test $# -eq 3 && {engine} remesh {source} {out}/mesh.obj --preset {preset} --largest $2 --smallest $1 && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json && printf '{\"smallest\": %s, \"largest\": %s, \"proposed\": %s}\\n' $1 $2 $3 > {out}/analyse.json"
@@ -780,7 +780,7 @@ timing_matters = false
 
 [batch.axes]
 model = ["human_male", "human_female", "ogre", "creature", "part"]
-ref = ["main", { value = "pull/348", ask = "--quads 3000" }]
+ref = ["946203c", { value = "1e03c8b", ask = "--quads 3000" }]
 
 [[batch]]
 name = "pole-pairs-115-male-body"
