@@ -35,7 +35,8 @@ With the Loops tool, a press on a loop away from its ends moves it
 points within a radius along the loop follow it the less the farther, and
 the loop is laid on the surface and every step again. The radius is drawn
 as a circle with "Move" while the mouse is over a loop and while moving;
-the wheel changes it. Esc or the right button puts the loop back.
+F over a loop sets it, as it sets the radius of the snap elsewhere, and the
+wheel changes it while moving. Esc or the right button puts the loop back.
 
 Cut Volume draws a straight line across a limb, as a knife would, from one
 side of it to the other: the plane of the view through the line cuts the
@@ -477,7 +478,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         name="Move Radius",
         description=(
             "Loops tool: how far along a loop, either side of the point dragged, moving it carries the loop, in "
-            "pixels; drawn as a circle, changed with the wheel while moving"
+            "pixels; drawn as a circle, set with F over a loop, changed with the wheel while moving"
         ),
         subtype="PIXEL",
         default=80.0,
@@ -978,7 +979,8 @@ class OPENCLARE_MT_snap(bpy.types.Menu):
 
 
 class OPENCLARE_OT_snap_radius(bpy.types.Operator):
-    """Set the radius of the snap with the mouse, as F does the radius of a brush"""
+    """Set the radius of the snap with the mouse, as F does the radius of a brush; over a loop, with the Loops
+    tool, the radius of a move"""
 
     bl_idname = "object.openclare_snap_radius"
     bl_label = "Snap Radius"
@@ -991,8 +993,16 @@ class OPENCLARE_OT_snap_radius(bpy.types.Operator):
 
     def invoke(self, context, event):
         self.properties_of_tool = draw_tool_properties(context)
-        self.before = self.properties_of_tool.snap_radius
         mouse = (event.mouse_region_x, event.mouse_region_y)
+        # The radius of the circle under the mouse: over a loop, with the
+        # Loops tool, that of a move.
+        self.setting, self.label = "snap_radius", "Snap Radius"
+        tool = context.workspace.tools.from_space_view3d_mode("OBJECT", create=False)
+        owner = target(context)
+        if tool is not None and tool.idname == OPENCLARE_TL_loops.bl_idname and owner is not None:
+            if loop_pressed(context, owner, mouse, self.properties_of_tool.close)[0] == "move":
+                self.setting, self.label = "move_radius", "Move Radius"
+        self.before = getattr(self.properties_of_tool, self.setting)
         # The circle is drawn with its edge under the mouse, as Blender's.
         self.centre = (mouse[0] - self.before, mouse[1])
         self.mouse = mouse
@@ -1003,25 +1013,25 @@ class OPENCLARE_OT_snap_radius(bpy.types.Operator):
 
     def radius(self):
         gap = ((self.mouse[0] - self.centre[0]) ** 2 + (self.mouse[1] - self.centre[1]) ** 2) ** 0.5
-        properties = type(self.properties_of_tool).bl_rna.properties["snap_radius"]
+        properties = type(self.properties_of_tool).bl_rna.properties[self.setting]
         return min(max(gap, properties.hard_min), properties.hard_max)
 
     def say(self, context):
-        context.area.header_text_set(f"Snap Radius: {self.radius():.0f} px")
+        context.area.header_text_set(f"{self.label}: {self.radius():.0f} px")
         context.region.tag_redraw()
 
     def modal(self, context, event):
         if event.type == "MOUSEMOVE":
             self.mouse = (event.mouse_region_x, event.mouse_region_y)
-            self.properties_of_tool.snap_radius = self.radius()
+            setattr(self.properties_of_tool, self.setting, self.radius())
             self.say(context)
             return {"RUNNING_MODAL"}
         if event.type in {"LEFTMOUSE", "RET", "NUMPAD_ENTER", "SPACE"} and event.value == "PRESS":
-            self.properties_of_tool.snap_radius = self.radius()
+            setattr(self.properties_of_tool, self.setting, self.radius())
             self.stop(context)
             return {"FINISHED"}
         if event.type in {"ESC", "RIGHTMOUSE"} and event.value == "PRESS":
-            self.properties_of_tool.snap_radius = self.before
+            setattr(self.properties_of_tool, self.setting, self.before)
             self.stop(context)
             return {"CANCELLED"}
         return {"RUNNING_MODAL"}
@@ -1409,7 +1419,7 @@ class OPENCLARE_TL_loops(bpy.types.WorkSpaceTool):
     bl_description = (
         "Experimental. Draw the loops of the selected mesh, for its result to have edges along them: drag to draw "
         "one (back along the stroke to undo, let go at its start to close it, from an end of a loop to take it up "
-        "again); drag a loop elsewhere to move it (the wheel sets how much of it goes); Alt + drag across a limb for "
+        "again); drag a loop elsewhere to move it (F over it or the wheel sets how much of it goes); Alt + drag across a limb for "
         "a loop all round it. The quads along each loop are drawn"
     )
     bl_icon = "ops.curve.draw"
