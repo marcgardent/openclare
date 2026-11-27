@@ -19,7 +19,6 @@ import os
 import time
 
 import bpy
-import mathutils
 from bl_operators.presets import AddPresetBase
 from bl_ui.utils import PresetPanel
 
@@ -129,28 +128,9 @@ def adopt_scene_settings(scene):
         legacy.property_unset(name)
 
 
-# How many of its largest quads go along the diagonal of the box of an object
-# when the sizes are set from it, and how many times smaller the smallest is.
-QUADS_ALONG = 40.0
+# How many times smaller than the largest the smallest quad is when none is
+# set.
 SIZE_RANGE = 8.0
-
-
-def sizes_from(owner):
-    """The largest and the smallest quad to start from for an object, in the
-    units of the scene: by its size alone."""
-    corners = [owner.matrix_world @ mathutils.Vector(corner) for corner in owner.bound_box]
-    diagonal = max((a - b).length for a in corners for b in corners)
-    largest = diagonal / QUADS_ALONG
-    return largest, largest / SIZE_RANGE
-
-
-def target_changed(settings, context):
-    """Sizes asked for and none set: those the object gives."""
-    if settings.target != "SIZE" or settings.largest_quad > 0.0:
-        return
-    owner = settings.id_data
-    if isinstance(owner, bpy.types.Object) and owner.type == "MESH":
-        settings.largest_quad, settings.smallest_quad = sizes_from(owner)
 
 
 # Shapes analysed: by object name, the engine's analysis, what it was made
@@ -232,6 +212,16 @@ def counted(analysis, scale, largest, smallest):
     return COUNTED["answer"]
 
 
+def thin_told(analysis, scale, largest, smallest):
+    """The share of the surface on thin parts at the scale of the largest,
+    and the share of those that get the quads round them asked for, for
+    sizes in the units of the scene; the last answer is kept."""
+    asked = (id(analysis), round(largest, 9), round(smallest, 9), scale)
+    if COUNTED.get("thin_asked") != asked:
+        COUNTED["thin_asked"], COUNTED["thin"] = asked, analysis.thin(largest / scale, smallest / scale)
+    return COUNTED["thin"]
+
+
 def linear(hex_colour):
     """A colour written as #rrggbb, in the linear values Blender keeps."""
     channels = [int(hex_colour[k : k + 2], 16) / 255.0 for k in (1, 3, 5)]
@@ -247,9 +237,16 @@ def colour_sizes(settings):
     if owner is None or held is None or owner.type != "MESH":
         return
     scale = PREVIEW["scale"]
-    largest = settings.largest_quad / scale
-    smallest = min(settings.smallest_quad / scale, largest) or largest / SIZE_RANGE
-    sizes, coarser = held["analysis"].at_vertices(largest, smallest)
+    if settings.largest_quad > 0.0:
+        largest = settings.largest_quad / scale
+        smallest = min(settings.smallest_quad / scale, largest) or largest / SIZE_RANGE
+        sizes, coarser = held["analysis"].at_vertices(largest, smallest)
+    else:
+        # No largest: the sizes the number of quads is meshed with.
+        sizes = held["analysis"].at_vertices_for(settings.quads)
+        coarser = numpy.zeros(len(sizes), bool)
+        seen = sizes[numpy.isfinite(sizes)]
+        largest, smallest = (float(seen.max()), float(seen.min())) if len(seen) else (1.0, 1.0)
     ramp = numpy.array([linear(colour) for colour in SIZE_RAMP], numpy.float32)
     span = max(numpy.log(largest / smallest), 1e-9)
     # From light (largest) to dark (smallest), as a logarithm of the size.
@@ -486,23 +483,24 @@ class OpenclareSettings(bpy.types.PropertyGroup):
             ),
         ],
         default="COUNT",
-        update=target_changed,
     )
     quads: bpy.props.IntProperty(
         options=set(),
         name="Quads",
-        description="Number of quads asked for",
+        description="Number of quads asked for; with Sizes, what a Largest of 0 stands for",
         default=3000,
         min=1,
         soft_min=100,
         soft_max=50_000,
+        update=sizes_changed,
     )
     largest_quad: bpy.props.FloatProperty(
         options=set(),
         name="Largest",
         description=(
             "Edge of the largest quads, in the units of the scene: what the shape is meshed with wherever "
-            "it asks for nothing smaller. 0 to have it set from the size of the object"
+            "it asks for nothing smaller. 0 to mesh with the number of Quads, and to have Analyse set the "
+            "sizes that make that number"
         ),
         default=0.0,
         min=0.0,
@@ -885,22 +883,18 @@ def marked_sharp(mesh):
     return ends.reshape(-1, 2)[sharp].astype(numpy.uint32).ravel()
 
 
-def engine_settings_of(original, evaluated, source, write=True):
+def engine_settings_of(original, evaluated, source):
     """What the engine is given for the object `original` with its settings:
     the settings on top of `BASE_PRESET`, and the weights of the density
     painted, if any, on `source`, the mesh of `evaluated`, `original` as it
-    is seen. Sizes asked for and none set are set from the object, and kept
-    in its settings unless `write` is false."""
+    is seen. Sizes asked for with no largest are the number of quads: no size
+    is made up for them (Analyse tells the sizes that make that number)."""
     settings = experimental.effective(original.openclare)
     engine_settings = {"quads": settings.quads, **shape_of(settings)}
-    if settings.target == "SIZE":
+    if settings.target == "SIZE" and settings.largest_quad > 0.0:
         # Lengths of the scene, where the engine is given the mesh as the
         # object holds it: before its scale, when the same along all axes.
         largest, smallest = settings.largest_quad, settings.smallest_quad
-        if largest <= 0.0:
-            largest, smallest = sizes_from(original)
-            if write:
-                settings.largest_quad, settings.smallest_quad = largest, smallest
         # A scale that differs along the axes is applied to the mesh itself.
         uniform = stretch_of(original) is None
         scale = sum(abs(factor) for factor in original.matrix_world.to_scale()) / 3.0 if uniform else 1.0
@@ -1225,8 +1219,8 @@ STAGES = 9
 
 
 class OPENCLARE_OT_analyse(bpy.types.Operator):
-    """Experimental. Measure what the shape asks for, and propose a largest and a smallest quad: how many quads
-    any sizes make is then shown at once"""
+    """Experimental. Measure what the shape asks for, and propose the smallest quad for the Largest set, or both
+    sizes for the number of Quads when Largest is 0: how many quads any sizes make is then shown at once"""
 
     bl_idname = "object.openclare_analyse"
     bl_label = "Analyse"
@@ -1268,13 +1262,25 @@ class OPENCLARE_OT_analyse(bpy.types.Operator):
         stop_preview(context)
         ANALYSES[owner.name] = {"analysis": analysis, "key": key}
         scale = scale_of(owner)
-        largest, smallest = analysis.proposal()
+        # The largest is the user's: kept when set, else told from the
+        # number of quads, as the sizes that make that number.
+        try:
+            if settings.largest_quad > 0.0:
+                largest = settings.largest_quad / scale
+                smallest, origin = analysis.smallest_for(largest), "for the Largest set"
+            else:
+                largest, smallest = analysis.proposal_for(settings.quads)
+                origin = f"for {settings.quads} quads"
+                settings.largest_quad = largest * scale
+        except engine.EngineError as error:
+            self.report({"ERROR"}, f"openclare: {error}")
+            return {"CANCELLED"}
         settings.target = "SIZE"
-        settings.largest_quad, settings.smallest_quad = largest * scale, smallest * scale
+        settings.smallest_quad = smallest * scale
         quads, below = analysis.count(largest, smallest)
         self.report(
             {"INFO"},
-            f"openclare: '{owner.name}' analysed in {seconds:.1f} s; proposed: about {quads:.0f} quads, "
+            f"openclare: '{owner.name}' analysed in {seconds:.1f} s; proposed {origin}: about {quads:.0f} quads, "
             f"{100.0 * below:.0f} % of it coarser than its shape asks",
         )
         return {"FINISHED"}
@@ -2350,6 +2356,10 @@ def draw_sizes(context, layout, owner, settings):
     sizes = layout.column(align=True)
     sizes.prop(settings, "largest_quad")
     sizes.prop(settings, "smallest_quad")
+    if settings.largest_quad <= 0.0:
+        # No largest: the number stands for it, until Analyse tells the
+        # sizes that make it.
+        sizes.prop(settings, "quads", text="Largest from Quads")
     layout.prop(settings, "quads_per_turn")
     held = analysis_of(context, settings, owner)
     if held is None:
@@ -2372,6 +2382,17 @@ def draw_sizes(context, layout, owner, settings):
             column.label(text=f"About {made}".replace(",", " "), icon="MESH_GRID")
             if below >= 0.005:
                 column.label(text=f"{100.0 * below:.0f} % coarser than its shape asks", icon="ERROR")
+            if settings.quads_around > 0:
+                try:
+                    share, served = thin_told(analysis, scale, settings.largest_quad, smallest)
+                except engine.EngineError:
+                    share = None
+                if share is not None and share >= 0.0005:
+                    column.label(
+                        text=f"Thin parts: {100.0 * share:.1f} % of the surface, {settings.quads_around} quads "
+                        f"round on {100.0 * served:.0f} % of them",
+                        icon="MOD_SKIN",
+                    )
     layout.prop(settings, "show_sizes")
 
 

@@ -1498,15 +1498,42 @@ pub unsafe extern "C" fn openclare_analysis_error(analysis: *const OpenclareAnal
     }
 }
 
-/// A largest and a smallest quad to start from, written to `largest` and
-/// `smallest`. Returns 1, or 0 when there is no analysis.
+/// The smallest quad to go with `largest`, written to `smallest`. Returns
+/// 1, or 0 when there is no analysis or `largest` is not a size.
+///
+/// # Safety
+///
+/// See [`openclare_analysis_ok`]; `smallest` must be valid.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_analysis_smallest(
+    analysis: *const OpenclareAnalysis,
+    largest: f64,
+    smallest: *mut f64,
+) -> i32 {
+    // SAFETY: null or a live handle, by contract.
+    let Some(analysis) = (unsafe { analysis.as_ref() }).and_then(|analysis| analysis.analysis.as_ref()) else {
+        return 0;
+    };
+    if smallest.is_null() || !(largest > 0.0 && largest.is_finite()) {
+        return 0;
+    }
+    let Ok(least) = catch_unwind(AssertUnwindSafe(|| analysis.smallest_for(largest))) else { return 0 };
+    // SAFETY: valid, by contract.
+    unsafe { *smallest = least };
+    1
+}
+
+/// A largest and a smallest quad that make about `quads` quads, written to
+/// `largest` and `smallest`. Returns 1, or 0 when there is no analysis or
+/// `quads` is not a number of quads.
 ///
 /// # Safety
 ///
 /// See [`openclare_analysis_ok`]; `largest` and `smallest` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn openclare_analysis_proposal(
+pub unsafe extern "C" fn openclare_analysis_proposal_for(
     analysis: *const OpenclareAnalysis,
+    quads: f64,
     largest: *mut f64,
     smallest: *mut f64,
 ) -> i32 {
@@ -1517,9 +1544,41 @@ pub unsafe extern "C" fn openclare_analysis_proposal(
     if largest.is_null() || smallest.is_null() {
         return 0;
     }
-    let (proposed, least) = analysis.proposal();
+    let Ok(Some((proposed, least))) = catch_unwind(AssertUnwindSafe(|| analysis.proposal_for(quads))) else {
+        return 0;
+    };
     // SAFETY: valid, by contract.
     unsafe { (*largest, *smallest) = (proposed, least) };
+    1
+}
+
+/// The share of the surface on thin parts at the scale of `largest`, to
+/// `share`, and the share of those that get the quads round them asked for
+/// with `smallest` for the smallest quad, to `served`, both from 0 to 1.
+/// Returns 1, or 0 when there is no analysis or the sizes are not
+/// 0 < `smallest` <= `largest`.
+///
+/// # Safety
+///
+/// See [`openclare_analysis_ok`]; `share` and `served` must be valid.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn openclare_analysis_thin(
+    analysis: *const OpenclareAnalysis,
+    largest: f64,
+    smallest: f64,
+    share: *mut f64,
+    served: *mut f64,
+) -> i32 {
+    // SAFETY: null or a live handle, by contract.
+    let Some(analysis) = (unsafe { analysis.as_ref() }).and_then(|analysis| analysis.analysis.as_ref()) else {
+        return 0;
+    };
+    if share.is_null() || served.is_null() || !(smallest > 0.0 && largest >= smallest && largest.is_finite()) {
+        return 0;
+    }
+    let Ok((on, kept)) = catch_unwind(AssertUnwindSafe(|| analysis.thin(largest, smallest))) else { return 0 };
+    // SAFETY: valid, by contract.
+    unsafe { (*share, *served) = (on, kept) };
     1
 }
 

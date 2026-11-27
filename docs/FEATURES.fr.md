@@ -36,7 +36,7 @@ Le panneau *openclare* de l'éditeur Properties, dans l'onglet du maillage.
 | *Output: Triangles*, pour *Shape* (le *Decimate* de Blender) | stable | ne suit ni arête vive, ni courbe, ni matériau, comme le panneau le dit |
 | *Output: N-gons* | expérimental | les parties plates en faces à nombreux côtés, pliées sur tout leur bord ; mesuré sur six formes mécaniques et un demi-cylindre, à trois niveaux de subdivision ; sans courbes, pôles ni symétrie pour les parties qui ne prennent aucun quad |
 | *Ask For: Number* | stable | |
-| *Ask For: Sizes* (*Largest*, *Smallest*) | expérimental | tailles proposées à partir d'une constante cachée, doigts perdus sur un corps (#253) |
+| *Ask For: Sizes* (*Largest*, *Smallest*) | expérimental | le plus grand quad est celui de l'utilisateur et les doigts sont gardés (#253) ; pas encore mesuré sur le banc (batch `analyse-sizes`) |
 | *Analyse* | expérimental | la même chose (#253) |
 | *Show Sizes* | expérimental | montre ces tailles (#253) |
 | *Density from Shape* | expérimental | lit la forme avec ces tailles (#253) |

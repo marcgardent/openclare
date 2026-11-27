@@ -449,7 +449,9 @@ impl Demand {
     }
 
     /// The edge the thin parts call for, at each of their vertices, and the
-    /// area each stands for: what is found thin and is not a sheet.
+    /// area each stands for: what is found thin and is not a sheet. Whether
+    /// that asks for anything depends on the largest quad: a limb found thin
+    /// calls for an edge larger than most largest quads, and gets those.
     pub fn thin_parts(&self) -> Vec<(f64, f64)> {
         (0..self.areas.len()).filter(|&v| self.thin[v].is_finite()).map(|v| (self.thin[v], self.areas[v])).collect()
     }

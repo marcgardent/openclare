@@ -34,7 +34,7 @@ The panel *openclare* of the Properties editor, on the tab of the mesh.
 | *Output: Triangles*, for *Shape* (Blender's *Decimate*) | stable | follows no hard edge, curve or material, as the panel says |
 | *Output: N-gons* | experimental | flat parts as faces of many sides, creased all round; measured on six mechanical shapes and a half cylinder, three levels of subdivision; not with curves, poles or a symmetry for the parts that take no quads |
 | *Ask For: Number* | stable | |
-| *Ask For: Sizes* (*Largest*, *Smallest*) | experimental | sizes proposed from a hidden constant, fingers dropped on a body (#253) |
+| *Ask For: Sizes* (*Largest*, *Smallest*) | experimental | the largest is the user's and the fingers are kept (#253); not measured on the bench yet (batch `analyse-sizes`) |
 | *Analyse* | experimental | the same (#253) |
 | *Show Sizes* | experimental | shows those sizes (#253) |
 | *Density from Shape* | experimental | reads the shape with those sizes (#253) |

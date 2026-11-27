@@ -91,6 +91,14 @@ pub struct Metrics {
     /// much of fingers, ears and the like is lost. `None` where the source
     /// has next to nothing that thin.
     pub thin_distance: Option<f64>,
+    /// How many quads go round those of the thin parts that are not
+    /// sheets (a finger, a wire, not an ear): the girth of the part at a
+    /// vertex of the source over the mean edge of the face of the mesh
+    /// nearest to it. By area, the median, and the 5 % quantile, the
+    /// fewest round all but a twentieth of them. `None` as for
+    /// `thin_distance`.
+    pub thin_quads_around: Option<f64>,
+    pub thin_quads_around_low: Option<f64>,
     /// Volume of the mesh over that of the source, both closed.
     pub volume_ratio: Option<f64>,
 
@@ -142,7 +150,7 @@ impl Metrics {
         fn optional<T: ToString>(value: Option<T>) -> String {
             value.map_or("null".into(), |v| v.to_string())
         }
-        let fields: [(&str, String); 32] = [
+        let fields: [(&str, String); 34] = [
             ("valid", self.is_valid().to_string()),
             ("vertices", self.vertices.to_string()),
             ("faces", self.faces.to_string()),
@@ -171,6 +179,8 @@ impl Metrics {
             ("mean_distance", self.mean_distance.to_string()),
             ("thin_share", self.thin_share.to_string()),
             ("thin_distance", optional(self.thin_distance)),
+            ("thin_quads_around", optional(self.thin_quads_around)),
+            ("thin_quads_around_low", optional(self.thin_quads_around_low)),
             ("volume_ratio", optional(self.volume_ratio)),
             ("feature_edges_length", self.feature_edges_length.to_string()),
             ("feature_chains", self.feature_chains.to_string()),
@@ -427,35 +437,83 @@ pub const MOST_VALENCE: u32 = 6;
 /// Fewest thin vertices for their mean distance to mean something.
 const THIN_SAMPLES: usize = 20;
 
-/// How well the parts of the source thinner than one quad edge are kept.
+/// How well the parts of the source thinner than one quad edge are kept,
+/// and how many quads go round them.
 fn thin_parts(source: &TriMesh, mesh: &PolyMesh, quad_edge: f64, metrics: &mut Metrics) {
     if !(quad_edge.is_finite() && quad_edge > 0.0) {
         return;
     }
     let normals = crate::geometry::vertex_normals(source);
-    let across = crate::thickness::measure(source, &normals, quad_edge).across;
-    let output = Bvh::build(&mesh.triangulated());
-    let distances: Vec<Option<f64>> =
-        source
-            .positions
-            .par_iter()
-            .enumerate()
-            .map(|(v, &p)| {
-                if across[v] < quad_edge {
-                    output.closest_point(p).map(|hit| hit.distance_squared.sqrt())
-                } else {
-                    None
-                }
-            })
-            .collect();
+    let thickness = crate::thickness::measure(source, &normals, quad_edge);
+    let triangles = mesh.triangulated();
+    // The face each triangle comes from, as `triangulated` cuts them, and
+    // the mean edge of each face.
+    let face_of: Vec<usize> = mesh
+        .faces
+        .iter()
+        .enumerate()
+        .flat_map(|(f, face)| std::iter::repeat_n(f, face.len().saturating_sub(2)))
+        .collect();
+    let edge_of: Vec<f64> = mesh
+        .faces
+        .iter()
+        .map(|face| {
+            let n = face.len().max(1);
+            (0..face.len())
+                .map(|k| (mesh.positions[face[(k + 1) % n] as usize] - mesh.positions[face[k] as usize]).length())
+                .sum::<f64>()
+                / n as f64
+        })
+        .collect();
+    let sheet = crate::sizing::Curvature::default().sheet;
+    let output = Bvh::build(&triangles);
+    let found: Vec<Option<(f64, Option<f64>)>> = source
+        .positions
+        .par_iter()
+        .enumerate()
+        .map(|(v, &p)| {
+            let (across, width, girth) = (thickness.across[v], thickness.width[v], thickness.girth[v]);
+            if across >= quad_edge {
+                return None;
+            }
+            let hit = output.closest_point(p)?;
+            let edge = edge_of[face_of[hit.triangle as usize]];
+            let around = (width <= sheet * across && girth.is_finite() && edge > 0.0).then(|| girth / edge);
+            Some((hit.distance_squared.sqrt(), around))
+        })
+        .collect();
+    // Quads round are told by area, a source being cut more finely where
+    // it has more detail: each vertex for a third of its triangles.
+    let mut areas = vec![0.0; source.positions.len()];
+    for (t, triangle) in source.triangles.iter().enumerate() {
+        let third = source.area_vector(t).length() / 3.0;
+        for &v in triangle {
+            areas[v as usize] += third;
+        }
+    }
     let (mut sum, mut count) = (0.0, 0usize);
-    for distance in distances.into_iter().flatten() {
+    let mut around = Vec::new();
+    for (v, (distance, round)) in found.into_iter().enumerate().filter_map(|(v, found)| Some((v, found?))) {
         sum += distance;
         count += 1;
+        around.extend(round.map(|round| (round, areas[v])));
     }
     metrics.thin_share = count as f64 / source.positions.len().max(1) as f64;
     if count >= THIN_SAMPLES {
         metrics.thin_distance = Some(sum / count as f64 / quad_edge);
+    }
+    if around.len() >= THIN_SAMPLES {
+        around.sort_by(|a, b| a.0.total_cmp(&b.0));
+        let all: f64 = around.iter().map(|&(_, area)| area).sum();
+        let at = |share: f64| {
+            let mut under = 0.0;
+            around.iter().find(|&&(_, area)| {
+                under += area;
+                under >= share * all
+            })
+        };
+        metrics.thin_quads_around = at(0.5).map(|&(round, _)| round);
+        metrics.thin_quads_around_low = at(0.05).map(|&(round, _)| round);
     }
 }
 

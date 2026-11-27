@@ -414,17 +414,32 @@ fn a_shape_is_analysed_once_and_any_bounds_are_then_counted() {
         before = now;
     }
     assert!(analysis.below(0.4, 0.4) > 0.02 && before.1 == 0.0);
-    // The proposal: the largest quad of a mesh of 1,500, and a smallest
-    // between it and a sixteenth of it, where coming down one more step
-    // would not be worth it.
-    let (largest, smallest) = analysis.proposal();
-    assert!((largest - (analysis.area() / 1500.0).sqrt()).abs() < 1e-12);
+    // The smallest to go with a largest asked for: between it and a
+    // sixteenth of it, where coming down one more step would not be worth
+    // it, and the last step taken gained something.
+    let largest = (analysis.area() / 1500.0).sqrt();
+    let smallest = analysis.smallest_for(largest);
     assert!(smallest <= largest && smallest >= largest / 16.0);
     let finer = smallest / 1.5;
     if finer >= largest / 16.0 {
         let gained = 100.0 * (analysis.below(largest, smallest) - analysis.below(largest, finer));
         let cost = 100.0 * (analysis.quads(largest, finer) / analysis.quads(largest, smallest) - 1.0);
-        assert!(gained < 0.25 * cost, "one more step: {gained} points of the surface for {cost} % of quads");
+        assert!(gained <= 0.25 * cost, "one more step: {gained} points of the surface for {cost} % of quads");
+    }
+    if smallest < largest {
+        assert!(analysis.below(largest, 1.5 * smallest) > analysis.below(largest, smallest), "a step for nothing");
+    }
+    // A number of quads told as sizes: they make that number, the largest
+    // being no smaller than the edge of as many quads of one size.
+    for quads in [300.0, 800.0, 2000.0] {
+        let (largest, smallest) = analysis.proposal_for(quads).unwrap();
+        assert_eq!(smallest, analysis.smallest_for(largest));
+        let made = analysis.quads(largest, smallest);
+        assert!((made / quads - 1.0).abs() < 0.02, "{made} quads for {quads}");
+        assert!(largest >= (analysis.area() / quads).sqrt() * (1.0 - 1e-9));
+    }
+    for quads in [0.0, -5.0, f64::NAN, f64::INFINITY] {
+        assert!(analysis.proposal_for(quads).is_none(), "{quads} quads");
     }
 
     // Asked for a number instead: the sizes the chain gives them, smaller
@@ -443,20 +458,31 @@ fn a_shape_is_analysed_once_and_any_bounds_are_then_counted() {
     assert!(middle > 0.7 * edge && tips < 1.4 * edge, "{tips} and {middle} for {edge}");
 
     // A ring of wire beside a ball: thin all along, a sixth of its girth is
-    // far under the largest quad, and on a twentieth of the surface: a part,
-    // which the proposal comes down to whatever it costs.
-    let mut both = primitives::icosphere(4);
-    let first = both.positions.len() as u32;
-    let ring = primitives::torus(0.6, 0.02, 96, 12);
-    both.positions.extend(ring.positions.iter().map(|&p| p + Vec3::new(4.0, 0.0, 0.0)));
-    both.triangles.extend(ring.triangles.iter().map(|t| t.map(|v| v + first)));
-    let analysis = Analysis::of(&both, &Guides::default(), &config).unwrap();
-    let (largest, smallest) = analysis.proposal();
+    // far under the largest quad, which the smallest comes down to whatever
+    // it costs, be the wire a small or a large share of the surface. The
+    // ball asks for nothing: it is thick for the largest quad.
     let wire = std::f64::consts::TAU * 0.02 / 6.0;
-    assert!(
-        smallest <= 1.1 * wire && wire < 0.5 * largest,
-        "quads from {smallest} to {largest} for a wire asking {wire}"
-    );
+    for ball in [1.0, 0.3] {
+        let mut both = primitives::icosphere(4);
+        both.positions.iter_mut().for_each(|p| *p *= ball);
+        let first = both.positions.len() as u32;
+        let ring = primitives::torus(0.6, 0.02, 96, 12);
+        both.positions.extend(ring.positions.iter().map(|&p| p + Vec3::new(4.0, 0.0, 0.0)));
+        both.triangles.extend(ring.triangles.iter().map(|t| t.map(|v| v + first)));
+        let analysis = Analysis::of(&both, &Guides::default(), &config).unwrap();
+        let largest = (analysis.area() / 1500.0).sqrt();
+        let smallest = analysis.smallest_for(largest);
+        assert!(
+            smallest <= 1.1 * wire && wire < 0.7 * largest,
+            "a ball of {ball}: quads from {smallest} to {largest} for a wire asking {wire}"
+        );
+        let (thin, served) = analysis.thin(largest, smallest);
+        let share = ring.surface_area() / analysis.area();
+        assert!((thin / share - 1.0).abs() < 0.2, "a ball of {ball}: {thin} thin for a wire on {share}");
+        assert!(served >= 0.94, "a ball of {ball}: {served} of the wire served");
+        // Quads half as large as the wire's: it asks for nothing smaller.
+        assert_eq!(analysis.thin(0.5 * wire, 0.5 * wire).0, 0.0);
+    }
 
     // What cannot be analysed.
     assert!(Analysis::of(&TriMesh::default(), &Guides::default(), &config).is_err());

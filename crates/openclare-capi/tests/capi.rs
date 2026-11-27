@@ -459,8 +459,20 @@ fn a_shape_is_analysed_once_and_asked_as_often_as_wanted() {
         assert!((quads / (area / 0.04) - 1.0).abs() < 0.03, "{quads} quads");
         assert!((0.0..=1.0).contains(&below));
         let (mut largest, mut smallest) = (0.0, 0.0);
-        assert_eq!(openclare_analysis_proposal(analysis, &mut largest, &mut smallest), 1);
+        assert_eq!(openclare_analysis_proposal_for(analysis, 1000.0, &mut largest, &mut smallest), 1);
         assert!(largest > 0.0 && smallest > 0.0 && smallest <= largest, "{smallest} to {largest}");
+        assert_eq!(openclare_analysis_count(analysis, largest, smallest, &mut quads, &mut below), 1);
+        assert!((quads / 1000.0 - 1.0).abs() < 0.05, "{quads} quads for 1000");
+        let mut least = 0.0;
+        assert_eq!(openclare_analysis_smallest(analysis, largest, &mut least), 1);
+        assert!((least - smallest).abs() <= 1e-12 * largest, "{least} for {smallest}");
+        assert_eq!(openclare_analysis_smallest(analysis, 0.0, &mut least), 0);
+        assert_eq!(openclare_analysis_proposal_for(analysis, f64::NAN, &mut largest, &mut smallest), 0);
+        // A ball has no thin part, and so all of them are served.
+        let (mut share, mut served) = (9.0, 9.0);
+        assert_eq!(openclare_analysis_thin(analysis, largest, smallest, &mut share, &mut served), 1);
+        assert!(share == 0.0 && served == 1.0, "{share} thin, {served} served");
+        assert_eq!(openclare_analysis_thin(analysis, largest, 2.0 * largest, &mut share, &mut served), 0);
 
         // At each vertex: the size, and whether it is coarser than asked.
         let (mut sizes, mut coarser) = (vec![0f32; vertices], vec![9u8; vertices]);

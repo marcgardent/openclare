@@ -319,7 +319,7 @@ def start(owner, key, now):
     # painted on it.
     source = evaluated.to_mesh() if shape is None or owner.openclare.density_group else None
     try:
-        engine_settings, density = engine_settings_of(owner, evaluated, source, write=False)
+        engine_settings, density = engine_settings_of(owner, evaluated, source)
         given = None if shape is not None else engine_input(
             source, BASE_PRESET, engine_settings, density, copy=True, sharp=True, stretch=stretch_of(owner)
         )

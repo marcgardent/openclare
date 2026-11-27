@@ -1804,22 +1804,19 @@ impl Analysis {
         under / self.area().max(f64::MIN_POSITIVE)
     }
 
-    /// A largest and a smallest quad to start from. The largest is that of
-    /// a mesh of [`PROPOSED_QUADS`] quads of one size: how coarse the whole
-    /// is to be is a matter of taste, and of what the mesh is for. The
-    /// smallest comes down by steps of [`PROPOSED_STEP`] as long as each
-    /// is worth it: as long as it gives what it calls for to at least
-    /// [`PROPOSED_YIELD`] of a point of the surface for each per cent of
-    /// quads it adds. A surface bumpy all over stops early, a smooth one
-    /// with a few tight bends goes down to them. Thin parts come first, when
-    /// they are parts: fingers, a wire, under [`PROPOSED_THIN`] of the
-    /// surface. The smallest is then no larger than what nineteen twentieths
-    /// of their surface calls for. A shape thin over much more of it (a
-    /// shell full of beams and rims) is thin by nature, and that is left to
-    /// the steps. The smallest is never less than [`PROPOSED_RANGE`] times
-    /// less than the largest.
-    pub fn proposal(&self) -> (f64, f64) {
-        let largest = (self.area() / PROPOSED_QUADS).sqrt();
+    /// The smallest quad to go with `largest`, the largest quad the user
+    /// asked for: how coarse the whole is to be is a matter of taste, and
+    /// of what the mesh is for. The smallest comes down by steps of
+    /// [`PROPOSED_STEP`] as long as each is worth it: as long as it gives
+    /// what it calls for to more than [`PROPOSED_YIELD`] of a point of the
+    /// surface for each per cent of quads it adds. A step that gains
+    /// nothing is not taken, even when it costs nothing. A surface bumpy
+    /// all over stops early, a smooth one with a few tight bends goes down
+    /// to them. Then the thin parts (see [`Analysis::thin`]): the smallest
+    /// is no larger than what nineteen twentieths of their surface calls
+    /// for, whatever it costs, since quads round them were asked for. It is
+    /// never less than [`PROPOSED_RANGE`] times less than the largest.
+    pub fn smallest_for(&self, largest: f64) -> f64 {
         let floor = largest / PROPOSED_RANGE;
         let mut smallest = largest;
         let (mut quads, mut below) = (self.quads(largest, smallest), self.below(largest, smallest));
@@ -1827,17 +1824,13 @@ impl Analysis {
             let finer = smallest / PROPOSED_STEP;
             let (more, less) = (self.quads(largest, finer), self.below(largest, finer));
             let (gained, cost) = (100.0 * (below - less), 100.0 * (more / quads - 1.0));
-            if gained < PROPOSED_YIELD * cost {
+            if gained <= PROPOSED_YIELD * cost {
                 break;
             }
             (smallest, quads, below) = (finer, more, less);
         }
-        let mut thin: Vec<(f64, f64)> = self.pieces.iter().flat_map(|piece| piece.thin_parts()).collect();
-        thin.sort_by(|a, b| a.0.total_cmp(&b.0));
+        let thin = self.thin_parts(largest);
         let all: f64 = thin.iter().map(|&(_, area)| area).sum();
-        if all > PROPOSED_THIN * self.area() {
-            thin.clear();
-        }
         let mut under = 0.0;
         for (size, area) in thin {
             under += area;
@@ -1846,7 +1839,62 @@ impl Analysis {
                 break;
             }
         }
-        (largest, smallest.clamp(floor, largest))
+        smallest.clamp(floor, largest)
+    }
+
+    /// A largest and a smallest quad that make about `quads` quads, the
+    /// smallest being [`Analysis::smallest_for`] the largest: the number
+    /// the user asked for, told as sizes. None when `quads` is not a
+    /// number of quads.
+    ///
+    /// Every quad being no larger than the largest, the largest is at least
+    /// the edge of as many quads of one size. It is then raised for the
+    /// smaller quads to fit in the number: the count goes about as the
+    /// inverse square of the largest, which is followed until it is within
+    /// [`PROPOSED_COUNT`] of the number, or [`PROPOSED_TRIES`] times.
+    pub fn proposal_for(&self, quads: f64) -> Option<(f64, f64)> {
+        if !(quads.is_finite() && quads >= 1.0) {
+            return None;
+        }
+        let mut largest = (self.area() / quads).sqrt();
+        let mut best = (f64::INFINITY, largest, largest);
+        for _ in 0..PROPOSED_TRIES {
+            let smallest = self.smallest_for(largest);
+            let made = self.quads(largest, smallest);
+            let off = (made / quads - 1.0).abs();
+            if off < best.0 {
+                best = (off, largest, smallest);
+            }
+            if off <= PROPOSED_COUNT || !(made.is_finite() && made > 0.0) {
+                break;
+            }
+            largest *= (made / quads).sqrt();
+        }
+        Some((best.1, best.2))
+    }
+
+    /// The share of the surface on thin parts at the scale of `largest`,
+    /// and the share of those that get the quads round them asked for with
+    /// `smallest` for the smallest quad, both from 0 to 1.
+    pub fn thin(&self, largest: f64, smallest: f64) -> (f64, f64) {
+        let thin = self.thin_parts(largest);
+        let all: f64 = thin.iter().map(|&(_, area)| area).sum();
+        let served: f64 = thin.iter().filter(|&&(size, _)| size >= smallest).map(|&(_, area)| area).sum();
+        // (An empty sum is -0.)
+        ((all / self.area().max(f64::MIN_POSITIVE)).max(0.0), if all > 0.0 { (served / all).max(0.0) } else { 1.0 })
+    }
+
+    /// The thin parts at the scale of `largest`, smallest first: the edge
+    /// each vertex of them calls for and the area it stands for. A part is
+    /// thin there when it asks for quads smaller than the largest to go
+    /// round it: fingers, a wire, a wrist under coarse quads. A part found
+    /// thin but thick enough for the largest asks for nothing: a limb, a
+    /// torso.
+    fn thin_parts(&self, largest: f64) -> Vec<(f64, f64)> {
+        let mut thin: Vec<(f64, f64)> =
+            self.pieces.iter().flat_map(|piece| piece.thin_parts()).filter(|&(size, _)| size < largest).collect();
+        thin.sort_by(|a, b| a.0.total_cmp(&b.0));
+        thin
     }
 }
 
@@ -1873,12 +1921,13 @@ fn barycentric_of([a, b, c]: [Vec3; 3], p: Vec3) -> [f64; 3] {
 /// Quads of the mesh at whose scale a shape is looked at before any size is
 /// set.
 const REFERENCE_QUADS: f64 = 4000.0;
-/// What [`Analysis::proposal`] starts from.
-pub const PROPOSED_QUADS: f64 = 1500.0;
+/// How [`Analysis::smallest_for`] comes down, and how near the number
+/// [`Analysis::proposal_for`] makes, in how many tries.
 pub const PROPOSED_STEP: f64 = 1.5;
 pub const PROPOSED_YIELD: f64 = 0.25;
-pub const PROPOSED_THIN: f64 = 0.1;
 pub const PROPOSED_RANGE: f64 = 16.0;
+pub const PROPOSED_COUNT: f64 = 0.01;
+pub const PROPOSED_TRIES: usize = 8;
 
 /// The density painted on `input`, if any, as the sizer takes it.
 fn painted_of<'a>(input: &'a TriMesh, guides: &Guides<'a>, contrast: f64) -> Option<sizing::Painted<'a>> {
