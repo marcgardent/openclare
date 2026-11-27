@@ -334,7 +334,7 @@ typedef struct OpenclareLevel OpenclareLevel;
  *   first level.
  * - source_positions (3 * source_vertex_count floats), source_triangles
  *   (3 * source_triangle_count indices): the source.
- * - settings: "key = value" lines (reach, far, stretch, tilt,
+ * - settings: "key = value" lines (reach, far, stretch, hug, tilt,
  *   crease_angle, samples, seed, target, stall, stuck), or NULL for the
  *   defaults.
  *
