@@ -34,7 +34,11 @@ brush, the more the nearer its centre: the bends of the size of the brush
 and smaller go, as under Blender's Smooth brush. A closed curve rubbed all
 round draws in a little, as a mesh does under that brush.
 
-A curve moved or smoothed is laid on the surface again (`laid`): its points,
+A curve is pushed by a brush (`pushed`): the points under it go away from
+its centre toward its edge, sideways to the curve, so that the curve goes
+ahead of the brush as it moves.
+
+A curve moved, smoothed or pushed is laid on the surface again (`laid`): its points,
 and the points of the surface under the middle of any stretch that leaves
 it, as across an edge.
 """
@@ -269,6 +273,46 @@ def smoothed(points, closed, weights, reach, strength=0.5):
         mean = [a / mass for a in sums]
         pull = min(1.0, strength * weight)
         out.append(tuple(x + pull * (m - x) for x, m in zip(point, mean)))
+    return out
+
+
+def pushed(points, closed, centre, radius, strength, heading):
+    """The points of a curve once the brush of `radius` round `centre` has
+    pushed it: each point inside goes away from the centre toward the edge
+    of the brush, by `strength` of the way (1 to the edge at once), sideways
+    to the curve so that the curve does not slide along itself. A point
+    the centre is on goes the way the brush goes (`heading`)."""
+    points = [tuple(point) for point in points]
+    count = len(points)
+    out = []
+    for k, point in enumerate(points):
+        away = [x - c for x, c in zip(point, centre)]
+        gap = math.sqrt(sum(x * x for x in away))
+        if gap >= radius or count < 2:
+            out.append(point)
+            continue
+        before = points[k - 1] if closed or k > 0 else point
+        after = points[(k + 1) % count] if closed or k < count - 1 else point
+        tangent = [y - x for x, y in zip(before, after)]
+        length = math.sqrt(sum(x * x for x in tangent)) or 1.0
+        tangent = [x / length for x in tangent]
+
+        def sideways(vector):
+            along = sum(x * t for x, t in zip(vector, tangent))
+            side = [x - along * t for x, t in zip(vector, tangent)]
+            size = math.sqrt(sum(x * x for x in side))
+            return [x / size for x in side] if size > 1e-9 else None
+
+        way = sideways(away) if gap > 1e-3 * radius else None
+        if way is None or (gap < 0.25 * radius and sum(w * h for w, h in zip(way, heading)) < 0.0):
+            # Near the centre the side is chosen by the way the brush goes,
+            # so that the curve is pushed ahead of it, not split.
+            way = sideways(heading) or way
+        if way is None:
+            out.append(point)
+            continue
+        step = strength * (radius - gap)
+        out.append(tuple(x + step * w for x, w in zip(point, way)))
     return out
 
 

@@ -415,8 +415,8 @@ from bl_ui.space_toolsystem_common import ToolSelectPanelHelper  # noqa: E402
 toolbar = ToolSelectPanelHelper._tool_class_from_space_type("VIEW_3D")
 tools = [item for item in ToolSelectPanelHelper._tools_flatten(toolbar.tools_from_context(bpy.context, mode="OBJECT"))
          if item is not None]
-loop_tools = ["openclare.loop_draw", "openclare.loop_ring", "openclare.loop_move", "openclare.loop_smooth",
-              "openclare.loop_delete"]
+loop_tools = ["openclare.loop_draw", "openclare.loop_ring", "openclare.loop_move", "openclare.loop_push",
+              "openclare.loop_smooth", "openclare.loop_delete"]
 shown = [item.idname for item in tools if item.idname.startswith("openclare.loop_")]
 assert shown == loop_tools, shown
 assert not any(item.idname in {"openclare.draw_curve", "openclare.cut_volume"} for item in tools), "Draw Curve still there"
@@ -431,6 +431,7 @@ for tool in openclare.draw.LOOP_TOOLS:
 assert presses["openclare.loop_draw"] == ("object.openclare_draw_curve", {"loop": True, "action": "DRAW"})
 assert presses["openclare.loop_ring"] == ("object.openclare_cut_volume", {"loop": True})
 assert presses["openclare.loop_move"] == ("object.openclare_draw_curve", {"loop": True, "action": "MOVE"})
+assert presses["openclare.loop_push"] == ("object.openclare_draw_curve", {"loop": True, "action": "PUSH"})
 assert presses["openclare.loop_smooth"] == ("object.openclare_draw_curve", {"loop": True, "action": "SMOOTH"})
 assert presses["openclare.loop_delete"] == ("object.openclare_loop_delete", {})
 assert hasattr(bpy.ops.object, "openclare_cut_volume")

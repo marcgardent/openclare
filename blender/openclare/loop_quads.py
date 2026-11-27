@@ -41,6 +41,15 @@ def stations(points, sizes, closed):
     count of edges along the loop). `points` (n, 3), `sizes` (n,)."""
     points = numpy.asarray(points, numpy.float64)
     sizes = numpy.asarray(sizes, numpy.float64)
+    # A point off in the infinite is no point; a size of nothing, infinite
+    # or a thousand times below the others is that of the others.
+    finite = numpy.isfinite(points).all(axis=1)
+    points, sizes = points[finite], sizes[finite]
+    good = numpy.isfinite(sizes) & (sizes > 0.0)
+    if not good.any() or len(points) < 2:
+        return points[:1], numpy.ones(min(len(points), 1)), 0
+    usual = float(numpy.median(sizes[good]))
+    sizes = numpy.where(good & (sizes > 1e-3 * usual), sizes, usual)
     if closed:
         points, sizes = numpy.vstack([points, points[:1]]), numpy.append(sizes, sizes[0])
     lengths = numpy.linalg.norm(numpy.diff(points, axis=0), axis=1)
@@ -51,6 +60,8 @@ def stations(points, sizes, closed):
     # In edges asked for: how many quads of the size there fit along it.
     along = numpy.append(0.0, numpy.cumsum(lengths / (0.5 * (sizes[:-1] + sizes[1:]))))
     total = along[-1]
+    if not numpy.isfinite(total):
+        return points[:1], sizes[:1], 0
     count = max(3 if closed else 1, int(round(total)))
     at = numpy.linspace(0.0, total, count + 1)
     if closed:

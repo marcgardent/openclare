@@ -277,4 +277,24 @@ assert worst(kept, True) <= 0.01 and len(rounded) < len(kept) < 2 * len(rounded)
 print("LAID a loop round a cube, smoothed, cut %.3f into it; laid again in %d points, %.4f at most"
       % (worst(rounded, True), len(kept), worst(kept, True)))
 
+# Push: a line along x, the brush of 0.5 coming from below up to 0.1 under
+# it: the line goes up ahead of the brush, round it, its points in their
+# order; what the brush does not reach stays. With the centre on the
+# line, it goes the way the brush goes.
+flat = [(x / 20 - 2.0, 0.0, 0.0) for x in range(81)]
+up = (0.0, 1.0, 0.0)
+bulged = flat
+for _ in range(20):
+    bulged = trace.pushed(bulged, False, (0.0, -0.1, 0.0), 0.5, 0.5, up)
+assert all(a[0] < b[0] for a, b in zip(bulged, bulged[1:])), "the points of the line crossed"
+assert min(math.dist(point, (0.0, -0.1, 0.0)) for point in bulged) > 0.49
+assert all(point == flat[k] for k, point in enumerate(bulged) if abs(flat[k][0]) >= 0.5)
+assert max(y for _, y, _ in bulged) > 0.35
+centred = trace.pushed(flat, False, (0.0, 0.0, 0.0), 0.5, 1.0, up)
+assert all(y >= 0.0 for _, y, _ in centred) and max(y for _, y, _ in centred) > 0.4
+down = trace.pushed(flat, False, (0.0, 0.0, 0.0), 0.5, 1.0, (0.0, -1.0, 0.0))
+assert all(y <= 0.0 for _, y, _ in down)
+print("PUSHED a line ahead of the brush to %.3f, round it, its points in order; from on it, the way the brush goes"
+      % max(y for _, y, _ in bulged))
+
 print("TRACE all checks passed")

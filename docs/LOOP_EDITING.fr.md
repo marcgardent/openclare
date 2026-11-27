@@ -2,7 +2,7 @@
 
 *[English version](LOOP_EDITING.md)*
 
-**État :** validé le 27 novembre 2026 ; jalons 1 à 3 écrits (greffon 0.29.0) ; puis, à la demande de Marc, un outil par action, avec Move et Delete avancés et Smooth ajouté (0.30.0) ; les autres pas encore. Le jalon 2 s'écarte des sections 1 et 5 sur trois points, pour l'instant : l'analyse est celle qu'a faite *Analyse*, pas lancée d'elle-même ; avec *Sizes*, la taille unique d'avant elle est le *Largest* ; les arêtes dures ne rendent pas une rangée rouge.
+**État :** validé le 27 novembre 2026 ; jalons 1 à 3 écrits (greffon 0.29.0) ; puis, à la demande de Marc, un outil par action, avec Move et Delete avancés et Smooth ajouté (0.30.0), et Push, un pinceau là où Move attrape (0.31.0) ; les autres pas encore. Le jalon 2 s'écarte des sections 1 et 5 sur trois points, pour l'instant : l'analyse est celle qu'a faite *Analyse*, pas lancée d'elle-même ; avec *Sizes*, la taille unique d'avant elle est le *Largest* ; les arêtes dures ne rendent pas une rangée rouge.
 
 Aujourd'hui, une loop se demande en traçant une courbe : *Draw Curve* ou *Cut Volume* crée un
 objet courbe, enfant du maillage et tenu dessus par un Shrinkwrap, que le moteur pose dans le
@@ -71,13 +71,14 @@ Un outil par action, côte à côte dans la barre d'outils (T) en Object Mode, s
 sélectionné et actif : aucune touche de modification, aucun raccourci à apprendre au-delà de ceux
 des outils de Blender (F pour un rayon, Échap pour défaire un glisser). Ce qu'un appui ferait se
 voit avant d'être fait : le cercle d'accroche de *Draw Loop*, le cercle de pinceau de *Move
-Loop* et *Smooth Loop*, la loop en rouge sous la souris pour *Delete Loop*.
+Loop*, *Push Loop* et *Smooth Loop*, la loop en rouge sous la souris pour *Delete Loop*.
 
 | Outil | Entrée | Ce qu'il fait |
 |---|---|---|
 | **Draw Loop** | glisser | une nouvelle loop le long du trait, avec tout ce qu'a *Draw Curve* : la corde, le retour le long du trait pour défaire, l'accroche *Ridge*/*Valley*, F pour le rayon. Depuis un bout d'une loop ouverte, la reprend. Lâché avec la souris sur son départ (pas le point au bout de la corde, qui traîne) : fermée ; un anneau autour du départ se remplit tant que lâcher la fermerait. Marques des loops à venir dans l'en-tête. |
 | **Ring Loop** | glisser à travers un membre | une loop fermée tout autour, comme la fait *Cut Volume*. Marques dans l'en-tête. |
 | **Move Loop** | glisser une loop | le point attrapé suit la souris sur la surface ; les points dans le rayon, le long de la loop, le suivent d'autant moins qu'ils sont loin (l'atténuation de l'édition proportionnelle de Blender) ; la loop reste sur la surface et garde son espacement. |
+| **Push Loop** | pousser les loops avec le pinceau | ce que couvre le pinceau s'éloigne de son centre vers son bord, de côté par rapport à la loop, de la *Strength* de l'en-tête à chaque passage : la loop avance devant le pinceau qui bouge, comme sous un pinceau de sculpture qui pousse. Depuis une loop, la loop part du côté où va le pinceau. |
 | **Smooth Loop** | frotter les loops | les points sous le pinceau vont vers la moyenne de la loop autour d'eux, sur la largeur du pinceau, d'autant plus qu'ils sont près de son centre, de la *Strength* de l'en-tête à chaque passage : les courbes aussi larges que le pinceau et plus petites s'en vont, comme sous le pinceau *Smooth* de Blender. Une loop fermée frottée tout autour se resserre un peu, comme un maillage sous ce pinceau. Déplacée ou lissée, une loop est reposée sur la surface entre ses points aussi : un tronçon qui passerait à travers le volume, par-dessus une arête, reçoit les points de la surface sous lui. Les bouts d'une loop ouverte restent. |
 | **Delete Loop** | clic sur une loop | la loop s'en va. |
 | **Cut Loop** | clic sur une loop | une loop ouverte en devient deux ; une fermée s'ouvre là. Un tronçon s'en va en coupant deux fois et en supprimant le milieu. |
@@ -85,7 +86,7 @@ Loop* et *Smooth Loop*, la loop en rouge sous la souris pour *Delete Loop*.
 | **Pick Loop** | clic sur une arête du résultat | la loop d'arêtes du maillage de quads par cette arête devient une loop : parcourue par les sommets à quatre arêtes, arrêtée à un pôle ou à un bord, fermée si elle revient. Chaque clic au-delà d'un pôle la prolonge jusqu'au suivant. |
 | **Join, Close** | un trait ou un Move qui finit sur un bout | un bout lâché sur le bout d'une autre loop joint les deux ; sur le départ de la loop elle-même, la ferme. |
 
-Le pinceau de *Move Loop* et *Smooth Loop* est un cercle autour de la souris avec le nom de
+Le pinceau de *Move Loop*, *Push Loop* et *Smooth Loop* est un cercle autour de la souris avec le nom de
 l'outil ; F règle son rayon, la molette le change pendant le glisser ; Échap ou le clic droit
 remet les loops en place. Chaque action est une étape d'annulation. Dans le panneau *Loops*,
 chaque loop a sa ligne : son compte d'arêtes, ses marques (*Sharp*, *Seam*, *Crease*) réglées

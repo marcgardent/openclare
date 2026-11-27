@@ -1,7 +1,7 @@
 """The tools of the loops, one for each action, in the toolbar of the 3D
 viewport (T) in Object Mode (docs/LOOP_EDITING.md): Draw Loop and Ring Loop
-(the Draw Curve and Cut Volume they are made of), Move Loop, Smooth Loop and
-Delete Loop. Their strokes make loops of the mesh (`loops`); called alone,
+(the Draw Curve and Cut Volume they are made of), Move Loop, Push Loop,
+Smooth Loop and Delete Loop. Their strokes make loops of the mesh (`loops`); called alone,
 as before the loops, Draw Curve and Cut Volume make curve objects. What follows is said of a
 curve and holds for a loop: a curve drawn with the mouse straight on a
 mesh, for the result to have a line of edges along it, instead of a curve
@@ -34,9 +34,11 @@ is seen before it is drawn.
 Move Loop drags a loop by the point pressed (`trace.moved`): it follows the
 mouse on the surface, the points within a radius along the loop follow it
 the less the farther, and the loop is laid on the surface and every step
-again. Smooth Loop rubs the loops under its brush (`trace.smoothed`): their
+again. Push Loop pushes the loops ahead of its brush (`trace.pushed`): what
+it covers goes toward its edge, sideways to the loop. Smooth Loop rubs the
+loops under its brush (`trace.smoothed`): their
 bends as wide as the brush and smaller go, by its strength at each pass. The radius of both is a circle round the
-mouse, with the name of the tool; F sets it and the wheel changes it while
+mouse, with the name of the tool (Push's too); F sets it and the wheel changes it while
 dragging. Esc or the right button puts the loops back. Delete Loop shows the
 loop under the mouse in red, and a click deletes it.
 
@@ -400,6 +402,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         items=[
             ("DRAW", "Draw", "Draw a loop, or a curve"),
             ("MOVE", "Move", "Move the loop pressed (the Move Loop tool)"),
+            ("PUSH", "Push", "Push the loops away from the brush (the Push Loop tool)"),
             ("SMOOTH", "Smooth", "Smooth the loops rubbed (the Smooth Loop tool)"),
         ],
         default="DRAW",
@@ -488,7 +491,10 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
     )
     strength: bpy.props.FloatProperty(
         name="Strength",
-        description="Smooth Loop: how far each pass of the brush takes the loop toward the mean of the loop round it",
+        description=(
+            "Smooth Loop: how far each pass of the brush takes the loop toward the mean of the loop round it; Push "
+            "Loop: how far toward the edge of the brush"
+        ),
         subtype="FACTOR",
         default=0.5,
         min=0.0,
@@ -497,7 +503,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
     move_radius: bpy.props.FloatProperty(
         name="Radius",
         description=(
-            "Move Loop and Smooth Loop tools: how far round the mouse they reach, in pixels (for Move, along the "
+            "Move, Push and Smooth Loop tools: how far round the mouse they reach, in pixels (for Move, along the "
             "loop, either side of the point dragged); drawn as a circle, set with F, changed with the wheel"
         ),
         subtype="PIXEL",
@@ -532,7 +538,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         self.taken = None
         curves = drawn_loops(self.owner) if self.loop else drawn_curves(context, self.owner)
         self.grab = self.rubbing = None
-        if self.action == "SMOOTH":
+        if self.action in {"SMOOTH", "PUSH"}:
             return self.start_smooth(context, start, mouse)
         if self.action == "MOVE":
             grip = trace.grabbed([(points, closed) for _, points, closed in curves], start, near)
@@ -622,6 +628,8 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
             self.spacings.append(float(gaps.mean()) if len(gaps) else 0.0)
         self.colour = (1.0, 1.0, 1.0, 1.0)
         self.head = self.mouse = mouse
+        # Where the brush was: the way it goes, for Push.
+        self.last = tuple(start)
         self.rub(start)
         self.handles = (bpy.types.SpaceView3D.draw_handler_add(self.draw_pull, (context,), "WINDOW", "POST_PIXEL"),)
         context.window_manager.modal_handler_add(self)
@@ -630,19 +638,24 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
     def rub(self, centre):
-        """One pass of the brush round `centre` over every loop it reaches;
-        the points moved laid back on the surface."""
+        """One pass of the brush round `centre` over every loop it reaches,
+        smoothing or pushing; the points moved laid back on the surface."""
         from . import loops
 
         radius = self.move_radius * self.pixel
+        heading = tuple(c - l for c, l in zip(centre, self.last))
+        self.last = tuple(centre)
         for loop, spacing in zip(self.owner.data.openclare_loops.items, self.spacings):
             points = [tuple(point) for point in loops.points_of(loop)]
             weights = trace.brushed(points, centre, radius)
             if not any(weights):
                 continue
-            smooth = trace.smoothed(points, loop.closed, weights, radius, self.strength)
+            if self.action == "PUSH":
+                moved_to = trace.pushed(points, loop.closed, centre, radius, self.strength, heading)
+            else:
+                moved_to = trace.smoothed(points, loop.closed, weights, radius, self.strength)
             laid = []
-            for weight, point in zip(weights, smooth):
+            for weight, point in zip(weights, moved_to):
                 if weight > 0.0:
                     found = self.tree.find_nearest(mathutils.Vector(point))[0]
                     point = tuple(found) if found is not None else point
@@ -678,7 +691,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
     def wheel(self, context, event):
-        """The wheel makes the radius of Move and Smooth wider or narrower,
+        """The wheel makes the radius of Move, Push and Smooth wider or narrower,
         as the falloff of Blender's proportional editing; kept for the next
         stroke."""
         wider = event.type in {"WHEELUPMOUSE", "PAGE_UP"}
@@ -786,7 +799,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         from gpu_extras.batch import batch_for_shader
 
         if self.grab is not None or self.rubbing is not None:
-            draw_brush(context, self.mouse, self.move_radius, self.colour, "Move" if self.grab is not None else "Smooth")
+            draw_brush(context, self.mouse, self.move_radius, self.colour, "Move" if self.grab is not None else self.action.title())
             return
         draw_snap(context, self.head, self.snap_radius, self.snap, self.colour)
         draw_close(context, self.owner.matrix_world, self.stroke, self.close, self.colour)
@@ -986,7 +999,7 @@ def draw_cursor(mouse):
     """While a tool of the loops (or Draw Curve) is active and there is a
     mesh to draw on, what a press would do, round the mouse: the circle of
     the snap for Draw (see `draw_snap`), in the colour of the marks to come;
-    the circle of the brush for Move and Smooth; the loop that would go, in
+    the circle of the brush for Move, Push and Smooth; the loop that would go, in
     red, for Delete."""
     from . import curve_colour
 
@@ -1115,7 +1128,7 @@ class OPENCLARE_MT_snap(bpy.types.Menu):
 
 
 class OPENCLARE_OT_snap_radius(bpy.types.Operator):
-    """Set the radius of the snap with the mouse, as F does the radius of a brush; in Move Loop and Smooth Loop,
+    """Set the radius of the snap with the mouse, as F does the radius of a brush; in Move, Push and Smooth Loop,
     the radius of the brush"""
 
     bl_idname = "object.openclare_snap_radius"
@@ -1131,7 +1144,7 @@ class OPENCLARE_OT_snap_radius(bpy.types.Operator):
         self.properties_of_tool = draw_tool_properties(context)
         mouse = (event.mouse_region_x, event.mouse_region_y)
         # The radius of the circle under the mouse: that of the brush in
-        # Move Loop and Smooth Loop.
+        # Move, Push and Smooth Loop.
         self.setting, self.label = "snap_radius", "Snap Radius"
         tool = active_tool(context)
         if tool is not None and tool.idname in BRUSHES:
@@ -1650,6 +1663,24 @@ class OPENCLARE_TL_loop_move(LoopTool, bpy.types.WorkSpaceTool):
         layout.prop(tool.operator_properties(OPENCLARE_OT_draw_curve.bl_idname), "move_radius")
 
 
+class OPENCLARE_TL_loop_push(LoopTool, bpy.types.WorkSpaceTool):
+    """Push Loop: the loops pushed ahead of the brush, as a brush pushes."""
+
+    bl_idname = "openclare.loop_push"
+    bl_label = "Push Loop (openclare)"
+    bl_description = (
+        "Experimental. Push the loops with the brush: what it covers goes away from its centre toward its edge, "
+        "sideways to the loop, so the loop goes ahead of the brush. F or the wheel sets the radius; Esc puts them back"
+    )
+    bl_icon = "ops.transform.push_pull"
+    bl_keymap = (loop_key("PUSH"), RADIUS_KEY)
+
+    def draw_settings(context, layout, tool):
+        properties = tool.operator_properties(OPENCLARE_OT_draw_curve.bl_idname)
+        layout.prop(properties, "move_radius")
+        layout.prop(properties, "strength", slider=True)
+
+
 class OPENCLARE_TL_loop_smooth(LoopTool, bpy.types.WorkSpaceTool):
     """Smooth Loop: the loops rubbed lose their shake."""
 
@@ -1679,13 +1710,14 @@ class OPENCLARE_TL_loop_delete(LoopTool, bpy.types.WorkSpaceTool):
 
 
 # The tools of the loops, in the order of the toolbar.
-LOOP_TOOLS = (OPENCLARE_TL_loop_draw, OPENCLARE_TL_loop_ring, OPENCLARE_TL_loop_move, OPENCLARE_TL_loop_smooth,
-              OPENCLARE_TL_loop_delete)
+LOOP_TOOLS = (OPENCLARE_TL_loop_draw, OPENCLARE_TL_loop_ring, OPENCLARE_TL_loop_move, OPENCLARE_TL_loop_push,
+              OPENCLARE_TL_loop_smooth, OPENCLARE_TL_loop_delete)
 # The tools whose press runs Draw Curve, and so whose header holds its settings.
 STROKE_TOOLS = {OPENCLARE_TL_draw_curve.bl_idname, OPENCLARE_TL_loop_draw.bl_idname,
-                OPENCLARE_TL_loop_move.bl_idname, OPENCLARE_TL_loop_smooth.bl_idname}
+                OPENCLARE_TL_loop_move.bl_idname, OPENCLARE_TL_loop_push.bl_idname, OPENCLARE_TL_loop_smooth.bl_idname}
 # The brushes, and the word drawn by their circle.
-BRUSHES = {OPENCLARE_TL_loop_move.bl_idname: "Move", OPENCLARE_TL_loop_smooth.bl_idname: "Smooth"}
+BRUSHES = {OPENCLARE_TL_loop_move.bl_idname: "Move", OPENCLARE_TL_loop_push.bl_idname: "Push",
+           OPENCLARE_TL_loop_smooth.bl_idname: "Smooth"}
 TOOL_IDS = {OPENCLARE_TL_draw_curve.bl_idname, OPENCLARE_TL_cut_volume.bl_idname} | {
     tool.bl_idname for tool in LOOP_TOOLS}
 
