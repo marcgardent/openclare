@@ -2033,6 +2033,7 @@ const REFINED_MOST: usize = 2;
 
 /// Preprocessing, sizing, cross field and singularity simplification.
 /// `guides` is given by the chains whose quads may vary in size.
+#[allow(clippy::too_many_arguments)]
 fn fields(
     input: &TriMesh,
     config: &RemeshConfig,

@@ -292,12 +292,55 @@ fn a_loop_drawn_by_hand_on_a_face_of_a_cube_is_held() {
 
 #[test]
 fn a_loop_that_cannot_be_held_is_let_go_alone() {
-    // Smaller than a quad: it is let go, and the edges of the cube are kept
-    // whole. Letting go of a line used to take the hard edges near it
-    // along, and the top of the cube came out rounded (#195).
+    // Smaller than a quad: it is let go, alone, and the edges of the cube
+    // are kept whole.
     let source = primitives::cube(1);
     let curve = loop_on_top(0.06, 0.06, [0.0, 0.0], 0.0, 0.0);
     let (mesh, report) = remesh(&source, 550, &[curve]);
+    assert!(measure(&source, &mesh, Some(550)).is_valid());
+    assert_eq!(report.guides_let_go, 1);
+    let lengths = along_the_edges_of_the_cube(&mesh);
+    assert!(lengths.iter().all(|&length| (length - 2.0).abs() < 1e-6), "{lengths:?}");
+}
+
+#[test]
+fn loops_let_go_together_leave_the_edges_of_a_cube_whole() {
+    // Three loops on the top face, uneven, one of them small: the map folds
+    // with them and they are let go. Letting go of them in the map took the
+    // hard edges near the folds with them, and the field, made for the
+    // loops, still folded the map with the edges of the cube alone: the
+    // top came out with an edge broken (#361). The cube of #195 as its file
+    // has it, each face cut from its first corner, which is how this was
+    // found.
+    let corners = [[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]];
+    let faces = [[0, 3, 2, 1], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]];
+    let source = TriMesh {
+        positions: corners.iter().map(|c| Vec3::new(f64::from(c[0]), f64::from(c[1]), f64::from(c[2]))).collect(),
+        triangles: faces.iter().flat_map(|&[a, b, c, d]| [[a, b, c], [a, c, d]]).collect(),
+    };
+    let uneven = |r: f64, flat: f64, centre: [f64; 2], turn: f64, wobble: f64| {
+        let points = (0..100)
+            .map(|k| {
+                let t = std::f64::consts::TAU * f64::from(k) / 100.0;
+                let w = 1.0 + wobble * (3.0 * t + 1.0).sin() * (2.0 * t).cos();
+                let (x, y) = (r * w * t.cos(), r * flat * w * t.sin());
+                // To the hundred-thousandth, as the file it was found with.
+                let round = |a: f64| (a * 1e5).round() / 1e5;
+                Vec3::new(
+                    round(centre[0] + x * turn.cos() - y * turn.sin()),
+                    round(centre[1] + x * turn.sin() + y * turn.cos()),
+                    1.0,
+                )
+            })
+            .collect();
+        GuideCurve { points, closed: true, sharp: false }
+    };
+    let curves = [
+        uneven(0.118118, 0.873686, [0.157084, -0.457953], 2.449465, 0.148652),
+        uneven(0.421832, 0.363392, [-0.299312, -0.361593], 1.521060, 0.191133),
+        uneven(0.305153, 0.615787, [0.532974, -0.295032], 1.252165, 0.194882),
+    ];
+    let (mesh, report) = remesh(&source, 550, &curves);
     assert!(measure(&source, &mesh, Some(550)).is_valid());
     assert_eq!(report.guides_let_go, 1);
     let lengths = along_the_edges_of_the_cube(&mesh);
