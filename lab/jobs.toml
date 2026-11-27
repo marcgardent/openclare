@@ -942,6 +942,47 @@ row = [{ value = "ogre-990", quads = "990" },
        { value = "ogre-1000", quads = "1000" },
        { value = "ogre-1010", quads = "1010" }]
 
+[[batch]]
+name = "curve-rings-350"
+description = "PR #350 before and after: a closed guide curve round a cube (40 x 40 quads a face) at 2000 quads, kept as a loop of edges or let go (bench/curve_rings.py). 37 heights on the rows of edges (multiples of 0.05), 37 off them, and a tilted ring; on main and on pull/350. A few seconds a job, the engine on the thread setting. The report sums kept and let_go per side."
+category = "quick-bench"
+needs = ["engine"]
+command = "python3 bench/curve_rings.py --openclare {engine} --ring {ring} --out {out}"
+report = "python3 bench/before_after.py {records} --side ref --by ring --file rings.json --keys kept,let_go,guide_edges --sum --out {out}"
+memory_limit_gb = 32
+timeout = "10m"
+timing_matters = false
+
+[batch.axes]
+ring = ["z-0.90", "z-0.85", "z-0.80", "z-0.75", "z-0.70", "z-0.65", "z-0.60", "z-0.55",
+        "z-0.50", "z-0.45", "z-0.40", "z-0.35", "z-0.30", "z-0.25", "z-0.20", "z-0.15",
+        "z-0.10", "z-0.05", "z0.00", "z0.05", "z0.10", "z0.15", "z0.20", "z0.25",
+        "z0.30", "z0.35", "z0.40", "z0.45", "z0.50", "z0.55", "z0.60", "z0.65",
+        "z0.70", "z0.75", "z0.80", "z0.85", "z0.90", "z-0.885", "z-0.835", "z-0.785",
+        "z-0.735", "z-0.685", "z-0.635", "z-0.585", "z-0.535", "z-0.485", "z-0.435", "z-0.385",
+        "z-0.335", "z-0.285", "z-0.235", "z-0.185", "z-0.135", "z-0.085", "z-0.035", "z0.015",
+        "z0.065", "z0.115", "z0.165", "z0.215", "z0.265", "z0.315", "z0.365", "z0.415",
+        "z0.465", "z0.515", "z0.565", "z0.615", "z0.665", "z0.715", "z0.765", "z0.815",
+        "z0.865", "z0.915", "tilted"]
+ref = ["main", "pull/350"]
+
+[[batch]]
+name = "three-budgets-350"
+description = "PR #350 before and after on the twelve models at 2970, 3000 and 3030 quads, as three-budgets (main and pull/350). The bench scenes draw no curve: the meshes should be the same on both sides, which is what this checks."
+category = "quick-bench"
+needs = ["engine", "source"]
+command = "{engine} remesh {source} {out}/mesh.obj --preset {preset} --quads {budget} && {engine} measure {source} {out}/mesh.obj --target {budget} --json > {out}/measure.json"
+report = "python3 bench/before_after.py {records} --side ref --by budget --out {out}"
+parameters = { preset = "organic" }
+memory_limit_gb = 32
+timing_matters = false
+
+[batch.axes]
+model = ["creature", "blob", "suzanne", "spot", "pig", "ogre", "bob", "jerry", "blub", "rock",
+         { value = "cage", preset = "hard-surface" }, { value = "part", preset = "hard-surface" }]
+budget = [2970, 3000, 3030]
+ref = ["main", "pull/350"]
+
 # ---------------------------------------------------------------- sequences
 
 [[sequence]]
