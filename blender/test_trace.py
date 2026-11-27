@@ -208,4 +208,24 @@ def roof_at(x):
 edge = trace.edge_between(roof_at, -0.1, 0.3, rounds=12)
 assert abs(edge[0] - 0.123) < 1e-3, edge
 print("EDGE found by halves at x = %.4f for 0.123" % edge[0])
+# Move: a point of the equator taken 0.2 north, a radius of 0.5 along it.
+equator = [on_ball(lon, 0) for lon in range(0, 360, 2)]
+assert trace.grabbed([(equator, True)], on_ball(41, 0.5), NEAR) in {(0, 20), (0, 21)}
+assert trace.grabbed([(equator, True)], on_ball(41, 30), NEAR) is None
+held = 0
+shifted = trace.moved(equator, True, held, (0.0, 0.0, 0.2), 0.5)
+lifts = [b[2] - a[2] for a, b in zip(equator, shifted)]
+assert abs(lifts[0] - 0.2) < 1e-12
+# The falloff: the less the farther, both ways round (the start of a closed
+# curve has neighbours on both sides), nothing past the radius.
+side = [lifts[k] for k in range(0, 20)]
+assert all(a >= b for a, b in zip(side, side[1:])) and abs(lifts[1] - lifts[-1]) < 1e-12
+far = [k for k, point in enumerate(equator) if min(trace.along_from(equator, True, held)[k], 9) >= 0.5]
+assert far and all(lifts[k] == 0.0 for k in far)
+# Along the curve, not across: a hairpin moved by one leg leaves the other.
+pin = [(x / 10, 0.0, 0.0) for x in range(30)] + [(3.0 - x / 10, 0.1, 0.0) for x in range(30)]
+bent = trace.moved(pin, False, 5, (0.0, 0.0, 1.0), 0.6)
+assert bent[5][2] == 1.0 and all(point[2] == 0.0 for point in bent[30:])
+print("MOVED a point of the equator 0.2 north, its neighbours within 0.5 the less the farther; a hairpin by one leg")
+
 print("TRACE all checks passed")

@@ -2,7 +2,7 @@
 
 *[English version](LOOP_EDITING.md)*
 
-**État :** validé le 27 novembre 2026 ; jalons 1 à 3 écrits (greffon 0.29.0), les autres pas encore. Le jalon 2 s'écarte des sections 1 et 5 sur trois points, pour l'instant : l'analyse est celle qu'a faite *Analyse*, pas lancée d'elle-même ; avec *Sizes*, la taille unique d'avant elle est le *Largest* ; les arêtes dures ne rendent pas une rangée rouge.
+**État :** validé le 27 novembre 2026 ; jalons 1 à 3 écrits (greffon 0.29.0), et Move du jalon 5, avancé (0.30.0) : glisser sur une loop loin de ses bouts la déplace, Redraw sera donc Ctrl + glisser ; les autres pas encore. Le jalon 2 s'écarte des sections 1 et 5 sur trois points, pour l'instant : l'analyse est celle qu'a faite *Analyse*, pas lancée d'elle-même ; avec *Sizes*, la taille unique d'avant elle est le *Largest* ; les arêtes dures ne rendent pas une rangée rouge.
 
 Aujourd'hui, une loop se demande en traçant une courbe : *Draw Curve* ou *Cut Volume* crée un
 objet courbe, enfant du maillage et tenu dessus par un Shrinkwrap, que le moteur pose dans le
@@ -77,8 +77,8 @@ s'allume ; ce qu'un clic ferait se voit avant d'être fait, comme le cercle d'ac
 | **Draw** | glisser, bouton gauche | une nouvelle loop le long du trait, avec tout ce qu'a *Draw Curve* : la corde, le retour le long du trait pour défaire, l'accroche *Ridge*/*Valley*, F pour le rayon. Lâché avec la souris sur son départ (pas le point au bout de la corde, qui traîne) : fermée ; un anneau autour du départ se remplit tant que lâcher la fermerait. Les quads le long d'elle se dessinent à mesure. |
 | **Ring** | Alt + glisser | une loop fermée tout autour d'un membre, comme la fait *Cut Volume*. |
 | **Pick** | Maj + clic sur une arête du résultat | la loop d'arêtes du maillage de quads par cette arête devient une loop : parcourue par les sommets à quatre arêtes, arrêtée à un pôle ou à un bord, fermée si elle revient. Chaque Maj + clic au-delà d'un pôle la prolonge jusqu'au suivant. |
-| **Move** | glisser sur une loop | les points dans le rayon glissent sur la surface avec la souris, d'autant moins qu'ils sont loin (l'atténuation de l'édition proportionnelle de Blender) ; la loop reste sur la surface et garde son espacement. |
-| **Redraw** | glisser d'une loop jusqu'à elle | le tronçon entre les deux endroits est remplacé par le trait. |
+| **Move** | glisser sur une loop, loin de ses bouts | les points dans le rayon, le long de la loop, glissent sur la surface avec la souris, d'autant moins qu'ils sont loin (l'atténuation de l'édition proportionnelle de Blender) ; la loop reste sur la surface et garde son espacement. Le rayon est un cercle autour de la souris, affiché avec *Move* dès que la souris est sur une loop ; la molette le change. |
+| **Redraw** | Ctrl + glisser d'une loop jusqu'à elle | le tronçon entre les deux endroits est remplacé par le trait. |
 | **Join, Close** | un trait ou un Move qui finit sur un bout | un bout lâché sur le bout d'une autre loop joint les deux ; sur le départ de la loop elle-même, la ferme. |
 | **Cut** | C + clic sur une loop | une loop ouverte en devient deux ; une fermée s'ouvre là. |
 | **Delete** | X + clic sur une loop | la loop s'en va. Un tronçon s'en va en coupant deux fois et en supprimant le milieu. |

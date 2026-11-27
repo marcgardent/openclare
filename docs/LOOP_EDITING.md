@@ -2,7 +2,7 @@
 
 *[Version française](LOOP_EDITING.fr.md)*
 
-**State:** validated on 27 November 2026; milestones 1 to 3 written (add-on 0.29.0), the others not yet. Milestone 2 departs from section 1 and 5 in three ways, for now: the analysis is the one *Analyse* made, not started by itself; with *Sizes* the one size before it is the *Largest*; hard edges do not make a row red.
+**State:** validated on 27 November 2026; milestones 1 to 3 written (add-on 0.29.0), and Move of milestone 5, brought forward (0.30.0): a drag on a loop away from its ends moves it, so Redraw will be Ctrl + drag; the others not yet. Milestone 2 departs from section 1 and 5 in three ways, for now: the analysis is the one *Analyse* made, not started by itself; with *Sizes* the one size before it is the *Largest*; hard edges do not make a row red.
 
 Today a loop is asked for by drawing a curve: *Draw Curve* or *Cut Volume* makes a curve
 object, child of the mesh and held on it by a Shrinkwrap, which the engine lays into the work
@@ -73,8 +73,8 @@ click would do is shown before it is done, as the snap circle of *Draw Curve* is
 | **Draw** | left drag | a new loop along the stroke, with everything *Draw Curve* has: the rope, back along the stroke to undo, *Ridge*/*Valley* snap, F for the radius. Let go with the mouse on its start (not the point on the rope, which lags): closed; a ring round the start fills while letting go would close it. The quads along it are drawn as it goes. |
 | **Ring** | Alt + left drag | a closed loop all round a limb, as *Cut Volume* makes it. |
 | **Pick** | Shift + click on an edge of the result | the edge loop of the quad mesh through that edge becomes a loop: walked through vertices of four edges, stopped at a pole or a border, closed if it comes back. Each Shift + click past a pole carries it on to the next one. |
-| **Move** | left drag on a loop | the points within the radius slide on the surface with the mouse, the farther the less (the falloff of Blender's proportional editing); the loop stays on the surface and keeps its spacing. |
-| **Redraw** | left drag starting on a loop and ending on it | the stretch between the two places is replaced by the stroke. |
+| **Move** | left drag on a loop, away from its ends | the points within the radius, along the loop, slide on the surface with the mouse, the farther the less (the falloff of Blender's proportional editing); the loop stays on the surface and keeps its spacing. The radius is a circle round the mouse, shown with *Move* as soon as the mouse is over a loop; the wheel changes it. |
+| **Redraw** | Ctrl + left drag starting on a loop and ending on it | the stretch between the two places is replaced by the stroke. |
 | **Join, Close** | a stroke or a Move that ends on an end | an end let go on the end of another loop joins the two; on the loop's own start, closes it. |
 | **Cut** | C + click on a loop | an open loop becomes two; a closed one is opened there. |
 | **Delete** | X + click on a loop | the loop goes. A stretch goes by cutting twice and deleting the middle. |
