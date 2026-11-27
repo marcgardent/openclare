@@ -949,7 +949,10 @@ def loop_pressed(context, owner, mouse, near):
 
     if owner is None:
         return None, None
-    region, view = context.region, context.region_data
+    region = context.region
+    # The view of this region: in a quad view, context.region_data may be
+    # that of another.
+    view = getattr(region, "data", None) or context.region_data
     matrix = numpy.array(view.perspective_matrix @ owner.matrix_world)
     best = None
     for index, loop in enumerate(owner.data.openclare_loops.items):
@@ -1008,16 +1011,20 @@ def draw_cursor(mouse):
     tool = active_tool(context)
     if DRAWING or owner is None or tool is None:
         return
+    # The cursor is drawn in the coordinates of the window, the loops are
+    # found in those of the region.
+    corner = (context.region.x, context.region.y)
+    in_region = (mouse[0] - corner[0], mouse[1] - corner[1])
     if tool.idname == OPENCLARE_TL_loop_delete.bl_idname:
-        index, screen = loop_pressed(context, owner, mouse, BRUSH_PIXELS)
+        index, screen = loop_pressed(context, owner, in_region, BRUSH_PIXELS)
         if index is not None:
-            draw_doomed(context, screen, owner.data.openclare_loops.items[index].closed, mouse)
+            draw_doomed(context, screen + corner, owner.data.openclare_loops.items[index].closed, mouse)
         return
     properties = draw_tool_properties(context)
     if properties is None:
         return
     if tool.idname in BRUSHES:
-        index, _ = loop_pressed(context, owner, mouse, properties.move_radius)
+        index, _ = loop_pressed(context, owner, in_region, properties.move_radius)
         loop = owner.data.openclare_loops.items[index] if index is not None else None
         colour = curve_colour(loop.sharp, loop.crease, loop.seam) if loop is not None else (0.8, 0.8, 0.8, 0.6)
         draw_brush(context, mouse, properties.move_radius, colour, BRUSHES[tool.idname])
