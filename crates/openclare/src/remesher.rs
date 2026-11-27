@@ -589,7 +589,7 @@ impl Remesher for IntegerGrid {
         let size = WorkSize { per_quad: self.triangles_per_quad, least: self.min_triangles, most: self.max_triangles };
         // Its extraction counts on quads of one size: no sizing.
         let Fields { work, field, edge_length, .. } =
-            fields(input, config, &size, None, &mut report, &mut clock, recorder)?;
+            fields(input, config, &size, None, true, &mut report, &mut clock, recorder)?;
 
         recorder.begin("parametrization")?;
         let map_request = parametrization::Request { edge_length, stiffening_rounds: self.stiffening_rounds };
@@ -1450,8 +1450,14 @@ fn shares_of(pieces: &[(TriMesh, Vec<u32>)], guides: &Guides, config: &RemeshCon
 }
 
 enum LayoutOutcome {
-    Done(PolyMesh, Report),
-    FallBack { cause: &'static str, underfed: bool },
+    /// The mesh, its report, and how many edges of the hard edges of the
+    /// shape followed where they can be (see [`RemeshConfig::edge_angle`])
+    /// the map let go of.
+    Done(PolyMesh, Report, usize),
+    FallBack {
+        cause: &'static str,
+        underfed: bool,
+    },
 }
 
 impl QuadLayout {
@@ -1465,8 +1471,51 @@ impl QuadLayout {
         least: usize,
         recorder: &mut dyn Recorder,
     ) -> Result<(PolyMesh, Report)> {
-        match self.try_layout_piece(input, guides, config, least, recorder)? {
-            LayoutOutcome::Done(mesh, report) => Ok((mesh, report)),
+        let mut outcome = self.try_layout_piece(input, guides, config, least, true, recorder)?;
+        // Cancelling singularities across a line drawn changes how the field
+        // turns inside it, and the map may then fold with the line: a loop
+        // drawn on the flat face of a box, between singularities half a
+        // quad on either side of it (#195). Before any line is let go, the
+        // chain is run again with no cancellation across the lines.
+        let drawn = !guides.curves.is_empty() || !guides.lines.is_empty();
+        let let_go = match &outcome {
+            LayoutOutcome::Done(_, report, _) => report.guides_let_go > 0,
+            LayoutOutcome::FallBack { underfed, .. } => !underfed,
+        };
+        if drawn && let_go && config.singularity_reach > 0.0 {
+            recorder.record("notes/lines", Shape::Note("done again with no singularities cancelled across its lines"));
+            let again = self.try_layout_piece(input, guides, config, least, false, recorder)?;
+            if matches!(&again, LayoutOutcome::Done(_, report, _) if report.guides_let_go == 0) {
+                outcome = again;
+            }
+        }
+        match outcome {
+            LayoutOutcome::Done(mesh, report, 0) => Ok((mesh, report)),
+            LayoutOutcome::Done(mesh, report, _) => {
+                // The map let go of hard edges of the shape with the lines
+                // drawn: the field was made for those lines, and without
+                // them it may not fold the map with the hard edges. A box
+                // with its edges and no line drawn on it is better than a
+                // box rounded where the line was let go (#195).
+                let held: Vec<[Vec3; 2]> =
+                    guides.lines.iter().copied().filter(|line| guides.held.contains(line)).collect();
+                if !guides.curves.is_empty() || held.len() < guides.lines.len() {
+                    let free = Guides { curves: &[], lines: &held, ..*guides };
+                    recorder.record(
+                        "notes/lines",
+                        Shape::Note("done again without its lines: letting go of them took hard edges with them"),
+                    );
+                    if let LayoutOutcome::Done(mesh, mut report, 0) =
+                        self.try_layout_piece(input, &free, config, least, true, recorder)?
+                    {
+                        report.guides_let_go = 1;
+                        report.line_causes =
+                            vec![("the map folds over with them, and with the hard edges near them", 1)];
+                        return Ok((mesh, report));
+                    }
+                }
+                Ok((mesh, report))
+            }
             LayoutOutcome::FallBack { cause, underfed } => {
                 // Lines that must be kept are tried alone first, without the
                 // others, the curves and the hard edges.
@@ -1478,8 +1527,8 @@ impl QuadLayout {
                     let kept_config = RemeshConfig { edge_angle: None, ..config.clone() };
                     recorder
                         .record("notes/lines", Shape::Note(&format!("done again with its held lines only: {cause}")));
-                    if let LayoutOutcome::Done(mesh, mut report) =
-                        self.try_layout_piece(input, &kept, &kept_config, least, recorder)?
+                    if let LayoutOutcome::Done(mesh, mut report, _) =
+                        self.try_layout_piece(input, &kept, &kept_config, least, true, recorder)?
                     {
                         report.guides_let_go = 1;
                         report.line_causes = vec![(cause, 1)];
@@ -1488,13 +1537,30 @@ impl QuadLayout {
                 }
                 // With guide curves, the first thing to try is to do without
                 // them: the layout without the lines drawn is still better
-                // than the other chain.
-                if !underfed && (!guides.curves.is_empty() || !guides.lines.is_empty() || config.edge_angle.is_some()) {
+                // than the other chain. The hard edges of the shape are kept
+                // the first time: a curve that cannot be held should not cost
+                // a box its edges (#195).
+                let drawn = !guides.curves.is_empty() || !guides.lines.is_empty();
+                if !underfed && drawn && config.edge_angle.is_some() {
+                    let free = Guides { curves: &[], lines: &held, ..*guides };
+                    recorder.record(
+                        "notes/lines",
+                        Shape::Note(&format!("done again without its lines, with its hard edges: {cause}")),
+                    );
+                    if let LayoutOutcome::Done(mesh, mut report, _) =
+                        self.try_layout_piece(input, &free, config, least, true, recorder)?
+                    {
+                        report.guides_let_go = 1;
+                        report.line_causes = vec![(cause, 1)];
+                        return Ok((mesh, report));
+                    }
+                }
+                if !underfed && (drawn || config.edge_angle.is_some()) {
                     let free = Guides { curves: &[], lines: &[], ..*guides };
                     let free_config = RemeshConfig { edge_angle: None, ..config.clone() };
                     recorder.record("notes/lines", Shape::Note(&format!("done again without its lines: {cause}")));
-                    if let LayoutOutcome::Done(mesh, mut report) =
-                        self.try_layout_piece(input, &free, &free_config, least, recorder)?
+                    if let LayoutOutcome::Done(mesh, mut report, _) =
+                        self.try_layout_piece(input, &free, &free_config, least, true, recorder)?
                     {
                         report.guides_let_go = 1;
                         report.line_causes = vec![(cause, 1)];
@@ -1514,18 +1580,25 @@ impl QuadLayout {
         guides: &Guides,
         config: &RemeshConfig,
         least: usize,
+        across_lines: bool,
         recorder: &mut dyn Recorder,
     ) -> Result<LayoutOutcome> {
         let mut clock = Stopwatch::start();
         let mut report = Report::default();
         let size = WorkSize { per_quad: self.triangles_per_quad, least, most: self.max_triangles };
         let Fields { work, field, edge_length, quads } =
-            fields(input, config, &size, Some(guides), &mut report, &mut clock, recorder)?;
+            fields(input, config, &size, Some(guides), across_lines, &mut report, &mut clock, recorder)?;
 
         recorder.begin("layout")?;
         let layout = tmesh::create(tmesh::Kind::Motorcycle).build(&work, &field, &tmesh::Request { edge_length })?;
         report.map_inversions = layout.tmesh.report.map_inversions;
         report.guides_let_go = layout.map.report.guides_off_grid as usize;
+        let shape_let_go = if work.shape_guide_edges.is_empty() {
+            0
+        } else {
+            let shape: HashSet<[u32; 2]> = work.shape_guide_edges.iter().copied().collect();
+            layout.map.report.loose_guides.iter().filter(|edge| shape.contains(*edge)).count()
+        };
         if layout.map.report.guides_off_grid {
             let whole = layout.map.report.loose_guides.len() == work.guide_edges.len();
             report.line_causes = vec![(
@@ -1647,7 +1720,7 @@ impl QuadLayout {
         lines.into_report(&mut report);
 
         report.stats = mesh.stats();
-        Ok(LayoutOutcome::Done(mesh, report))
+        Ok(LayoutOutcome::Done(mesh, report, shape_let_go))
     }
 }
 
@@ -1965,6 +2038,7 @@ fn fields(
     config: &RemeshConfig,
     size: &WorkSize,
     guides: Option<&Guides>,
+    across_lines: bool,
     report: &mut Report,
     clock: &mut Stopwatch,
     recorder: &mut dyn Recorder,
@@ -2047,6 +2121,7 @@ fn fields(
             alignment: config.alignment,
             tolerance: config.singularity_tolerance,
             reach: Some(config.singularity_reach * edge_length),
+            across_lines,
         };
         field = singularity::create(singularity::Kind::PairCancellation).optimize(&work, &field, &request)?.0;
     }

@@ -1207,8 +1207,12 @@ fn field_command(args: &[String]) -> Result<(), String> {
     if let Some(quad_edges) = simplify {
         let quad_edge = work_request.curvature_scale.ok_or("--simplify needs --quads or --scale")?;
         let optimizer = singularity::create(singularity::Kind::PairCancellation);
-        let options =
-            singularity::Request { alignment: request.alignment, tolerance, reach: Some(quad_edges * quad_edge) };
+        let options = singularity::Request {
+            alignment: request.alignment,
+            tolerance,
+            reach: Some(quad_edges * quad_edge),
+            ..Default::default()
+        };
         let start = std::time::Instant::now();
         let (simplified, report) = optimizer.optimize(&work, &field, &options).map_err(|e| e.to_string())?;
         let frames = crossfield::FaceFrames::build(&work.mesh, &Topology::build(&work.mesh));

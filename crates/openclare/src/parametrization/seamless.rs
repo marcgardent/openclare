@@ -75,46 +75,59 @@ impl Seamless {
         work: &WorkMesh,
         field: &CrossField,
         request: &Request,
-        mut folds: Vec<usize>,
+        folds: Vec<usize>,
     ) -> Result<Parametrization> {
         // Where that folds the map, guide lines are let go first: a line
         // drawn that cannot be kept should not cost the creases theirs, nor
         // the other lines. And of a line, only what is near a fold: the
-        // rest of it stays, as a line that stops there.
+        // rest of it stays, as a line that stops there. The lines drawn go
+        // before the hard edges of the shape that are followed only where
+        // they can be: a loop drawn on a box that folds the map is let go
+        // alone, and the box keeps its edges (#195).
+        let shape: HashSet<[u32; 2]> = work.shape_guide_edges.iter().copied().collect();
+        let drawn = work.guide_edges.iter().any(|edge| !shape.contains(edge));
+        let spare_shape: &[bool] = if drawn && !shape.is_empty() { &[true, false] } else { &[false] };
         if !work.guide_edges.is_empty() {
             let neighbors = Topology::build(&work.mesh).neighbors;
-            let mut lighter = work.clone();
-            let mut loose: Vec<[u32; 2]> = Vec::new();
-            for round in 0..NEAR_ROUNDS {
-                // The vertices within reach of a fold, a reach that doubles
-                // each time the folds do not go away.
-                let mut near: HashSet<u32> = folds.iter().flat_map(|&f| work.mesh.triangles[f]).collect();
-                for _ in 0..(NEAR_REACH << round) {
-                    let ring: Vec<u32> = near.iter().flat_map(|&v| neighbors[v as usize].iter().copied()).collect();
-                    near.extend(ring);
-                }
-                let dropped: HashSet<[u32; 2]> =
-                    lighter.guide_edges.iter().copied().filter(|edge| edge.iter().any(|v| near.contains(v))).collect();
-                if dropped.is_empty() {
-                    // The folds are not the doing of the lines left.
-                    break;
-                }
-                lighter.feature_edges.retain(|edge| !dropped.contains(edge));
-                lighter.guide_edges.retain(|edge| !dropped.contains(edge));
-                loose.extend(dropped);
-                match self.solve_or_folds(&lighter, field, request)? {
-                    Ok(mut map) => {
-                        loose.sort_unstable();
-                        map.report.guides_off_grid = true;
-                        map.report.loose_guides = loose;
-                        return Ok(map);
+            for &spared in spare_shape {
+                let mut folds = folds.clone();
+                let mut lighter = work.clone();
+                let mut loose: Vec<[u32; 2]> = Vec::new();
+                for round in 0..NEAR_ROUNDS {
+                    // The vertices within reach of a fold, a reach that doubles
+                    // each time the folds do not go away.
+                    let mut near: HashSet<u32> = folds.iter().flat_map(|&f| work.mesh.triangles[f]).collect();
+                    for _ in 0..(NEAR_REACH << round) {
+                        let ring: Vec<u32> = near.iter().flat_map(|&v| neighbors[v as usize].iter().copied()).collect();
+                        near.extend(ring);
                     }
-                    Err(still) => folds = still,
+                    let dropped: HashSet<[u32; 2]> = lighter
+                        .guide_edges
+                        .iter()
+                        .copied()
+                        .filter(|edge| edge.iter().any(|v| near.contains(v)) && !(spared && shape.contains(edge)))
+                        .collect();
+                    if dropped.is_empty() {
+                        // The folds are not the doing of the lines left.
+                        break;
+                    }
+                    lighter.feature_edges.retain(|edge| !dropped.contains(edge));
+                    lighter.guide_edges.retain(|edge| !dropped.contains(edge));
+                    loose.extend(dropped);
+                    match self.solve_or_folds(&lighter, field, request)? {
+                        Ok(mut map) => {
+                            loose.sort_unstable();
+                            map.report.guides_off_grid = true;
+                            map.report.loose_guides = loose;
+                            return Ok(map);
+                        }
+                        Err(still) => folds = still,
+                    }
                 }
             }
         }
         // Failing that, whole lines: each is tried alone, then those that
-        // can be kept together, then none.
+        // can be kept together, then every line drawn, then all of them.
         if !work.guide_edges.is_empty() {
             let curves = lines_of(&work.guide_edges);
             let without = |dropped: &[&Vec<[u32; 2]>]| {
@@ -132,12 +145,20 @@ impl Seamless {
                     fits[index] = self.solve(&without(&others).0, field, request, true)?.is_some();
                 }
             }
-            for keep_those_that_fit in [true, false] {
-                if keep_those_that_fit && !fits.contains(&true) {
-                    continue;
-                }
+            // A line is of the shape when all its edges are.
+            let of_the_shape: Vec<bool> =
+                curves.iter().map(|curve| curve.iter().all(|edge| shape.contains(edge))).collect();
+            let mut trials: Vec<Vec<bool>> = Vec::new();
+            if fits.contains(&true) {
+                trials.push(fits.iter().map(|&fit| !fit).collect());
+            }
+            if spare_shape.len() > 1 && of_the_shape.contains(&true) {
+                trials.push(of_the_shape.iter().map(|&kept| !kept).collect());
+            }
+            trials.push(vec![true; curves.len()]);
+            for dropping in trials {
                 let dropped: Vec<&Vec<[u32; 2]>> =
-                    (0..curves.len()).filter(|&k| !(keep_those_that_fit && fits[k])).map(|k| &curves[k]).collect();
+                    (0..curves.len()).filter(|&k| dropping[k]).map(|k| &curves[k]).collect();
                 let (lighter, mut loose) = without(&dropped);
                 if let Some(mut map) = self.solve(&lighter, field, request, true)? {
                     loose.sort_unstable();
