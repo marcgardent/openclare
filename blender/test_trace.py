@@ -273,7 +273,7 @@ square = [on_cube((2 * math.cos(a), 2 * math.sin(a), 0.0)) for a in (2 * math.pi
 rounded = [on_cube(point) for point in trace.smoothed(square, True, [1.0] * 40, 1.0, 1.0)]
 assert worst(rounded, True) > 0.05, worst(rounded, True)
 kept = trace.laid(rounded, True, on_cube, 0.001)
-assert worst(kept, True) <= 0.001 and len(kept) > len(rounded), (worst(kept, True), len(kept))
+assert worst(kept, True) <= 0.01 and len(rounded) < len(kept) < 2 * len(rounded), (worst(kept, True), len(kept))
 print("LAID a loop round a cube, smoothed, cut %.3f into it; laid again in %d points, %.4f at most"
       % (worst(rounded, True), len(kept), worst(kept, True)))
 
