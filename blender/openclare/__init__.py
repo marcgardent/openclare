@@ -2488,7 +2488,7 @@ class OPENCLARE_PT_curves(DataPanel, bpy.types.Panel):
         owner = object_to_remesh(context)
         drawn = curve_objects(owner)
         if not drawn:
-            layout.label(text="Draw Curve or Cut Volume in the toolbar (T), or parent a curve here", icon="INFO")
+            layout.label(text="Parent a curve here, or draw loops with the Loops tool (T)", icon="INFO")
             return
         layout.operator(loops.OPENCLARE_OT_curves_to_loops.bl_idname)
         column = layout.column(align=True)
@@ -2551,7 +2551,7 @@ class OPENCLARE_PT_loops(DataPanel, bpy.types.Panel):
         owner = object_to_remesh(context)
         project = owner.data.openclare_loops
         if not project.items:
-            layout.label(text="Convert the curves drawn on the object into loops", icon="INFO")
+            layout.label(text="Draw with the Loops tool (T), or convert the curves drawn on the object", icon="INFO")
             layout.operator(loops.OPENCLARE_OT_curves_to_loops.bl_idname)
             return
         layout.label(text=loops.summary(project))

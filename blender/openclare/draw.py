@@ -1,5 +1,8 @@
-"""The Draw Curve and Cut Volume tools, in the toolbar of the 3D viewport
-(T) in Object Mode, one button: a curve drawn with the mouse straight on a
+"""The Loops tool (and the Draw Curve and Cut Volume it is made of), in the
+toolbar of the 3D viewport (T) in Object Mode. Its strokes make loops of the
+mesh (`loops`, docs/LOOP_EDITING.md); called alone, as before the loops,
+Draw Curve and Cut Volume make curve objects. What follows is said of a
+curve and holds for a loop: a curve drawn with the mouse straight on a
 mesh, for the result to have a line of edges along it, instead of a curve
 object held on it by a Shrinkwrap by hand. The mesh drawn on is the active
 object, selected; when the active object is not a selected mesh, the tools
@@ -323,6 +326,35 @@ def drawn_curves(context, owner):
     return found
 
 
+def kept(context, owner, points, closed, marks, taken, as_loop, tolerance):
+    """What a stroke let go makes: with `as_loop`, a loop of `owner`, or the
+    loop of that index `taken` up again; else a curve object, or the curve
+    `taken` up again, fitted within `tolerance`."""
+    from . import bezier_spline, drawn_curve, loops
+
+    if as_loop:
+        if taken is not None:
+            loops.set_points(owner.data.openclare_loops.items[taken], points, closed)
+        else:
+            loops.add(owner.data, points, closed, marks)
+    elif taken is not None:
+        bezier_spline(taken.data, points, closed, tolerance)
+    else:
+        drawn_curve(context, owner, points, closed, marks, tolerance)
+
+
+def drawn_loops(owner):
+    """The loops of `owner` that can be taken up again, as `drawn_curves`
+    gives the curves: (index, points, closed)."""
+    from . import loops
+
+    return [
+        (index, [tuple(point) for point in loops.points_of(loop)], loop.closed)
+        for index, loop in enumerate(owner.data.openclare_loops.items)
+        if len(loop.points) >= 2
+    ]
+
+
 def nothing_to_draw_on(mouse):
     """A click of the tools with no selected mesh to draw on: it selects what
     is under the mouse, as a click does, so that a mesh can be chosen, and
@@ -352,6 +384,12 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
     )
     seam: bpy.props.BoolProperty(
         name="Seam", description="The edges of the result along the curve are marked as seams", default=False
+    )
+    loop: bpy.props.BoolProperty(
+        name="Loop",
+        description="Make a loop of the mesh (the Loops tool), not a curve object",
+        default=False,
+        options={"SKIP_SAVE", "HIDDEN"},
     )
     rope: bpy.props.FloatProperty(
         name="Rope",
@@ -453,7 +491,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         self.pixel = pixel
         step, near, back = self.spacing * pixel, self.close * pixel, self.back_band * pixel
         self.taken = None
-        curves = drawn_curves(context, self.owner)
+        curves = drawn_loops(self.owner) if self.loop else drawn_curves(context, self.owner)
         end = trace.end_near([(points, closed) for _, points, closed in curves], start, near)
         if end is not None:
             index, at_start = end
@@ -463,7 +501,7 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
             self.stroke = trace.Trace(start, step, near, back=back)
         self.colour = curve_colour(self.sharp, self.crease, self.seam)
         if self.taken is not None:
-            told = self.taken.openclare_curve
+            told = self.owner.data.openclare_loops.items[self.taken] if self.loop else self.taken.openclare_curve
             self.colour = curve_colour(told.sharp, told.crease, told.seam)
         # The point that draws, on the screen, and the mouse that pulls it.
         self.head = self.mouse = mouse
@@ -518,18 +556,13 @@ class OPENCLARE_OT_draw_curve(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
     def finish(self, context):
-        from . import bezier_spline, drawn_curve
-
         self.stop(context)
         made = self.stroke.curve()
         if made is None:
             return {"CANCELLED"}
         points, closed = made
-        tolerance = self.fit * self.pixel
-        if self.taken is not None:
-            bezier_spline(self.taken.data, points, closed, tolerance)
-        else:
-            drawn_curve(context, self.owner, points, closed, (self.sharp, self.crease, self.seam), tolerance)
+        kept(context, self.owner, points, closed, (self.sharp, self.crease, self.seam), self.taken, self.loop,
+             self.fit * self.pixel)
         return {"FINISHED"}
 
     def stop(self, context):
@@ -678,7 +711,7 @@ def draw_tool_properties(context):
     is not the active tool."""
     workspace = getattr(context, "workspace", None)
     tool = workspace.tools.from_space_view3d_mode("OBJECT", create=False) if workspace is not None else None
-    if tool is None or tool.idname != OPENCLARE_TL_draw_curve.bl_idname:
+    if tool is None or tool.idname not in {OPENCLARE_TL_draw_curve.bl_idname, OPENCLARE_TL_loops.bl_idname}:
         return None
     return tool.operator_properties(OPENCLARE_OT_draw_curve.bl_idname)
 
@@ -978,6 +1011,12 @@ class OPENCLARE_OT_cut_volume(bpy.types.Operator):
     seam: bpy.props.BoolProperty(
         name="Seam", description="The edges of the result along the curve are marked as seams", default=False
     )
+    loop: bpy.props.BoolProperty(
+        name="Loop",
+        description="Make a loop of the mesh (the Loops tool), not a curve object",
+        default=False,
+        options={"SKIP_SAVE", "HIDDEN"},
+    )
 
     @classmethod
     def poll(cls, context):
@@ -998,7 +1037,12 @@ class OPENCLARE_OT_cut_volume(bpy.types.Operator):
         # Each line asked for has a number: the loop shown is that of the
         # line `shown`, the latest asked for is `serial`.
         self.serial = self.shown = 0
-        self.loop, self.why, self.header = None, None, None
+        self.ring, self.why, self.header = None, None, None
+        if self.loop:
+            # Ring, in the Loops tool: the marks of its header.
+            told = draw_tool_properties(context)
+            if told is not None:
+                self.sharp, self.crease, self.seam = told.sharp, told.crease, told.seam
         self.colour = curve_colour(self.sharp, self.crease, self.seam)
         self.handles = (
             bpy.types.SpaceView3D.draw_handler_add(self.draw_loop, (context,), "WINDOW", "POST_VIEW"),
@@ -1033,9 +1077,9 @@ class OPENCLARE_OT_cut_volume(bpy.types.Operator):
             if self.shown != self.serial or self.asked_end != self.end:
                 # The loop shown is not yet that of the line let go: cut now.
                 plane, under, why = cut_plane(context, self.owner, self.tree, self.start, self.end)
-                self.loop, self.why = (None, why) if plane is None else loop_under(self.surface, plane, under, self.farthest)
+                self.ring, self.why = (None, why) if plane is None else loop_under(self.surface, plane, under, self.farthest)
             self.stop(context)
-            if self.loop is None:
+            if self.ring is None:
                 self.report({"WARNING"}, f"openclare: no curve made: {self.why or 'draw a line across the limb'}")
                 return {"CANCELLED"}
             return self.make(context)
@@ -1057,7 +1101,7 @@ class OPENCLARE_OT_cut_volume(bpy.types.Operator):
             self.cutter.ask(self.serial, plane, under)
 
     def show(self, context, serial, loop, why):
-        self.shown, self.loop, self.why = serial, loop, why
+        self.shown, self.ring, self.why = serial, loop, why
         header = f"Cut Volume: {why}" if why else "Cut Volume"
         if header != self.header:
             self.header = header
@@ -1067,10 +1111,15 @@ class OPENCLARE_OT_cut_volume(bpy.types.Operator):
     def make(self, context):
         from . import FIT_STEPS, drawn_curve
 
-        middle = tuple(sum(point[k] for point in self.loop) / len(self.loop) for k in range(3))
+        from . import loops
+
+        middle = tuple(sum(point[k] for point in self.ring) / len(self.ring) for k in range(3))
         step = STEP_PIXELS * pixel_at(context, self.owner, middle)
-        points = trace.resampled(self.loop, step, closed=True)
-        drawn_curve(context, self.owner, points, True, (self.sharp, self.crease, self.seam), FIT_STEPS * step)
+        points = trace.resampled(self.ring, step, closed=True)
+        if self.loop:
+            loops.add(self.owner.data, points, True, (self.sharp, self.crease, self.seam))
+        else:
+            drawn_curve(context, self.owner, points, True, (self.sharp, self.crease, self.seam), FIT_STEPS * step)
         return {"FINISHED"}
 
     def stop(self, context):
@@ -1084,8 +1133,8 @@ class OPENCLARE_OT_cut_volume(bpy.types.Operator):
 
     def draw_loop(self, context):
         self.timings.frame()
-        if self.loop is not None:
-            draw_stroke(context, self.owner.matrix_world, self.loop, True, self.colour)
+        if self.ring is not None:
+            draw_stroke(context, self.owner.matrix_world, self.ring, True, self.colour)
 
     def draw_line(self, context):
         import gpu
@@ -1097,7 +1146,7 @@ class OPENCLARE_OT_cut_volume(bpy.types.Operator):
         line.bind()
         line.uniform_float("viewportSize", (context.region.width, context.region.height))
         line.uniform_float("lineWidth", 2.0)
-        line.uniform_float("color", self.colour[:3] + (0.6 if self.loop is None else 1.0,))
+        line.uniform_float("color", self.colour[:3] + (0.6 if self.ring is None else 1.0,))
         batch.draw(line)
         gpu.state.blend_set("NONE")
 
@@ -1129,18 +1178,47 @@ class OPENCLARE_TL_cut_volume(bpy.types.WorkSpaceTool):
         draw_marks(layout, properties)
 
 
-TOOL_IDS = {OPENCLARE_TL_draw_curve.bl_idname, OPENCLARE_TL_cut_volume.bl_idname}
+class OPENCLARE_TL_loops(bpy.types.WorkSpaceTool):
+    """The Loops tool (docs/LOOP_EDITING.md): the strokes of Draw Curve and
+    the cuts of Cut Volume made loops of the mesh, with the marks set in its
+    header. It takes the place of the two tools in the toolbar; their
+    operators still make curve objects when called alone."""
+
+    bl_space_type = "VIEW_3D"
+    bl_context_mode = "OBJECT"
+    bl_idname = "openclare.loops"
+    bl_label = "Loops (openclare)"
+    bl_description = (
+        "Experimental. Draw the loops of the selected mesh, for its result to have edges along them: drag to draw "
+        "one (back along the stroke to undo, let go at its start to close it, from an end of a loop to take it up "
+        "again); Alt + drag across a limb for a loop all round it. The quads along each loop are drawn"
+    )
+    bl_icon = "ops.curve.draw"
+    bl_widget = None
+    bl_keymap = (
+        (OPENCLARE_OT_draw_curve.bl_idname, {"type": "LEFTMOUSE", "value": "PRESS"}, {"properties": [("loop", True)]}),
+        (OPENCLARE_OT_cut_volume.bl_idname, {"type": "LEFTMOUSE", "value": "PRESS", "alt": True},
+         {"properties": [("loop", True)]}),
+        (OPENCLARE_OT_snap_radius.bl_idname, {"type": "F", "value": "PRESS"}, None),
+        ("wm.call_menu", {"type": "S", "value": "PRESS"}, {"properties": [("name", "OPENCLARE_MT_snap")]}),
+        ("object.openclare_snap", {"type": "V", "value": "PRESS"}, {"properties": [("snap", "VALLEY")]}),
+        ("object.openclare_snap", {"type": "R", "value": "PRESS"}, {"properties": [("snap", "RIDGE")]}),
+    )
+
+    def draw_settings(context, layout, tool, *, extra=False):
+        OPENCLARE_TL_draw_curve.draw_settings(context, layout, tool, extra=extra)
+
+
+TOOL_IDS = {OPENCLARE_TL_draw_curve.bl_idname, OPENCLARE_TL_cut_volume.bl_idname, OPENCLARE_TL_loops.bl_idname}
 
 
 def tools(shown):
-    """Draw Curve and Cut Volume put in the toolbar, one button, or taken
-    out: they are experimental (see `experimental`)."""
+    """The Loops tool put in the toolbar, or taken out: it is experimental
+    (see `experimental`). It takes the place of Draw Curve and Cut Volume."""
     if shown:
-        bpy.utils.register_tool(OPENCLARE_TL_draw_curve, separator=True, group=True)
-        bpy.utils.register_tool(OPENCLARE_TL_cut_volume, after={OPENCLARE_TL_draw_curve.bl_idname})
+        bpy.utils.register_tool(OPENCLARE_TL_loops, separator=True)
     else:
-        bpy.utils.unregister_tool(OPENCLARE_TL_cut_volume)
-        bpy.utils.unregister_tool(OPENCLARE_TL_draw_curve)
+        bpy.utils.unregister_tool(OPENCLARE_TL_loops)
 
 
 def register():

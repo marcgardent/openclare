@@ -102,18 +102,24 @@ def points_of(loop):
 def add(mesh, points, closed, marks, name=None):
     """A new loop of `mesh` through `points` (in the space of the object),
     with the marks (sharp, crease, seam). Returns it."""
-    import numpy
-
     loop = mesh.openclare_loops.items.add()
     loop.name = name or f"Loop {len(mesh.openclare_loops.items)}"
+    loop.sharp, loop.crease, loop.seam = bool(marks[0]), float(marks[1]), bool(marks[2])
+    set_points(loop, points, closed)
+    return loop
+
+
+def set_points(loop, points, closed):
+    """`loop` made to go through `points` (in the space of the object)."""
+    import numpy
+
     flat = numpy.asarray(points, numpy.float32).reshape(-1)
+    loop.points.clear()
     for _ in range(len(flat) // 3):
         loop.points.add()
     loop.points.foreach_set("co", flat)
     loop.closed = bool(closed)
-    loop.sharp, loop.crease, loop.seam = bool(marks[0]), float(marks[1]), bool(marks[2])
     redraw_views()
-    return loop
 
 
 def loops_of(mesh):

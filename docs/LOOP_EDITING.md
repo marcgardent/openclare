@@ -2,7 +2,7 @@
 
 *[Version française](LOOP_EDITING.fr.md)*
 
-**State:** validated on 27 November 2026; milestones 1 and 2 written (add-on 0.29.0), the others not yet. Milestone 2 departs from section 1 and 5 in three ways, for now: the analysis is the one *Analyse* made, not started by itself; with *Sizes* the one size before it is the *Largest*; hard edges do not make a row red.
+**State:** validated on 27 November 2026; milestones 1 to 3 written (add-on 0.29.0), the others not yet. Milestone 2 departs from section 1 and 5 in three ways, for now: the analysis is the one *Analyse* made, not started by itself; with *Sizes* the one size before it is the *Largest*; hard edges do not make a row red.
 
 Today a loop is asked for by drawing a curve: *Draw Curve* or *Cut Volume* makes a curve
 object, child of the mesh and held on it by a Shrinkwrap, which the engine lays into the work
@@ -87,7 +87,7 @@ the shape stays the same, the rope, the snap, the ribbon and the cutter of *Cut 
 those of `draw.py`, moved where both tools reach them.
 
 **Decision D3.** *Loops* takes over *Draw Curve* and *Cut Volume*: its Draw and Ring are theirs.
-Proposed: the two tools are removed from the toolbar once *Loops* draws (milestone 5), and the
+Proposed: the two tools are removed from the toolbar once *Loops* draws (milestone 3), and the
 curve objects stay readable.
 
 ## 4. What goes to the engine
@@ -147,13 +147,14 @@ the experimental flask.
    until it is ready; the strips of quads, the count round a closed loop and the red of
    section 5. Done when, on a sphere of known radius `r` with a size asked for, the count round
    its equator is `2πr / h`, and two loops drawn closer than `h` are red where they are.
-3. **Pick and Delete.** An edge loop of the result made a loop of the source, and taken away.
+3. **Draw and Ring.** The strokes of *Draw Curve* and *Cut Volume* make loops; D3 applied.
+   Brought forward by Marc on 27 November 2026, once he had drawn a curve where he wanted a loop.
+4. **Pick and Delete.** An edge loop of the result made a loop of the source, and taken away.
    With the states of section 5 (and the two additions of section 4) from here, since a picked
    loop is only worth something if the next remesh says whether it held it. Done when a loop
    picked on a result of the ogre is held by *Remesh Again*, or is said not to be.
-4. **Move and Redraw.** Done when the module of rules covers them in tests, and a loop moved
+5. **Move and Redraw.** Done when the module of rules covers them in tests, and a loop moved
    on the ogre stays on the surface with its spacing.
-5. **Draw and Ring.** The strokes of *Draw Curve* and *Cut Volume* make loops; D3 applied.
 6. **Cut, Join, Close, Marks.**
 
 ## 7. Out of scope, for later
@@ -170,7 +171,7 @@ the experimental flask.
 - **D1**: the quad size of the project is the engine's size field `h(p)`, uniform until the
   analysis is ready (section 1), not one size set by hand for the whole project.
 - **D2**: loops as data of the mesh, not curve objects (section 2).
-- **D3**: *Loops* replaces *Draw Curve* and *Cut Volume* at milestone 5 (section 3).
-- **D4**: the order of the milestones; Pick comes before Draw because editing the result's own
-  loops is the new part.
+- **D3**: *Loops* replaces *Draw Curve* and *Cut Volume* at milestone 3 (section 3).
+- **D4**: the order of the milestones; Draw first, then Pick (changed by Marc on 27 November
+  2026: Pick came before Draw).
 - **D5**: the keys of section 3.

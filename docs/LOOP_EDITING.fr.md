@@ -2,7 +2,7 @@
 
 *[English version](LOOP_EDITING.md)*
 
-**État :** validé le 27 novembre 2026 ; jalons 1 et 2 écrits (greffon 0.29.0), les autres pas encore. Le jalon 2 s'écarte des sections 1 et 5 sur trois points, pour l'instant : l'analyse est celle qu'a faite *Analyse*, pas lancée d'elle-même ; avec *Sizes*, la taille unique d'avant elle est le *Largest* ; les arêtes dures ne rendent pas une rangée rouge.
+**État :** validé le 27 novembre 2026 ; jalons 1 à 3 écrits (greffon 0.29.0), les autres pas encore. Le jalon 2 s'écarte des sections 1 et 5 sur trois points, pour l'instant : l'analyse est celle qu'a faite *Analyse*, pas lancée d'elle-même ; avec *Sizes*, la taille unique d'avant elle est le *Largest* ; les arêtes dures ne rendent pas une rangée rouge.
 
 Aujourd'hui, une loop se demande en traçant une courbe : *Draw Curve* ou *Cut Volume* crée un
 objet courbe, enfant du maillage et tenu dessus par un Shrinkwrap, que le moteur pose dans le
@@ -91,7 +91,7 @@ change pas, la corde, l'accroche, le ruban et le découpeur de *Cut Volume* sont
 `draw.py`, déplacés là où les deux outils les atteignent.
 
 **Décision D3.** *Loops* reprend *Draw Curve* et *Cut Volume* : son Draw et son Ring sont les
-leurs. Proposé : les deux outils quittent la barre d'outils quand *Loops* dessine (jalon 5), et
+leurs. Proposé : les deux outils quittent la barre d'outils quand *Loops* dessine (jalon 3), et
 les objets courbes restent lus.
 
 ## 4. Ce qui va au moteur
@@ -155,13 +155,14 @@ fiole expérimentale.
    de la section 5. Fini quand, sur une sphère de rayon `r` connu avec une taille demandée, le
    compte autour de l'équateur est `2πr / h`, et que deux loops tracées à moins de `h` sont
    rouges là où elles le sont.
-3. **Pick et Delete.** Une loop d'arêtes du résultat faite loop de la source, et retirée. Avec
+3. **Draw et Ring.** Les traits de *Draw Curve* et *Cut Volume* font des loops ; D3 appliquée.
+   Avancé par Marc le 27 novembre 2026, après avoir tracé une courbe là où il voulait une loop.
+4. **Pick et Delete.** Une loop d'arêtes du résultat faite loop de la source, et retirée. Avec
    les états de la section 5 (et les deux ajouts de la section 4) dès ici : une loop prise ne
    vaut que si le remesh suivant dit s'il l'a tenue. Fini quand une loop prise sur un résultat
    de l'ogre est tenue par *Remesh Again*, ou dite non tenue.
-4. **Move et Redraw.** Fini quand le module de règles les couvre en tests, et qu'une loop
+5. **Move et Redraw.** Fini quand le module de règles les couvre en tests, et qu'une loop
    déplacée sur l'ogre reste sur la surface avec son espacement.
-5. **Draw et Ring.** Les traits de *Draw Curve* et *Cut Volume* font des loops ; D3 appliquée.
 6. **Cut, Join, Close, Marks.**
 
 ## 7. Hors champ, pour plus tard
@@ -179,7 +180,7 @@ fiole expérimentale.
   que l'analyse n'est pas prête (section 1), et non une taille unique réglée à la main pour tout
   le projet.
 - **D2** : les loops comme données du maillage, pas des objets courbes (section 2).
-- **D3** : *Loops* remplace *Draw Curve* et *Cut Volume* au jalon 5 (section 3).
-- **D4** : l'ordre des jalons ; Pick avant Draw, parce qu'éditer les loops du résultat lui-même
-  est la partie neuve.
+- **D3** : *Loops* remplace *Draw Curve* et *Cut Volume* au jalon 3 (section 3).
+- **D4** : l'ordre des jalons ; Draw d'abord, puis Pick (changé par Marc le 27 novembre 2026 :
+  Pick venait avant Draw).
 - **D5** : les touches de la section 3.
