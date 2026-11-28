@@ -31,11 +31,17 @@ pub struct Request {
     /// the field is several times smoother without it, a twist and not a
     /// feature. `None` puts no limit.
     pub reach: Option<f64>,
+    /// Whether a pair may be cancelled across a line the field is held to.
+    /// Moving index across a closed line changes how the field turns
+    /// inside it: a loop drawn on a flat face may then come out with
+    /// fewer corners than a rectangle has and fold the map (#195). With
+    /// `false`, no cancellation crosses a line.
+    pub across_lines: bool,
 }
 
 impl Default for Request {
     fn default() -> Self {
-        Self { alignment: 0.05, tolerance: 1.0, reach: None }
+        Self { alignment: 0.05, tolerance: 1.0, reach: None, across_lines: true }
     }
 }
 

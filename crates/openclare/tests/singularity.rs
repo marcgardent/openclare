@@ -24,7 +24,7 @@ fn cancel_within(
     tolerance: f64,
     reach: Option<f64>,
 ) -> (CrossField, Report) {
-    let request = Request { alignment, tolerance, reach };
+    let request = Request { alignment, tolerance, reach, ..Default::default() };
     create(Kind::PairCancellation).optimize(work, field, &request).unwrap()
 }
 

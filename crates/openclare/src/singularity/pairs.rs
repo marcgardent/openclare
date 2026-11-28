@@ -85,7 +85,7 @@ impl SingularityOptimizer for PairCancellation {
         'passes: for (reach, most, far) in passes {
             loop {
                 let mut progressed = false;
-                for path in graph.candidates(&angles, reach, far, &rejected) {
+                for path in graph.candidates(&angles, reach, far || !request.across_lines, &rejected) {
                     if report.tried >= self.max_trials {
                         break 'passes;
                     }

@@ -190,6 +190,182 @@ fn a_diagonal_across_a_face_is_followed_with_no_singularity_for_it() {
     assert_eq!(line.values().filter(|n| n.len() == 1).count(), 2);
 }
 
+/// A closed curve on the top face of the cube of twelve triangles, as the
+/// drawing tools make one: an ellipse of half-axes `a` and `b` round
+/// `centre`, turned by `turn`, its radius wobbling by up to `wobble` of
+/// itself.
+fn loop_on_top(a: f64, b: f64, centre: [f64; 2], turn: f64, wobble: f64) -> GuideCurve {
+    let points = (0..100)
+        .map(|k| {
+            let t = std::f64::consts::TAU * f64::from(k) / 100.0;
+            let w = 1.0
+                + wobble * ((2.0 * t + 1.6).sin() + 0.75 * (3.0 * t + 1.3).sin() + 0.5 * (5.0 * t + 0.2).sin()) / 2.25;
+            let (x, y) = (a * w * t.cos(), b * w * t.sin());
+            Vec3::new(centre[0] + x * turn.cos() - y * turn.sin(), centre[1] + x * turn.sin() + y * turn.cos(), 1.0)
+        })
+        .collect();
+    GuideCurve { points, closed: true, sharp: false }
+}
+
+/// The edges of `report` along the curve form one closed loop of edges on
+/// it, of at least `fewest` vertices.
+fn is_one_loop_on(mesh: &PolyMesh, report: &Report, curve: &GuideCurve, fewest: usize) {
+    assert_eq!(report.guides_let_go, 0, "{:?}", report.line_causes);
+    let line = joined(&report.guide_edges);
+    assert!(line.len() >= fewest, "{} vertices on the loop", line.len());
+    let points = &curve.points;
+    let off = |p: Vec3| {
+        (0..points.len())
+            .map(|k| {
+                let (a, b) = (points[k], points[(k + 1) % points.len()]);
+                let t = ((p - a).dot(b - a) / (b - a).length_squared()).clamp(0.0, 1.0);
+                p.distance(a.lerp(b, t))
+            })
+            .fold(f64::INFINITY, f64::min)
+    };
+    for (&v, neighbours) in &line {
+        let p = mesh.positions[v as usize];
+        assert_eq!(neighbours.len(), 2, "vertex {v} at {p:?}");
+        assert!((p.z - 1.0).abs() < 1e-6 && off(p) < 0.01, "{p:?} is off the loop by {}", off(p));
+    }
+    // One loop, not several.
+    let start = *line.keys().next().unwrap();
+    let (mut previous, mut current, mut steps) = (start, line[&start][0], 1);
+    while current != start {
+        let next = line[&current].iter().copied().find(|&n| n != previous).unwrap();
+        (previous, current, steps) = (current, next, steps + 1);
+    }
+    assert_eq!(steps, line.len());
+}
+
+/// How long the edges of `mesh` along each of the twelve edges of the cube
+/// of side 2 are, in all: 2 for an edge kept whole.
+fn along_the_edges_of_the_cube(mesh: &PolyMesh) -> Vec<f64> {
+    let mut lengths = Vec::new();
+    for axis in 0..3 {
+        let others = [(axis + 1) % 3, (axis + 2) % 3];
+        for [s, t] in [[-1.0, -1.0], [-1.0, 1.0], [1.0, -1.0], [1.0, 1.0]] {
+            let on = |p: Vec3| (p[others[0]] - s).abs() < 1e-6 && (p[others[1]] - t).abs() < 1e-6;
+            let mut seen = std::collections::HashSet::new();
+            let mut length = 0.0;
+            for face in &mesh.faces {
+                for k in 0..face.len() {
+                    let (a, b) = (face[k], face[(k + 1) % face.len()]);
+                    let (p, q) = (mesh.positions[a as usize], mesh.positions[b as usize]);
+                    if on(p) && on(q) && seen.insert((a.min(b), a.max(b))) {
+                        length += p.distance(q);
+                    }
+                }
+            }
+            lengths.push(length);
+        }
+    }
+    lengths
+}
+
+#[test]
+fn a_loop_on_a_face_of_a_cube_is_one_loop_of_edges() {
+    // The singularities of the field round the loop lie half a quad from
+    // it: arcs of no length join them to it, and the vertex they share
+    // used to stay at the singularity, off the loop (#195).
+    let source = primitives::cube(1);
+    let curve = loop_on_top(0.45, 0.35, [0.0, 0.0], 0.0, 0.0);
+    let (mesh, report) = remesh(&source, 550, std::slice::from_ref(&curve));
+    assert!(measure(&source, &mesh, Some(550)).is_valid());
+    is_one_loop_on(&mesh, &report, &curve, 8);
+    assert!(along_the_edges_of_the_cube(&mesh).iter().all(|&length| (length - 2.0).abs() < 1e-6));
+}
+
+#[test]
+fn a_loop_drawn_by_hand_on_a_face_of_a_cube_is_held() {
+    // Off the middle, turned and uneven. Cancelling a pair of
+    // singularities across the loop left the field inside it a quarter
+    // turn instead of a whole one round, which folded the map: the loop
+    // was let go (#195).
+    let source = primitives::cube(1);
+    let curve = loop_on_top(0.51, 0.4, [-0.09, -0.08], 2.6, 0.06);
+    let (mesh, report) = remesh(&source, 550, std::slice::from_ref(&curve));
+    assert!(measure(&source, &mesh, Some(550)).is_valid());
+    is_one_loop_on(&mesh, &report, &curve, 8);
+    assert!(along_the_edges_of_the_cube(&mesh).iter().all(|&length| (length - 2.0).abs() < 1e-6));
+}
+
+#[test]
+fn a_loop_that_cannot_be_held_is_let_go_alone() {
+    // Smaller than a quad: it is let go, alone, and the edges of the cube
+    // are kept whole.
+    let source = primitives::cube(1);
+    let curve = loop_on_top(0.06, 0.06, [0.0, 0.0], 0.0, 0.0);
+    let (mesh, report) = remesh(&source, 550, &[curve]);
+    assert!(measure(&source, &mesh, Some(550)).is_valid());
+    assert_eq!(report.guides_let_go, 1);
+    let lengths = along_the_edges_of_the_cube(&mesh);
+    assert!(lengths.iter().all(|&length| (length - 2.0).abs() < 1e-6), "{lengths:?}");
+}
+
+#[test]
+fn loops_let_go_together_leave_the_edges_of_a_cube_whole() {
+    // Three loops on the top face, uneven, one of them small: the map folds
+    // with them and they are let go. Letting go of them in the map took the
+    // hard edges near the folds with them, and the field, made for the
+    // loops, still folded the map with the edges of the cube alone: the
+    // top came out with an edge broken (#361). The cube of #195 as its file
+    // has it, each face cut from its first corner, which is how this was
+    // found.
+    let corners = [[-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]];
+    let faces = [[0, 3, 2, 1], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]];
+    let source = TriMesh {
+        positions: corners.iter().map(|c| Vec3::new(f64::from(c[0]), f64::from(c[1]), f64::from(c[2]))).collect(),
+        triangles: faces.iter().flat_map(|&[a, b, c, d]| [[a, b, c], [a, c, d]]).collect(),
+    };
+    let uneven = |r: f64, flat: f64, centre: [f64; 2], turn: f64, wobble: f64| {
+        let points = (0..100)
+            .map(|k| {
+                let t = std::f64::consts::TAU * f64::from(k) / 100.0;
+                let w = 1.0 + wobble * (3.0 * t + 1.0).sin() * (2.0 * t).cos();
+                let (x, y) = (r * w * t.cos(), r * flat * w * t.sin());
+                // To the hundred-thousandth, as the file it was found with.
+                let round = |a: f64| (a * 1e5).round() / 1e5;
+                Vec3::new(
+                    round(centre[0] + x * turn.cos() - y * turn.sin()),
+                    round(centre[1] + x * turn.sin() + y * turn.cos()),
+                    1.0,
+                )
+            })
+            .collect();
+        GuideCurve { points, closed: true, sharp: false }
+    };
+    let curves = [
+        uneven(0.118118, 0.873686, [0.157084, -0.457953], 2.449465, 0.148652),
+        uneven(0.421832, 0.363392, [-0.299312, -0.361593], 1.521060, 0.191133),
+        uneven(0.305153, 0.615787, [0.532974, -0.295032], 1.252165, 0.194882),
+    ];
+    let (mesh, report) = remesh(&source, 550, &curves);
+    assert!(measure(&source, &mesh, Some(550)).is_valid());
+    assert_eq!(report.guides_let_go, 1);
+    let lengths = along_the_edges_of_the_cube(&mesh);
+    assert!(lengths.iter().all(|&length| (length - 2.0).abs() < 1e-6), "{lengths:?}");
+}
+
+#[test]
+fn a_loop_near_the_edges_of_a_cube_leaves_them_whole() {
+    // A quarter of a quad from two edges of the top: an arc of no length
+    // joins the loop to them, and the vertex they share used to be put
+    // halfway between, off the edge of the cube (#195).
+    let source = primitives::cube(1);
+    let lengths: Vec<Vec<f64>> =
+        [loop_on_top(0.3, 0.3, [0.65, 0.65], 0.0, 0.0), loop_on_top(0.95, 0.95, [0.0, 0.0], 0.0, 0.0)]
+            .into_iter()
+            .map(|curve| {
+                let (mesh, report) = remesh(&source, 550, &[curve]);
+                assert!(measure(&source, &mesh, Some(550)).is_valid());
+                assert!(!report.guide_edges.is_empty());
+                along_the_edges_of_the_cube(&mesh)
+            })
+            .collect();
+    assert!(lengths.iter().flatten().all(|&length| (length - 2.0).abs() < 1e-6), "{lengths:?}");
+}
+
 #[test]
 fn a_curve_away_from_the_surface_changes_nothing() {
     let source = primitives::icosphere(4);

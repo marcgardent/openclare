@@ -13,7 +13,7 @@ mod motorcycle;
 pub(crate) mod walk;
 mod walls;
 
-use std::collections::VecDeque;
+use std::collections::{HashSet, VecDeque};
 use std::fmt;
 use std::str::FromStr;
 
@@ -645,59 +645,75 @@ impl LayoutBuilder for Motorcycle {
         if !tmesh.report.is_valid() && map.report.loose_guides.len() < work.guide_edges.len() {
             // Guide lines that did not fold the map may still leave a patch
             // that is no rectangle: let go of those near that patch first,
-            // then of the rest if need be.
-            let mut dropped: std::collections::HashSet<[u32; 2]> = map.report.loose_guides.iter().copied().collect();
-            let mut current_tmesh = &tmesh;
-            let mut retry_holder: Option<(TMesh, Parametrization)>;
+            // then of the rest if need be. The lines drawn go before the
+            // hard edges of the shape (#195), as in the map.
+            let shape: HashSet<[u32; 2]> = work.shape_guide_edges.iter().copied().collect();
+            let drawn = work.guide_edges.iter().any(|edge| !shape.contains(edge));
+            let spare_shape: &[bool] = if drawn && !shape.is_empty() { &[true, false] } else { &[false] };
             let reach = 2.0 * request.edge_length;
-            for _ in 0..3 {
-                let bad_points: Vec<Vec3> = current_tmesh
-                    .patches
-                    .iter()
-                    .filter(|patch| patch.sides.is_none())
-                    .flat_map(|patch| {
-                        patch.boundary.iter().flat_map(|&half| {
-                            let arc = &current_tmesh.arcs[half as usize / 2];
-                            current_tmesh.traces[arc.trace as usize].points.iter().copied()
+            for &spared in spare_shape {
+                let mut dropped: HashSet<[u32; 2]> = map.report.loose_guides.iter().copied().collect();
+                let mut current_tmesh = &tmesh;
+                let mut retry_holder: Option<(TMesh, Parametrization)>;
+                for _ in 0..3 {
+                    let bad_points: Vec<Vec3> = current_tmesh
+                        .patches
+                        .iter()
+                        .filter(|patch| patch.sides.is_none())
+                        .flat_map(|patch| {
+                            patch.boundary.iter().flat_map(|&half| {
+                                let arc = &current_tmesh.arcs[half as usize / 2];
+                                current_tmesh.traces[arc.trace as usize].points.iter().copied()
+                            })
                         })
-                    })
-                    .collect();
-                let before = dropped.len();
-                for &edge in &work.guide_edges {
-                    let [a, b] = edge.map(|v| work.mesh.positions[v as usize]);
-                    if bad_points.iter().any(|&p| p.distance(a) <= reach || p.distance(b) <= reach) {
-                        dropped.insert(edge);
+                        .collect();
+                    let before = dropped.len();
+                    for &edge in &work.guide_edges {
+                        if spared && shape.contains(&edge) {
+                            continue;
+                        }
+                        let [a, b] = edge.map(|v| work.mesh.positions[v as usize]);
+                        if bad_points.iter().any(|&p| p.distance(a) <= reach || p.distance(b) <= reach) {
+                            dropped.insert(edge);
+                        }
                     }
+                    if dropped.len() == before || dropped.len() >= work.guide_edges.len() {
+                        break;
+                    }
+                    let mut lighter = work.clone();
+                    lighter.feature_edges.retain(|edge| !dropped.contains(edge));
+                    lighter.guide_edges.retain(|edge| !dropped.contains(edge));
+                    let mut retry_map = parametrizer.parametrize(&lighter, field, &map_request)?;
+                    let retry_tmesh = TMesh::trace(&lighter, field, &retry_map, max_trace);
+                    if retry_tmesh.report.is_valid() {
+                        retry_map.report.guides_off_grid = true;
+                        retry_map.report.loose_guides.extend(dropped);
+                        retry_map.report.loose_guides.sort_unstable();
+                        retry_map.report.loose_guides.dedup();
+                        return Ok(Layout { tmesh: retry_tmesh, map: retry_map });
+                    }
+                    dropped.extend(retry_map.report.loose_guides.iter().copied());
+                    retry_holder = Some((retry_tmesh, retry_map));
+                    current_tmesh = &retry_holder.as_ref().unwrap().0;
                 }
-                if dropped.len() == before || dropped.len() >= work.guide_edges.len() {
-                    break;
-                }
+            }
+            // Then every line drawn, then every guide line.
+            for spared in spare_shape {
+                let guides: HashSet<[u32; 2]> =
+                    work.guide_edges.iter().copied().filter(|edge| !(*spared && shape.contains(edge))).collect();
                 let mut lighter = work.clone();
-                lighter.feature_edges.retain(|edge| !dropped.contains(edge));
-                lighter.guide_edges.retain(|edge| !dropped.contains(edge));
+                lighter.feature_edges.retain(|edge| !guides.contains(edge));
+                lighter.guide_edges.retain(|edge| !guides.contains(edge));
                 let mut retry_map = parametrizer.parametrize(&lighter, field, &map_request)?;
                 let retry_tmesh = TMesh::trace(&lighter, field, &retry_map, max_trace);
                 if retry_tmesh.report.is_valid() {
                     retry_map.report.guides_off_grid = true;
-                    retry_map.report.loose_guides.extend(dropped);
-                    retry_map.report.loose_guides.sort_unstable();
-                    retry_map.report.loose_guides.dedup();
+                    let mut loose: Vec<[u32; 2]> = guides.into_iter().chain(retry_map.report.loose_guides).collect();
+                    loose.sort_unstable();
+                    loose.dedup();
+                    retry_map.report.loose_guides = loose;
                     return Ok(Layout { tmesh: retry_tmesh, map: retry_map });
                 }
-                dropped.extend(retry_map.report.loose_guides.iter().copied());
-                retry_holder = Some((retry_tmesh, retry_map));
-                current_tmesh = &retry_holder.as_ref().unwrap().0;
-            }
-            let guides: std::collections::HashSet<[u32; 2]> = work.guide_edges.iter().copied().collect();
-            let mut lighter = work.clone();
-            lighter.feature_edges.retain(|edge| !guides.contains(edge));
-            lighter.guide_edges.clear();
-            let mut retry_map = parametrizer.parametrize(&lighter, field, &map_request)?;
-            let retry_tmesh = TMesh::trace(&lighter, field, &retry_map, max_trace);
-            if retry_tmesh.report.is_valid() {
-                retry_map.report.guides_off_grid = true;
-                retry_map.report.loose_guides = work.guide_edges.clone();
-                return Ok(Layout { tmesh: retry_tmesh, map: retry_map });
             }
         }
         Ok(Layout { tmesh, map })
