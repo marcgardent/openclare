@@ -238,8 +238,8 @@ impl Built {
     /// Checks that the lattice is a manifold quad mesh whose irregular
     /// vertices are the singularities of the T-mesh, each with the valence
     /// its index asks for unless it came to lie on a border, and no vertex
-    /// inside the surface of valence under 3 or over [`MOST_VALENCE`]. With
-    /// `merging`, singularities may share a vertex whose valence their
+    /// inside the surface of valence under 3 or over [`MOST_VALENCE`], none
+    /// of the singularities brought onto a guide curve. With `merging`, singularities may share a vertex whose valence their
     /// indices add up to, if that is 3, 4 or 5 and the Euler characteristic
     /// is kept (ALGORITHM.md, M6, "Merging singularities").
     pub fn defects(&self, tmesh: &TMesh, merging: bool) -> Defects {
@@ -296,6 +296,40 @@ impl Built {
             singularity[vertex] = Some(node as u32);
             expected_valence[vertex] = Some(4 - index_of(node));
             node_valence[vertex] = Some(data.arcs.len());
+        }
+        // Nor may a singularity be brought onto a guide curve by the
+        // lengths: the line of edges along the curve would have a pole on
+        // it, and be no edge loop (#360). A singularity the T-mesh already
+        // has on the curve is left where it is: no length moves it off.
+        let mut on_guide = vec![false; lattice.points.len()];
+        for arc in tmesh.arcs.iter().filter(|arc| arc.guide) {
+            for node in arc.nodes {
+                on_guide[node as usize] = true;
+            }
+        }
+        for (point, source) in lattice.points.iter().enumerate() {
+            if let Source::Arc { arc, .. } = *source
+                && tmesh.arcs[arc as usize].guide
+            {
+                on_guide[point] = true;
+            }
+        }
+        if on_guide.iter().any(|&on| on) {
+            let mut guided = vec![false; vertices];
+            for (point, &on) in on_guide.iter().enumerate() {
+                if on {
+                    guided[lattice.point_vertex[point] as usize] = true;
+                }
+            }
+            for (node, data) in tmesh.nodes.iter().enumerate() {
+                let vertex = lattice.node_vertex[node];
+                if !matches!(data.kind, NodeKind::Singularity { .. }) || on_guide[node] || !guided[vertex as usize] {
+                    continue;
+                }
+                charge(&mut defects, vertex, &|| {
+                    self.largest_merge_between(node as u32, |point| on_guide[point as usize])
+                });
+            }
         }
         for (&vertex, (nodes, valence)) in &merged {
             if (3..=5).contains(valence) {
@@ -502,6 +536,7 @@ pub(super) mod tests {
                         patches: [u32::MAX; 2],
                         border: true,
                         feature: false,
+                        guide: false,
                         trace: 0,
                         span: [0.0; 2],
                     });
